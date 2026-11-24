@@ -3,6 +3,7 @@ import {
   buildSheet,
   countDescendants,
   findItem,
+  nextChildCode,
   type EntryRow,
   type ItemRow
 } from './accounting.tree'
@@ -97,9 +98,9 @@ describe('buildSheet : arborescence', () => {
     expect(
       buildSheet(2026, rows, [], new Set()).items[0]?.children.map((c) => [c.id, c.code])
     ).toEqual([
-      [10, 'A1-I'],
-      [11, 'A1-II'],
-      [12, 'A1-III']
+      [10, 'A1-1'],
+      [11, 'A1-2'],
+      [12, 'A1-3']
     ])
   })
 
@@ -135,5 +136,36 @@ describe('buildSheet : arborescence', () => {
     expect(countDescendants(findItem(sheet, 1)!)).toBe(6)
     expect(countDescendants(findItem(sheet, 5)!)).toBe(2)
     expect(countDescendants(findItem(sheet, 7)!)).toBe(0)
+  })
+
+  it('au niveau 2, numérote les groupes et les rubriques à montant séparément', () => {
+    const rows = [
+      item({ id: 1, prefix: 'F' }),
+      item({ id: 2, parentId: 1 }), // groupe (a un enfant)
+      item({ id: 3, parentId: 1 }), // rubrique à montant
+      item({ id: 4, parentId: 1 }), // groupe
+      item({ id: 5, parentId: 1 }), // rubrique à montant
+      item({ id: 6, parentId: 2 }),
+      item({ id: 7, parentId: 4 })
+    ]
+    const sheet = buildSheet(2026, rows, [], new Set())
+    expect(sheet.items[0]?.children.map((c) => c.code)).toEqual(['F1-I', 'F1-1', 'F1-II', 'F1-2'])
+    expect(findItem(sheet, 7)?.code).toBe('F1-II-1')
+  })
+
+  it('propose le numéro d’un nouvel enfant, parent renuméroté compris', () => {
+    const rows = [
+      item({ id: 1, prefix: 'A' }),
+      item({ id: 2, parentId: 1 }),
+      item({ id: 3, parentId: 1 }),
+      item({ id: 4, parentId: 3 })
+    ]
+    const sheet = buildSheet(2026, rows, [], new Set())
+    expect(sheet.items[0]?.children.map((c) => c.code)).toEqual(['A1-1', 'A1-I'])
+    expect(nextChildCode(sheet, 1)).toBe('A1-2')
+    expect(nextChildCode(sheet, 3)).toBe('A1-I-2')
+    // A1-1 deviendrait un groupe placé avant A1-I : il prendrait A1-I (l'actuel passerait A1-II)
+    expect(nextChildCode(sheet, 2)).toBe('A1-I-1')
+    expect(nextChildCode(sheet, 999)).toBeNull()
   })
 })

@@ -5,7 +5,8 @@
  * | Niveau | Forme                          | Exemple       |
  * |--------|--------------------------------|---------------|
  * | 1      | lettre malgache + rang         | `F1`          |
- * | 2      | parent + `-` + chiffre romain  | `F1-II`       |
+ * | 2      | groupe : parent + `-` + romain | `F1-II`       |
+ * |        | à montant : parent + `-` + rang| `A1-2`        |
  * | 3      | parent + `-` + chiffre         | `F1-II-1`     |
  * | 4      | parent + ` ` + lettre + `)`    | `F1-II-1 A)`  |
  */
@@ -93,11 +94,20 @@ export function rootCode(prefix: string, rank: number): string {
   return `${prefix}${rank}`
 }
 
-/** Numéro d'un enfant selon son niveau (rang à partir de 1). */
-export function childCode(parentCode: string, childLevel: 2 | 3 | 4, rank: number): string {
+/**
+ * Numéro d'un enfant selon son niveau (rang à partir de 1). Au niveau 2 seulement, la nature
+ * compte : un groupe (qui a des enfants) en chiffres romains, une rubrique à montant en chiffres
+ * arabes, chacun avec son propre rang (règle du document de l'église : `F1-I`, `A1-1`).
+ */
+export function childCode(
+  parentCode: string,
+  childLevel: 2 | 3 | 4,
+  rank: number,
+  kind: 'group' | 'leaf'
+): string {
   switch (childLevel) {
     case 2:
-      return `${parentCode}-${toRoman(rank)}`
+      return kind === 'group' ? `${parentCode}-${toRoman(rank)}` : `${parentCode}-${rank}`
     case 3:
       return `${parentCode}-${rank}`
     case 4:

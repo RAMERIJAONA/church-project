@@ -1,9 +1,78 @@
 [
-  { "parent": null, "prefix": "F", "rank": 1, "code": "F1" },
-  { "parent": "F1", "level": 2, "rank": 1, "code": "F1-I" },
-  { "parent": "F1-I", "level": 3, "rank": 1, "code": "F1-I-1" },
-  { "parent": "F1", "level": 2, "rank": 2, "code": "F1-II" },
-  { "parent": "F1-II", "level": 3, "rank": 1, "code": "F1-II-1" },
-  { "parent": "F1-II-1", "level": 4, "rank": 1, "code": "F1-II-1 A)" },
-  { "parent": "F1-II-1", "level": 4, "rank": 2, "code": "F1-II-1 B)" }
+  {
+    "parent": null,
+    "prefix": "F",
+    "rank": 1,
+    "code": "F1"
+  },
+  {
+    "parent": "F1",
+    "level": 2,
+    "rank": 1,
+    "code": "F1-I",
+    "kind": "group"
+  },
+  {
+    "parent": "F1-I",
+    "level": 3,
+    "rank": 1,
+    "code": "F1-I-1",
+    "kind": "leaf"
+  },
+  {
+    "parent": "F1",
+    "level": 2,
+    "rank": 2,
+    "code": "F1-II",
+    "kind": "group"
+  },
+  {
+    "parent": "F1-II",
+    "level": 3,
+    "rank": 1,
+    "code": "F1-II-1",
+    "kind": "group"
+  },
+  {
+    "parent": "F1-II-1",
+    "level": 4,
+    "rank": 1,
+    "code": "F1-II-1 A)",
+    "kind": "leaf"
+  },
+  {
+    "parent": "F1-II-1",
+    "level": 4,
+    "rank": 2,
+    "code": "F1-II-1 B)",
+    "kind": "leaf"
+  },
+  {
+    "parent": "A1",
+    "level": 2,
+    "rank": 1,
+    "kind": "leaf",
+    "code": "A1-1"
+  },
+  {
+    "parent": "A1",
+    "level": 2,
+    "rank": 8,
+    "kind": "leaf",
+    "code": "A1-8"
+  },
+  {
+    "parent": "F1",
+    "level": 2,
+    "rank": 4,
+    "kind": "group",
+    "code": "F1-IV"
+  },
+  {
+    "parent": "F1-II",
+    "level": 3,
+    "rank": 4,
+    "kind": "leaf",
+    "code": "F1-II-4"
+  }
 ]

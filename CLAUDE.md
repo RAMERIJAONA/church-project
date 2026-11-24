@@ -438,6 +438,7 @@ export async function invoke<C extends Channel>(channel: C, input: IpcInput<C>):
 - Couverture (seuils bloquants en CI) : `shared/domain` ≥ 90 %, `main/services` ≥ 80 %. Pas de seuil sur l'UI (on teste les comportements, pas les lignes).
 - Pas de globals Vitest : `tests/setup/renderer.ts` appelle `cleanup()` de Testing Library. Pas de `@testing-library/jest-dom` (non listé) : on teste les propriétés DOM (`toHaveProperty('disabled', true)`).
 - Factories : `tests/factories/*.factory.ts` sans dépendance DB (utilisables côté renderer), `*.seed.ts` pour écrire en base.
+- **Base de démonstration** : `npm run seed:accounting` (projet Vitest `seed`, `scripts/seed-accounting.task.ts`, activé par `SEED_ACCOUNTING=1`) recrée `.dev-data/seed/data.db` (ignoré par git) avec le plan comptable réel du porteur (`tests/fixtures/accounting/church-plan-2025.ts`, budget 2025 : 107 rubriques, totaux [montant retiré] / [montant retiré] / 999 999 999 999). Les réalisations sont datées de façon déterministe sur 83 jours de 2025 (dimanches surtout), une sur quatre en 2 à 4 versements. Passe par le service (`tests/factories/accounting.seed.ts`), donc par toutes les règles ; vérifié par `tests/integration/accounting.seed.test.ts`. `npm run dev:seed` lance l'app sur cette base (`APP_USER_DATA`), sans toucher la base de dev habituelle.
 - `npm run fixture:snapshot` est un projet Vitest dédié (`scripts/fixture-snapshot.task.ts`, activé par `FIXTURE_SNAPSHOT=1`) : mêmes alias, même runtime. Il refuse d'écraser une fixture existante et écrit un manifeste `v<version>.json` (lignes par table) que lit le test de migrations.
 
 ### 9.3 Règles de non-régression (obligatoires)
@@ -621,7 +622,9 @@ UI en français d'abord ; les termes malgaches sont gardés en glossaire (traduc
 
 - **Arborescence sur 4 niveaux** (`accounting_items`, `parent_id`). Numéros calculés, jamais stockés (`shared/domain/accounting/accounting.codes.ts`, golden `__golden__/codes.json`) :
   - niveau 1 : lettre de l'**alphabet malgache** (21 lettres, sans C, Q, U, W, X ; puis AA, AB…) + rang dans la lettre : `F1`. La lettre est automatique : une lettre déjà utilisée (→ F2) ou la suivante proposée ; le service refuse toute autre (`availableLetters`), la base aussi (CHECK) ;
-  - niveau 2 : chiffres romains `F1-I`, `F1-II` ; niveau 3 : chiffres `F1-II-1` ; niveau 4 : lettres malgaches `F1-II-1 A)`, `B)`, `D)`… Pas de 5e niveau.
+  - niveau 2 : **groupe** (a des sous-rubriques) en chiffres romains `F1-I`, `F1-II` ; **rubrique à montant** en chiffres arabes `A1-1`, `A1-2` ; deux rangs séparés (règle du document de l'église, confirmée le 2026-11-24). Une sous-rubrique de niveau 2 démarre donc en `A1-3` et devient `A1-I` dès qu'elle reçoit un enfant (ses sœurs sont renumérotées) ;
+  - niveau 3 : chiffres `F1-II-1`, groupes et rubriques à montant dans la même suite (`F1-II-1` à `F1-II-6`) ; niveau 4 : lettres malgaches `F1-II-1 A)`, `B)`, `D)`… Pas de 5e niveau.
+  - le seed vérifie que les 107 numéros calculés sont exactement ceux du document (`tests/integration/accounting.seed.test.ts`).
 - Les numéros découlent de `position` parmi les frères actifs (même parent ; au niveau 1, même lettre). Suppression ou ↑ ↓ → renumérotation sans trou ; les montants suivent l'élément (liés à son id). Pas de changement de parent.
 - **Groupe ou montant, sans type stocké** : un élément qui a des enfants est un groupe (pas de montant) ; un élément sans enfant porte des montants, **à tous les niveaux** (une rubrique principale sans sous-rubrique aussi). Refus (`BUSINESS_RULE`) : enfant sous un élément qui a des saisies (toutes années), montant sur un groupe.
 - Description du niveau 1 toujours en **MAJUSCULES** (`normalizeDescription`) ; autres niveaux : casse saisie.

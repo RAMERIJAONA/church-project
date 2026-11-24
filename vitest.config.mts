@@ -8,6 +8,12 @@ const alias = {
   '@tests': resolve('tests')
 }
 
+// `npm run seed:accounting` : base de démonstration dans .dev-data/seed (jamais lancé par `npm test`)
+const seedProject = {
+  extends: true,
+  test: { name: 'seed', environment: 'node', include: ['scripts/seed-accounting.task.ts'] }
+}
+
 // `npm run fixture:snapshot` : projet dédié qui génère une fixture DB (jamais lancé par `npm test`)
 const fixtureProject = {
   extends: true,
@@ -43,7 +49,8 @@ export default defineConfig({
           setupFiles: ['tests/setup/renderer.ts']
         }
       },
-      ...(process.env['FIXTURE_SNAPSHOT'] === '1' ? [fixtureProject] : [])
+      ...(process.env['FIXTURE_SNAPSHOT'] === '1' ? [fixtureProject] : []),
+      ...(process.env['SEED_ACCOUNTING'] === '1' ? [seedProject] : [])
     ],
     coverage: {
       provider: 'v8',

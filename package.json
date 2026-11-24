@@ -24,6 +24,8 @@
     "db:generate": "drizzle-kit generate",
     "db:check": "drizzle-kit check",
     "fixture:snapshot": "cross-env ELECTRON_RUN_AS_NODE=1 FIXTURE_SNAPSHOT=1 electron ./node_modules/vitest/vitest.mjs run --project fixtures",
+    "seed:accounting": "cross-env ELECTRON_RUN_AS_NODE=1 SEED_ACCOUNTING=1 electron ./node_modules/vitest/vitest.mjs run --project seed",
+    "dev:seed": "cross-env APP_USER_DATA=.dev-data/seed electron-vite dev",
     "test:e2e": "playwright test",
     "test:e2e:smoke": "playwright test --grep @smoke"
   },

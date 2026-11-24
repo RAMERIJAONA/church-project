@@ -57,9 +57,17 @@ describe('chiffres romains (niveau 2)', () => {
 
 describe('numéros par niveau', () => {
   it('numérote le niveau 4 en alphabet malgache', () => {
-    expect(childCode('F1-II-1', 4, 1)).toBe('F1-II-1 A)')
-    expect(childCode('F1-II-1', 4, 3)).toBe('F1-II-1 D)')
-    expect(childCode('F1-II-1', 4, 22)).toBe('F1-II-1 AA)')
+    expect(childCode('F1-II-1', 4, 1, 'leaf')).toBe('F1-II-1 A)')
+    expect(childCode('F1-II-1', 4, 3, 'leaf')).toBe('F1-II-1 D)')
+    expect(childCode('F1-II-1', 4, 22, 'leaf')).toBe('F1-II-1 AA)')
+  })
+
+  it('niveau 2 : chiffres romains pour un groupe, chiffres arabes pour une rubrique à montant', () => {
+    expect(childCode('F1', 2, 2, 'group')).toBe('F1-II')
+    expect(childCode('A1', 2, 2, 'leaf')).toBe('A1-2')
+    // Aux niveaux 3 et 4, la nature ne change rien
+    expect(childCode('F1-II', 3, 4, 'group')).toBe('F1-II-4')
+    expect(childCode('F1-II', 3, 4, 'leaf')).toBe('F1-II-4')
   })
 
   it('reproduit le plan de l’église (golden)', () => {
@@ -67,7 +75,7 @@ describe('numéros par niveau', () => {
       const code =
         g.parent === null
           ? rootCode(g.prefix ?? '', g.rank)
-          : childCode(g.parent, g.level as 2 | 3 | 4, g.rank)
+          : childCode(g.parent, g.level as 2 | 3 | 4, g.rank, g.kind as 'group' | 'leaf')
       expect(code, JSON.stringify(g)).toBe(g.code)
     }
   })

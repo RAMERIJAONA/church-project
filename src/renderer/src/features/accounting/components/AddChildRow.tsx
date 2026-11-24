@@ -2,7 +2,6 @@ import { X } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { Button } from '@renderer/components/ui/button'
 import { Input } from '@renderer/components/ui/input'
-import { childCode } from '@shared/domain/accounting/accounting.codes'
 import {
   descriptionSchema,
   type AccountingItemDTO
@@ -13,6 +12,8 @@ import { useSheetActions } from './sheet-actions'
 export interface AddChildRowProps {
   /** Parent qui reçoit la sous-rubrique (niveau 1 à 3) */
   parent: AccountingItemDTO
+  /** Numéro qu'aura la nouvelle sous-rubrique (`nextChildCode`) */
+  code: string
 }
 
 /**
@@ -20,14 +21,13 @@ export interface AddChildRowProps {
  * ouverte après chaque ajout (focus sur la description) pour enchaîner ; Échap ferme.
  * Les montants se saisissent ensuite dans le tableau.
  */
-export function AddChildRow({ parent }: AddChildRowProps): React.JSX.Element {
+export function AddChildRow({ parent, code }: AddChildRowProps): React.JSX.Element {
   const actions = useSheetActions()
   const [description, setDescription] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const level = (parent.level + 1) as 2 | 3 | 4
-  const code = childCode(parent.code, level, parent.children.length + 1)
 
   const submit = async (): Promise<void> => {
     const parsed = descriptionSchema.safeParse(description)

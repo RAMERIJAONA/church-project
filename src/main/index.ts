@@ -2,7 +2,7 @@
  * Bootstrap du process main : chemins, logger, container, fenêtre. Aucune logique métier.
  */
 import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from 'electron'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import { electronDialog } from '@main/adapters/dialog.adapter'
 import { electronSystem } from '@main/adapters/system.adapter'
 import { createContainer, type Container } from '@main/container'
@@ -25,7 +25,7 @@ const isDebug = isDev || process.argv.includes('--debug')
 // Isolation des tests E2E : dossier de données dédié, JAMAIS dans l'app installée.
 // Doit précéder toute lecture de userData (logger compris).
 const testUserData = process.env['APP_USER_DATA']
-if (!app.isPackaged && testUserData) app.setPath('userData', testUserData)
+if (!app.isPackaged && testUserData) app.setPath('userData', resolve(testUserData))
 
 const logsDir = join(app.getPath('userData'), 'logs')
 const logger = createLogger(

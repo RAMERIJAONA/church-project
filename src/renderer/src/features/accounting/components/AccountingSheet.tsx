@@ -1,5 +1,6 @@
 import { Fragment, useMemo } from 'react'
 import type { AccountingItemDTO } from '@shared/domain/accounting/accounting.types'
+import { nextChildCode } from '@shared/domain/accounting/accounting.tree'
 import { formatAmount } from '@shared/utils/money'
 import { AMOUNT_COLUMNS, columnLabel, flattenTree, sheetTotals } from '../accounting.utils'
 import { AddChildRow } from './AddChildRow'
@@ -73,7 +74,13 @@ export function AccountingSheet({
                 isLast={row.isLast}
                 subtotals={row.item.amounts ? undefined : totals.byItem.get(row.item.id)}
               />
-              {parent && i === insertAfter && <AddChildRow key="add" parent={parent} />}
+              {parent && i === insertAfter && (
+                <AddChildRow
+                  key="add"
+                  parent={parent}
+                  code={nextChildCode({ year, items }, parent.id) ?? ''}
+                />
+              )}
             </Fragment>
           ))}
         </tbody>

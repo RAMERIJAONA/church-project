@@ -12,3 +12,6 @@ playwright-report
 *.db-shm
 .claude/settings.local.json
 __pycache__
+
+# Base de démonstration (npm run seed:accounting)
+.dev-data/

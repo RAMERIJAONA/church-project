@@ -77,16 +77,23 @@ export function buildSheet(
     }
   }
 
+  const isGroup = (row: ItemRow, level: ItemLevel): boolean =>
+    level < MAX_DEPTH && (childrenOf.get(row.id)?.length ?? 0) > 0
+
   const toDTO = (row: ItemRow, level: ItemLevel, code: string): AccountingItemDTO => {
     const childLevel = level + 1
+    // Rangs : au niveau 2, groupes et rubriques à montant sont comptés séparément
+    const ranks = { group: 0, leaf: 0 }
     const children =
       childLevel > MAX_DEPTH
         ? []
-        : [...(childrenOf.get(row.id) ?? [])]
-            .sort(byPosition)
-            .map((c, i) =>
-              toDTO(c, childLevel as ItemLevel, childCode(code, childLevel as 2 | 3 | 4, i + 1))
-            )
+        : [...(childrenOf.get(row.id) ?? [])].sort(byPosition).map((c) => {
+            const lvl = childLevel as 2 | 3 | 4
+            const kind = isGroup(c, lvl) ? 'group' : 'leaf'
+            const counter = lvl === 2 ? kind : 'leaf'
+            ranks[counter] += 1
+            return toDTO(c, lvl, childCode(code, lvl, ranks[counter], kind))
+          })
     return {
       id: row.id,
       code,
@@ -130,4 +137,33 @@ export function findItem(sheet: AccountingSheetDTO, id: number): AccountingItemD
 /** Nombre d'éléments sous `item` (enfants, petits-enfants…). */
 export function countDescendants(item: AccountingItemDTO): number {
   return item.children.reduce((n, c) => n + 1 + countDescendants(c), 0)
+}
+
+/** Lignes équivalentes au tableau (positions = ordre affiché), pour simuler un ajout. */
+function rowsOf(sheet: AccountingSheetDTO): ItemRow[] {
+  const rows: ItemRow[] = []
+  const walk = (items: readonly AccountingItemDTO[], parentId: number | null): void =>
+    items.forEach((item, i) => {
+      rows.push({ id: item.id, parentId, prefix: item.prefix, position: i + 1, description: '' })
+      walk(item.children, item.id)
+    })
+  walk(sheet.items, null)
+  return rows
+}
+
+/**
+ * Numéro qu'aura une nouvelle sous-rubrique ajoutée à la fin de `parentId` (aperçu avant
+ * création). Tient compte de la renumérotation du parent s'il devient un groupe.
+ */
+export function nextChildCode(sheet: AccountingSheetDTO, parentId: number): string | null {
+  const probe = Number.MAX_SAFE_INTEGER
+  const rows = rowsOf(sheet)
+  rows.push({
+    id: probe,
+    parentId,
+    prefix: null,
+    position: Number.MAX_SAFE_INTEGER,
+    description: ''
+  })
+  return findItem(buildSheet(sheet.year, rows, [], new Set()), probe)?.code ?? null
 }

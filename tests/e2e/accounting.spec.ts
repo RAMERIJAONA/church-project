@@ -60,8 +60,8 @@ test('@smoke comptabilité : arborescence, 3 colonnes, détail, persistés aprè
     await w.getByLabel('Description', { exact: true }).fill('asa iombonana')
     await w.getByRole('button', { name: 'Créer la rubrique' }).click()
     for (const [code, description] of [
-      ['A1-I', 'Mpitandrina'],
-      ['A1-II', 'Trano Fiangonana']
+      ['A1-1', 'Mpitandrina'],
+      ['A1-2', 'Trano Fiangonana']
     ] as const) {
       await newChild(w, code).fill(description)
       await newChild(w, code).press('Enter')
@@ -69,8 +69,11 @@ test('@smoke comptabilité : arborescence, 3 colonnes, détail, persistés aprè
     await w.keyboard.press('Escape')
     await expect(w.getByRole('button', { name: 'ASA IOMBONANA', exact: true })).toBeVisible()
 
-    await addChildren(w, 'A1-I', [['A1-I-1', 'Karama']])
-    await addChildren(w, 'A1-II', [['A1-II-1', 'Fanatsarana']])
+    // Niveau 2 : chiffres arabes tant qu'elle porte des montants, romains dès qu'elle a un enfant
+    await addChildren(w, 'A1-1', [['A1-I-1', 'Karama']])
+    await expect(row(w, 'A1-1')).toContainText('Trano Fiangonana') // A1-2 devient A1-1
+    await addChildren(w, 'A1-1', [['A1-II-1', 'Fanatsarana']])
+    await expect(row(w, 'A1-II')).toContainText('Trano Fiangonana')
     await addChildren(w, 'A1-II-1', [
       ['A1-II-1 A)', 'Trano Fiangonana (Kojakoja)'],
       ['A1-II-1 B)', 'Akany']

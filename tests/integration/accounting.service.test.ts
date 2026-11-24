@@ -19,11 +19,13 @@ describe('AccountingService : arborescence', () => {
   it('construit le plan de l’église sur 4 niveaux', () => {
     const { church, codes, item } = setup()
     const c = church()
+    // Numéro au moment de la création : une sous-rubrique de niveau 2 démarre en chiffres arabes
+    // (rubrique à montant) et passe en chiffres romains quand elle reçoit un enfant
     expect([c.f1, c.i, c.i1, c.ii, c.ii1, c.a, c.b].map((x) => x.code)).toEqual([
       'F1',
-      'F1-I',
+      'F1-1',
       'F1-I-1',
-      'F1-II',
+      'F1-1',
       'F1-II-1',
       'F1-II-1 A)',
       'F1-II-1 B)'

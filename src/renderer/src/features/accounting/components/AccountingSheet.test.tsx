@@ -132,7 +132,7 @@ describe('AccountingSheet', () => {
   it('ouvre l’ajout sous le dernier descendant et crée la sous-rubrique', async () => {
     const actions = renderSheet({ addingChildTo: 1 })
     const input = screen.getByRole('textbox', {
-      name: 'Description de la nouvelle sous-rubrique F1-III'
+      name: 'Description de la nouvelle sous-rubrique F1-1'
     })
     const rows = screen.getAllByRole('row')
     expect(rows.at(-2)?.contains(input)).toBe(true) // après F1-II-1 B), avant le total

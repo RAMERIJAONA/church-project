@@ -120,7 +120,7 @@ describe('migration 0002 : reprise des données 0001', () => {
     expect(sqlite.pragma('integrity_check', { simple: true })).toBe('ok')
   })
 
-  it('donne les numéros A1-I, A1-II après migration', () => {
+  it('donne les numéros A1-1, A1-2 après migration', () => {
     const { sqlite } = migratedFrom0001()
     const rows = sqlite
       .prepare(
@@ -134,8 +134,8 @@ describe('migration 0002 : reprise des données 0001', () => {
       [
         'A1',
         [
-          ['A1-I', 'Kitapo iombonana'],
-          ['A1-II', 'KTM - Adidy']
+          ['A1-1', 'Kitapo iombonana'],
+          ['A1-2', 'KTM - Adidy']
         ]
       ],
       ['B1', []]

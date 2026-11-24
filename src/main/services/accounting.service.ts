@@ -2,7 +2,7 @@ import type { Clock } from '@main/adapters/clock.adapter'
 import type { Db, DbOrTx } from '@main/db/client'
 import type { Logger } from '@main/logging/logger'
 import type { AccountingRepository } from '@main/repositories/accounting.repository'
-import { availableLetters, childCode, rootCode } from '@shared/domain/accounting/accounting.codes'
+import { availableLetters } from '@shared/domain/accounting/accounting.codes'
 import { defaultOperationDate } from '@shared/domain/accounting/accounting.periods'
 import {
   isDetailed,
@@ -47,6 +47,8 @@ export function createAccountingService(deps: {
   function structure(tx: DbOrTx): AccountingSheetDTO {
     return buildSheet(MIN_YEAR, repo.listItems(tx), [], repo.itemIdsWithEntries(tx))
   }
+
+  const codeOf = (tx: DbOrTx, id: number): string => findItem(structure(tx), id)?.code ?? '?'
 
   function requireItem(tx: DbOrTx, id: number): AccountingItemDTO {
     const item = findItem(structure(tx), id)
@@ -101,7 +103,6 @@ export function createAccountingService(deps: {
         { prefix, allowed }
       )
     }
-    const rank = roots.filter((r) => r.prefix === prefix).length + 1
     const id = repo.insertItem(tx, {
       parentId: null,
       prefix,
@@ -109,7 +110,7 @@ export function createAccountingService(deps: {
       description: normalizeDescription(1, description),
       at: now()
     })
-    return { id, code: rootCode(prefix, rank) }
+    return { id, code: codeOf(tx, id) }
   }
 
   function createChild(tx: DbOrTx, parentId: number, description: string): CreatedItemDTO {
@@ -135,7 +136,8 @@ export function createAccountingService(deps: {
       description: normalizeDescription(level, description),
       at: now()
     })
-    return { id, code: childCode(parent.code, level, parent.children.length + 1) }
+    // Relu après l'insertion : le parent peut changer de numéro en devenant un groupe
+    return { id, code: codeOf(tx, id) }
   }
 
   return {
