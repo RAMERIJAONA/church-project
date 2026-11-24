@@ -1,4 +1,4 @@
-import { DatabaseZap, LayoutGrid, Settings } from 'lucide-react'
+import { BookOpenText, ChevronRight, DatabaseZap, Settings } from 'lucide-react'
 import { Link } from 'react-router'
 import { buttonVariants } from '@renderer/components/ui/button'
 import {
@@ -26,15 +26,19 @@ export function WelcomePanel({ version }: WelcomePanelProps): React.JSX.Element 
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-start gap-3 rounded-lg border border-dashed p-4">
-            <LayoutGrid className="mt-0.5 size-5 shrink-0 text-muted-foreground" aria-hidden />
-            <div className="space-y-1 text-sm">
-              <p className="font-medium">Les modules arrivent bientôt</p>
-              <p className="text-muted-foreground">
-                Les écrans de gestion apparaîtront dans la barre de gauche au fil des versions.
-              </p>
-            </div>
-          </div>
+          <Link
+            to="/comptabilite"
+            className="flex items-center gap-3 rounded-lg border p-4 outline-none hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <BookOpenText className="size-5 shrink-0 text-primary" aria-hidden />
+            <span className="flex-1 space-y-1 text-sm">
+              <span className="block font-medium">Comptabilité</span>
+              <span className="block text-muted-foreground">
+                Rubriques, lignes et montants de l’église, année par année.
+              </span>
+            </span>
+            <ChevronRight className="size-4 text-muted-foreground" aria-hidden />
+          </Link>
         </CardContent>
       </Card>
 

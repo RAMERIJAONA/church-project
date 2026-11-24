@@ -12,7 +12,9 @@ import { prepareDatabase } from '@main/db/bootstrap'
 import { openDatabase } from '@main/db/client'
 import { inspectDatabaseFile } from '@main/db/inspect'
 import type { Logger } from '@main/logging/logger'
+import { createAccountingRepository } from '@main/repositories/accounting.repository'
 import { createSettingsRepository } from '@main/repositories/settings.repository'
+import { createAccountingService } from '@main/services/accounting.service'
 import { createMaintenanceService } from '@main/services/maintenance.service'
 import { createSettingsService } from '@main/services/settings.service'
 
@@ -88,7 +90,14 @@ export async function createContainer(paths: AppPaths, logger: Logger, platform:
     closeDatabase
   })
 
-  return { handle, backup, settings, maintenance, dispose: closeDatabase }
+  const accounting = createAccountingService({
+    db: handle.db,
+    accounting: createAccountingRepository(),
+    clock: systemClock,
+    logger: logger.child({ module: 'accounting' })
+  })
+
+  return { handle, backup, settings, maintenance, accounting, dispose: closeDatabase }
 }
 
 export type Container = Awaited<ReturnType<typeof createContainer>>

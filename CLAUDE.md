@@ -9,7 +9,7 @@
 ## 1. Contexte produit
 
 - **Type** : logiciel de gestion pour l'église **FJKM Ambatondrazaka Fitiavana** (constante `CHURCH_NAME` dans `src/shared/domain/identity.ts`).
-- **Métier** : règles de gestion et fonctionnalités **fournies plus tard par le porteur du projet**. Ne rien inventer ni coder de métier avant de les avoir reçues (cf. §14).
+- **Métier** : règles de gestion et fonctionnalités **fournies par le porteur du projet**, module par module. Ne rien inventer ni coder de métier avant de les avoir reçues (cf. §14). Règles déjà reçues : §16.
 - **Nom du logiciel** : « FJKM Ambatondrazaka Fitiavana » (`productName`, constante `APP_NAME`), `appId` : `mg.church.manager` (identifiant interne, invisible). **Ne plus changer `productName` ni `appId` après la première installation** : `productName` fixe les dossiers `%APPDATA%\<productName>` (données) et `Documents\<productName>\Sauvegardes`, `appId` l'identité Windows (raccourcis, désinstallation). Un test vérifie que `package.json`, `electron-builder.yml` et `APP_NAME` concordent.
 - **Utilisateur** : non-technique. Il double-clique sur un `.exe`, point. Zéro dépendance à installer, zéro config, zéro base externe.
 - **Mode** : 100 % offline, mono-poste, mono-utilisateur (pour l'instant).
@@ -390,6 +390,7 @@ export async function invoke<C extends Channel>(channel: C, input: IpcInput<C>):
   - Drizzle **0.45 stable** (pas la 1.0 beta). Le migrator better-sqlite3 est synchrone et applique toutes les migrations en attente dans **une seule transaction** ; suivi dans `__drizzle_migrations` (`created_at` = horodatage du journal).
   - `PRAGMA foreign_keys` est sans effet dans une transaction : `runMigrations()` lance `PRAGMA foreign_key_check` après coup et échoue s'il y a des orphelins.
   - **Une migration publiée n'est JAMAIS modifiée.** Correction = nouvelle migration.
+  - Même règle pour une migration **déjà appliquée sur la base de dev** (`npm run dev` l'applique à `userData/data.db`) : la régénérer lui donne un nouvel horodatage, l'app la croit en attente et plante (`table already exists`). Avant de régénérer une migration non commitée, vérifier qu'aucun `npm run dev` ne l'a appliquée ; sinon, nouvelle migration.
   - Toute migration est couverte par le test de non-régression des données (§9.4).
 - Montants : **entiers** dans la plus petite unité (pas de float). Dates : **TEXT ISO 8601 en UTC** (`2026-11-24T10:00:00.000Z`), produites par l'horloge injectée ; affichage en heure locale via `Intl` (`fr-FR`).
 - Soft delete (`deleted_at`) pour les entités référencées (clients, produits).
@@ -448,6 +449,7 @@ export async function invoke<C extends Channel>(channel: C, input: IpcInput<C>):
    - [ ] Imprimer / générer le PDF d'une facture
    - [x] Sauvegarde manuelle → restauration → données identiques (`tests/e2e/backup.spec.ts`)
    - [x] Changer le thème → persisté après redémarrage (`tests/e2e/theme.spec.ts`)
+   - [x] Comptabilité : rubrique → lignes numérotées → montants → suppression/renumérotation → persisté (`tests/e2e/accounting.spec.ts`)
 4. **Aucun test supprimé ou désactivé** (`.skip`) sans justification écrite dans la PR.
 5. Un test qui échoue de façon aléatoire (flaky) se corrige en priorité, il ne se relance pas en boucle.
 
@@ -576,7 +578,7 @@ nsis:
   - **Windows 7/8** → figer **Electron 22** (dernière version compatible) **et** passer à **Tailwind v3** (v4 nécessite un Chromium plus récent)
 - [ ] Domaine métier exact + liste des entités v1
 - [ ] Besoin d'impression (A4 ? ticket thermique ?)
-- [ ] Monnaie et règles d'arrondi
+- [ ] Monnaie et règles d'arrondi (hypothèse actuelle : Ariary, montants entiers ≥ 0, sans décimales ; à confirmer)
 
 ## 15. Plan d'initialisation (Phase 0)
 
@@ -601,4 +603,26 @@ nsis:
 
 **Ne pas commencer les features métier avant que l'étape 10 soit validée sur la machine cible.**
 
-> **État (2026-11-24)** : étapes 1 à 10 faites sur le Mac (lint, typecheck, 60 tests, 4 E2E, build, fixture `v0.1.0`). Reste : pousser sur GitHub, CI verte, tag `v0.1.0`, test du `.exe` sur le vrai PC. Note : Vitest est installé dès l'étape 3 (pour que `npm test` existe à chaque étape).
+> **État (2026-11-24)** : module Comptabilité ajouté (§16.1) à la demande du porteur, avant validation de l'étape 10 sur le vrai PC. Étapes 1 à 10 faites sur le Mac (lint, typecheck, 60 tests, 4 E2E, build, fixture `v0.1.0`). Reste : pousser sur GitHub, CI verte, tag `v0.1.0`, test du `.exe` sur le vrai PC. Note : Vitest est installé dès l'étape 3 (pour que `npm test` existe à chaque étape).
+
+## 16. Règles métier reçues
+
+### 16.1 Comptabilité (`features/accounting`, reçue le 2026-11-24)
+
+UI en français d'abord ; les termes malgaches sont gardés en glossaire (traduction prévue plus tard).
+
+| Français (UI / code) | Malgache | Sens |
+|---|---|---|
+| Numéro (`code`) | Laharana, « Lah. » | `A1` (rubrique), `A1-1` (ligne) |
+| Description | Antony | texte saisi |
+| Rubrique (`section`) | ex. « ASA IOMBONANA » | parent, **sans montant** |
+| Ligne (`line`) | ex. « Kitapo iombonana » | enfant, **un montant par année** |
+
+- La **lettre** (`prefix`) est **automatique**, dans l'**alphabet malgache** (21 lettres, sans C, Q, U, W, X) : A, B, D, E… Z, puis AA, AB, AD… L'utilisateur ne la tape pas ; il choisit une lettre déjà utilisée (→ A2, A3…) ou la lettre suivante proposée (B, puis D…). Le service refuse toute autre lettre (`availableLetters`), la base aussi (CHECK). Les **chiffres sont automatiques** : `A1`, `A2`… par lettre, puis `A1-1`, `A1-2`… par rubrique.
+- Description d'une **rubrique** : toujours en **MAJUSCULES** (zod `sectionDescriptionSchema` + service). Les lignes gardent la casse saisie.
+- Les numéros **ne sont pas stockés** : ils découlent de `position` parmi les éléments non supprimés (`shared/domain/accounting/accounting.rules.ts`). Suppression ou déplacement (↑ ↓) → renumérotation sans trou ; les montants suivent la ligne (liés à son id).
+- Montants : table `accounting_amounts` (clé `line_id` + `year`), entiers ≥ 0 (CHECK SQL). Montant vide = pas de ligne en base. Le tableau affiche une année à la fois (en-tête de colonne = l'année) ; la structure rubriques/lignes est commune à toutes les années.
+- Suppression douce (`deleted_at`) ; supprimer une rubrique supprime ses lignes. Confirmation obligatoire dans l'UI.
+- Saisie des montants : toujours affichés groupés par 3 avec une espace insécable de largeur normale (`2 000 000`, U+00A0, `formatAmount`), **y compris pendant la frappe** (`lib/money-input.ts`) : seuls les chiffres sont acceptés, le curseur reste en place, Retour arrière sur une espace efface le chiffre voisin. Entrée = enregistre et passe à la case suivante.
+- Pas de totaux (ni par rubrique ni global) : non demandés.
+- Tableau non virtualisé : un plan comptable reste sous 200 lignes. À virtualiser s'il dépasse (§2).

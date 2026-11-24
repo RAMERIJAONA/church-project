@@ -1,3 +1,4 @@
+import { cpSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { prepareDatabase } from '@main/db/bootstrap'
@@ -9,6 +10,18 @@ import { createTempDir } from '@tests/helpers/temp-dir'
 
 const cleanups: Array<() => void> = []
 afterEach(() => cleanups.splice(0).forEach((c) => c()))
+
+/** Copie du dossier drizzle/ sans la dernière migration = schéma de la version précédente. */
+function previousVersionMigrations(): string {
+  const tmp = createTempDir()
+  cleanups.push(tmp.cleanup)
+  cpSync(MIGRATIONS_FOLDER, tmp.dir, { recursive: true })
+  const journalPath = join(tmp.dir, 'meta', '_journal.json')
+  const journal = JSON.parse(readFileSync(journalPath, 'utf8')) as { entries: unknown[] }
+  journal.entries.pop()
+  writeFileSync(journalPath, JSON.stringify(journal))
+  return tmp.dir
+}
 
 describe('migrations', () => {
   it('appliquent toutes les migrations réelles sur une base vide', () => {
@@ -58,23 +71,18 @@ describe('prepareDatabase', () => {
   })
 
   it('sauvegarde une base existante AVANT d’appliquer une migration en attente', async () => {
-    const handle = createTestDb()
-    // Simule une base d'une version précédente : on "oublie" la dernière migration appliquée
-    handle.sqlite.exec(
-      'DELETE FROM __drizzle_migrations WHERE created_at = (SELECT MAX(created_at) FROM __drizzle_migrations)'
-    )
-    handle.sqlite.exec("INSERT INTO __drizzle_migrations (hash, created_at) VALUES ('old', 1)")
-    handle.sqlite.exec('DROP TABLE settings')
+    // Base d'une version précédente : toutes les migrations sauf la dernière
+    const handle = openDatabase(':memory:')
+    runMigrations(handle, previousVersionMigrations())
+    expect(getPendingMigrations(handle.sqlite, MIGRATIONS_FOLDER)).toHaveLength(1)
 
     const order: string[] = []
     await prepareDatabase(handle, {
       migrationsFolder: MIGRATIONS_FOLDER,
       logger: createLogger(createMemorySink()),
       backupBeforeMigration: async () => {
-        const hasSettings = handle.sqlite
-          .prepare("SELECT 1 FROM sqlite_master WHERE name = 'settings'")
-          .get()
-        order.push(hasSettings ? 'backup-après' : 'backup-avant')
+        const pending = getPendingMigrations(handle.sqlite, MIGRATIONS_FOLDER).length
+        order.push(pending > 0 ? 'backup-avant' : 'backup-après')
         return { path: 'x' }
       }
     })

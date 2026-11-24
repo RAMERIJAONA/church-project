@@ -3,6 +3,16 @@
  * pour filtrer les canaux autorisés. contract.ts vérifie à la compilation qu'il couvre tout.
  */
 export const CHANNELS = [
+  'accounting.sheet',
+  'accounting.createSection',
+  'accounting.updateSection',
+  'accounting.deleteSection',
+  'accounting.moveSection',
+  'accounting.createLine',
+  'accounting.updateLine',
+  'accounting.deleteLine',
+  'accounting.moveLine',
+  'accounting.setAmount',
   'app.info',
   'app.openLogsFolder',
   'backup.list',

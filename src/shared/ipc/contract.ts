@@ -1,11 +1,34 @@
 /** Source unique du contrat IPC : schémas zod d'entrée + types de sortie par canal. */
 import { z } from 'zod'
+import {
+  createLineInputSchema,
+  createSectionInputSchema,
+  idInputSchema,
+  listSheetInputSchema,
+  moveInputSchema,
+  setAmountInputSchema,
+  updateLineInputSchema,
+  updateSectionInputSchema,
+  type AccountingSheetDTO,
+  type CreatedItemDTO,
+  type MoveResultDTO
+} from '../domain/accounting/accounting.types'
 import { appSettingsPatchSchema, type AppSettings } from '../domain/settings/settings.types'
 import type { Channel } from './channels'
 
 export type { Channel } from './channels'
 
 export const ipcInputs = {
+  'accounting.sheet': listSheetInputSchema,
+  'accounting.createSection': createSectionInputSchema,
+  'accounting.updateSection': updateSectionInputSchema,
+  'accounting.deleteSection': idInputSchema,
+  'accounting.moveSection': moveInputSchema,
+  'accounting.createLine': createLineInputSchema,
+  'accounting.updateLine': updateLineInputSchema,
+  'accounting.deleteLine': idInputSchema,
+  'accounting.moveLine': moveInputSchema,
+  'accounting.setAmount': setAmountInputSchema,
   'app.info': z.undefined(),
   'app.openLogsFolder': z.undefined(),
   'backup.list': z.undefined(),
@@ -35,6 +58,16 @@ export type ExportResultDTO = { status: 'saved'; path: string } | { status: 'can
 export type RestoreResultDTO = { status: 'restarting' } | { status: 'cancelled' }
 
 export interface IpcOutputs {
+  'accounting.sheet': AccountingSheetDTO
+  'accounting.createSection': CreatedItemDTO
+  'accounting.updateSection': null
+  'accounting.deleteSection': null
+  'accounting.moveSection': MoveResultDTO
+  'accounting.createLine': CreatedItemDTO
+  'accounting.updateLine': null
+  'accounting.deleteLine': null
+  'accounting.moveLine': MoveResultDTO
+  'accounting.setAmount': null
   'app.info': AppInfoDTO
   'app.openLogsFolder': null
   'backup.list': BackupDTO[]

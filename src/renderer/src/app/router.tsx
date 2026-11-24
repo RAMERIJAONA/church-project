@@ -21,6 +21,18 @@ export const routes: RouteObject[] = [
         })
       },
       {
+        path: 'comptabilite',
+        handle: {
+          title: 'Comptabilité',
+          description: 'Rubriques, lignes et montants par année'
+        } satisfies RouteHandle,
+        errorElement: <RouteErrorBoundary />,
+        lazy: async () => ({
+          Component: (await import('@renderer/features/accounting/pages/AccountingPage'))
+            .AccountingPage
+        })
+      },
+      {
         path: 'parametres',
         handle: {
           title: 'Paramètres',

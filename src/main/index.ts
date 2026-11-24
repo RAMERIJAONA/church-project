@@ -156,7 +156,8 @@ async function start(): Promise<void> {
   registerIpc(ipcMain, logger, {
     appInfo: { name: app.getName(), version: app.getVersion(), isDebug },
     settings: services.settings,
-    maintenance: services.maintenance
+    maintenance: services.maintenance,
+    accounting: services.accounting
   })
 
   const openWindow = (): void => {
