@@ -1,27 +1,40 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ChevronDown } from 'lucide-react'
 import { useForm, useWatch } from 'react-hook-form'
-import type { z } from 'zod'
+import { z } from 'zod'
 import { Button } from '@renderer/components/ui/button'
 import { Input } from '@renderer/components/ui/input'
 import { Label } from '@renderer/components/ui/label'
-import { availableLetters, nextSectionCode } from '@shared/domain/accounting/accounting.rules'
+import { availableLetters, rootCode } from '@shared/domain/accounting/accounting.codes'
+import { normalizePrefix } from '@shared/domain/accounting/accounting.rules'
 import {
-  createSectionInputSchema,
-  type AccountingSectionDTO,
-  type CreateSectionInput
+  descriptionSchema,
+  sectionPrefixSchema,
+  type AccountingItemDTO
 } from '@shared/domain/accounting/accounting.types'
 import { selectChevron, selectField } from './accounting.styles'
 
+/** Rubrique de niveau 1 : la description part en majuscules. */
+const newRootSchema = z.object({
+  prefix: sectionPrefixSchema,
+  description: descriptionSchema.toUpperCase()
+})
+export type NewRootInput = z.output<typeof newRootSchema>
+type FormInput = z.input<typeof newRootSchema>
+
 export interface NewSectionFormProps {
-  /** Rubriques existantes : aperçu du numéro qui sera attribué */
-  sections: ReadonlyArray<Pick<AccountingSectionDTO, 'prefix'>>
+  /** Rubriques de niveau 1 existantes : aperçu du numéro qui sera attribué */
+  roots: ReadonlyArray<Pick<AccountingItemDTO, 'prefix'>>
   busy: boolean
-  onSubmit: (input: CreateSectionInput) => Promise<void>
+  onSubmit: (input: NewRootInput) => Promise<void>
   onCancel: () => void
 }
 
-type FormInput = z.input<typeof createSectionInputSchema>
+/** Numéro qu'aura la prochaine rubrique de cette lettre (aperçu avant création). */
+function nextRootCode(prefix: string, roots: NewSectionFormProps['roots']): string {
+  const p = normalizePrefix(prefix)
+  return rootCode(p, roots.filter((r) => r.prefix === p).length + 1)
+}
 
 /**
  * La lettre n'est jamais tapée : on choisit une lettre déjà utilisée (A2, A3…) ou la lettre
@@ -29,22 +42,22 @@ type FormInput = z.input<typeof createSectionInputSchema>
  * La description est mise en majuscules (affichage pendant la saisie, et à l'enregistrement).
  */
 export function NewSectionForm({
-  sections,
+  roots,
   busy,
   onSubmit,
   onCancel
 }: NewSectionFormProps): React.JSX.Element {
-  const letters = availableLetters(sections.map((s) => s.prefix))
+  const letters = availableLetters(roots.map((r) => r.prefix ?? ''))
   const newLetter = letters[letters.length - 1]
   // Par défaut : on continue la dernière lettre utilisée (ou A sur un tableau vide)
   const defaultLetter = letters.length > 1 ? letters[letters.length - 2] : newLetter
-  const form = useForm<FormInput, unknown, CreateSectionInput>({
-    resolver: zodResolver(createSectionInputSchema),
+  const form = useForm<FormInput, unknown, NewRootInput>({
+    resolver: zodResolver(newRootSchema),
     defaultValues: { prefix: defaultLetter, description: '' }
   })
   const { errors } = form.formState
   const prefix = useWatch({ control: form.control, name: 'prefix' })
-  const preview = nextSectionCode(prefix, sections)
+  const preview = nextRootCode(prefix, roots)
 
   return (
     <form
@@ -71,7 +84,7 @@ export function NewSectionForm({
                 <option key={letter} value={letter}>
                   {letter === newLetter
                     ? `${letter} : nouvelle lettre`
-                    : `${letter} : continuer (${nextSectionCode(letter, sections)})`}
+                    : `${letter} : continuer (${nextRootCode(letter, roots)})`}
                 </option>
               ))}
             </select>

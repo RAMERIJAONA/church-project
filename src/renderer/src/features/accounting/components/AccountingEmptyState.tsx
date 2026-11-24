@@ -15,8 +15,8 @@ export function AccountingEmptyState({ onCreate }: AccountingEmptyStateProps): R
       <div className="max-w-md space-y-1.5">
         <h2 className="font-display text-lg font-semibold">Aucune rubrique pour l’instant</h2>
         <p className="text-sm text-muted-foreground">
-          Créez une rubrique (par exemple « A1 ASA IOMBONANA »), puis ajoutez-y des lignes avec leur
-          montant. Les lettres (A, B, D…) et les numéros sont attribués automatiquement.
+          Créez une rubrique (par exemple « A1 ASA IOMBONANA »), puis ses sous-rubriques et leurs
+          montants. Les lettres (A, B, D…) et les numéros sont attribués automatiquement.
         </p>
       </div>
       <Button onClick={onCreate}>Créer la première rubrique</Button>

@@ -1,10 +1,13 @@
-import { ArrowDown, ArrowUp, Pencil, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, Pencil, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@renderer/components/ui/button'
 import { rowActions } from './accounting.styles'
 
 export interface RowActionsProps {
-  /** Numéro de l'élément (A1, A1-2), pour des libellés accessibles non ambigus */
+  /** Numéro de l'élément (F1, F1-II-1 A)), pour des libellés accessibles non ambigus */
   code: string
+  /** Raison pour laquelle on ne peut pas ajouter de sous-rubrique, `null` si possible */
+  addChildBlockedReason: string | null
+  onAddChild: () => void
   isFirst: boolean
   isLast: boolean
   onEdit: () => void
@@ -15,6 +18,8 @@ export interface RowActionsProps {
 /** Boutons d'icône avec infobulle (title) et nom accessible complet. */
 export function RowActions({
   code,
+  addChildBlockedReason,
+  onAddChild,
   isFirst,
   isLast,
   onEdit,
@@ -23,6 +28,16 @@ export function RowActions({
 }: RowActionsProps): React.JSX.Element {
   return (
     <div className={rowActions}>
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        title={addChildBlockedReason ?? 'Ajouter une sous-rubrique'}
+        aria-label={`Ajouter une sous-rubrique à ${code}`}
+        disabled={addChildBlockedReason !== null}
+        onClick={onAddChild}
+      >
+        <Plus aria-hidden />
+      </Button>
       <Button
         variant="ghost"
         size="icon-sm"

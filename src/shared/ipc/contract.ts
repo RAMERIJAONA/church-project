@@ -1,16 +1,19 @@
 /** Source unique du contrat IPC : schémas zod d'entrée + types de sortie par canal. */
 import { z } from 'zod'
 import {
-  createLineInputSchema,
-  createSectionInputSchema,
+  addEntryInputSchema,
+  createItemInputSchema,
   idInputSchema,
+  listEntriesInputSchema,
   listSheetInputSchema,
   moveInputSchema,
-  setAmountInputSchema,
-  updateLineInputSchema,
-  updateSectionInputSchema,
+  setTotalInputSchema,
+  updateEntryInputSchema,
+  updateItemInputSchema,
   type AccountingSheetDTO,
+  type CreatedEntryDTO,
   type CreatedItemDTO,
+  type EntryDTO,
   type MoveResultDTO
 } from '../domain/accounting/accounting.types'
 import { appSettingsPatchSchema, type AppSettings } from '../domain/settings/settings.types'
@@ -20,15 +23,15 @@ export type { Channel } from './channels'
 
 export const ipcInputs = {
   'accounting.sheet': listSheetInputSchema,
-  'accounting.createSection': createSectionInputSchema,
-  'accounting.updateSection': updateSectionInputSchema,
-  'accounting.deleteSection': idInputSchema,
-  'accounting.moveSection': moveInputSchema,
-  'accounting.createLine': createLineInputSchema,
-  'accounting.updateLine': updateLineInputSchema,
-  'accounting.deleteLine': idInputSchema,
-  'accounting.moveLine': moveInputSchema,
-  'accounting.setAmount': setAmountInputSchema,
+  'accounting.createItem': createItemInputSchema,
+  'accounting.updateItem': updateItemInputSchema,
+  'accounting.deleteItem': idInputSchema,
+  'accounting.moveItem': moveInputSchema,
+  'accounting.setTotal': setTotalInputSchema,
+  'accounting.entries': listEntriesInputSchema,
+  'accounting.addEntry': addEntryInputSchema,
+  'accounting.updateEntry': updateEntryInputSchema,
+  'accounting.deleteEntry': idInputSchema,
   'app.info': z.undefined(),
   'app.openLogsFolder': z.undefined(),
   'backup.list': z.undefined(),
@@ -59,15 +62,15 @@ export type RestoreResultDTO = { status: 'restarting' } | { status: 'cancelled' 
 
 export interface IpcOutputs {
   'accounting.sheet': AccountingSheetDTO
-  'accounting.createSection': CreatedItemDTO
-  'accounting.updateSection': null
-  'accounting.deleteSection': null
-  'accounting.moveSection': MoveResultDTO
-  'accounting.createLine': CreatedItemDTO
-  'accounting.updateLine': null
-  'accounting.deleteLine': null
-  'accounting.moveLine': MoveResultDTO
-  'accounting.setAmount': null
+  'accounting.createItem': CreatedItemDTO
+  'accounting.updateItem': null
+  'accounting.deleteItem': null
+  'accounting.moveItem': MoveResultDTO
+  'accounting.setTotal': null
+  'accounting.entries': EntryDTO[]
+  'accounting.addEntry': CreatedEntryDTO
+  'accounting.updateEntry': null
+  'accounting.deleteEntry': null
   'app.info': AppInfoDTO
   'app.openLogsFolder': null
   'backup.list': BackupDTO[]

@@ -1,10 +1,10 @@
 import { cva } from 'class-variance-authority'
 
-/** Colonnes du tableau (table-fixed) : numéro | description | montant | actions. */
+/** Colonnes du tableau (table-fixed) : numéro | description | 3 montants | actions. */
 export const col = {
-  code: 'w-24',
-  amount: 'w-44',
-  actions: 'w-40'
+  code: 'w-32',
+  amount: 'w-40',
+  actions: 'w-44'
 } as const
 
 export const headCell = cva(
@@ -15,22 +15,32 @@ export const headCell = cva(
   }
 )
 
+/** Rangée : niveau 1 = bandeau de rubrique ; groupe = texte appuyé ; feuille = montants. */
 export const sheetRow = cva('group border-b last:border-b-0', {
   variants: {
     kind: {
-      section: 'bg-muted/60',
-      line: 'focus-within:bg-muted/30 hover:bg-muted/30',
-      add: ''
+      root: 'bg-muted/60',
+      group: 'focus-within:bg-muted/30 hover:bg-muted/30',
+      leaf: 'focus-within:bg-muted/30 hover:bg-muted/30',
+      add: 'bg-accent/40'
     }
   }
 })
 
-export const codeCell = cva('px-3 align-middle tabular-nums', {
+export const codeCell = cva('px-3 align-middle whitespace-nowrap tabular-nums', {
   variants: {
     kind: {
-      section: 'py-2.5 font-display text-base font-semibold',
-      line: 'py-1.5 pl-6 text-muted-foreground'
+      root: 'py-2.5 font-display text-base font-semibold',
+      group: 'py-1.5 font-medium',
+      leaf: 'py-1.5 text-muted-foreground'
     }
+  }
+})
+
+/** Retrait de la description selon le niveau (l'arbre se lit dans cette colonne). */
+export const descriptionCell = cva('py-1 pr-1', {
+  variants: {
+    level: { 1: 'pl-1', 2: 'pl-5', 3: 'pl-9', 4: 'pl-13' }
   }
 })
 
@@ -38,10 +48,17 @@ export const codeCell = cva('px-3 align-middle tabular-nums', {
 export const editableText = cva(
   'w-full cursor-text truncate rounded-md px-2 py-1 text-left outline-none hover:bg-background focus-visible:ring-2 focus-visible:ring-ring',
   {
-    variants: { kind: { section: 'font-semibold', line: '' } },
+    variants: { kind: { section: 'font-semibold', group: 'font-medium', line: '' } },
     defaultVariants: { kind: 'line' }
   }
 )
+
+/** Case montant : saisie + bouton détail côte à côte. */
+export const amountCell = 'flex items-center gap-0.5'
+
+/** Total d'une case détaillée : lecture seule, aligné comme une saisie. */
+export const amountReadonly =
+  'h-8 flex-1 truncate px-2 text-right leading-8 font-medium tabular-nums'
 
 export const amountInput = cva([
   'h-8 w-full rounded-md border border-transparent bg-transparent px-2 text-right tabular-nums outline-none',

@@ -23,7 +23,7 @@ function focusNextAmount(current: HTMLInputElement): void {
 
 /**
  * Case montant éditable en place, toujours affichée « 2 000 000 » (y compris pendant la frappe).
- * Entrée : enregistre et passe à la ligne suivante. Échap : annule. Sortie de la case : enregistre.
+ * Entrée : enregistre et passe à la case suivante. Échap : annule. Sortie de la case : enregistre.
  */
 export function AmountInput({
   value,

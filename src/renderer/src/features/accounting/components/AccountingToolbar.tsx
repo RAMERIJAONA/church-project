@@ -24,7 +24,7 @@ export function AccountingToolbar({
       <div className="flex items-center gap-4">
         <p className="hidden text-xs text-muted-foreground lg:block">
           Astuce : tapez un montant puis <kbd className="font-sans font-semibold">Entrée</kbd> pour
-          passer à la ligne suivante.
+          passer à la case suivante.
         </p>
         {!creating && (
           <Button onClick={onNewSection}>

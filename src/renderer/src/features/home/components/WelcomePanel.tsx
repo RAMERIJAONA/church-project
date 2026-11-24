@@ -34,7 +34,7 @@ export function WelcomePanel({ version }: WelcomePanelProps): React.JSX.Element 
             <span className="flex-1 space-y-1 text-sm">
               <span className="block font-medium">Comptabilité</span>
               <span className="block text-muted-foreground">
-                Rubriques, lignes et montants de l’église, année par année.
+                Rubriques, estimations et réalisations de l’église, année par année.
               </span>
             </span>
             <ChevronRight className="size-4 text-muted-foreground" aria-hidden />

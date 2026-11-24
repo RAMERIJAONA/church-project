@@ -5,7 +5,7 @@ import { NewSectionForm } from './NewSectionForm'
 
 function setup(sections = [{ prefix: 'A' }, { prefix: 'A' }, { prefix: 'B' }]) {
   const onSubmit = vi.fn().mockResolvedValue(undefined)
-  render(<NewSectionForm sections={sections} busy={false} onSubmit={onSubmit} onCancel={vi.fn()} />)
+  render(<NewSectionForm roots={sections} busy={false} onSubmit={onSubmit} onCancel={vi.fn()} />)
   return {
     onSubmit,
     letter: screen.getByLabelText<HTMLSelectElement>('Lettre'),

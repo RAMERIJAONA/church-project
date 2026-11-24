@@ -1,0 +1,9 @@
+[
+  { "parent": null, "prefix": "F", "rank": 1, "code": "F1" },
+  { "parent": "F1", "level": 2, "rank": 1, "code": "F1-I" },
+  { "parent": "F1-I", "level": 3, "rank": 1, "code": "F1-I-1" },
+  { "parent": "F1", "level": 2, "rank": 2, "code": "F1-II" },
+  { "parent": "F1-II", "level": 3, "rank": 1, "code": "F1-II-1" },
+  { "parent": "F1-II-1", "level": 4, "rank": 1, "code": "F1-II-1 A)" },
+  { "parent": "F1-II-1", "level": 4, "rank": 2, "code": "F1-II-1 B)" }
+]

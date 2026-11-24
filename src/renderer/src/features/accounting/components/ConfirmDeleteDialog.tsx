@@ -8,10 +8,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from '@renderer/components/ui/alert-dialog'
+import { formatAmount } from '@shared/utils/money'
 
 export type DeleteTarget =
-  | { kind: 'section'; id: number; code: string; description: string; lineCount: number }
-  | { kind: 'line'; id: number; code: string; description: string }
+  | { kind: 'item'; id: number; code: string; description: string; descendantCount: number }
+  | { kind: 'entry'; id: number; itemCode: string; label: string | null; amount: number }
 
 export interface ConfirmDeleteDialogProps {
   target: DeleteTarget | null
@@ -19,17 +20,23 @@ export interface ConfirmDeleteDialogProps {
   onCancel: () => void
 }
 
+function title(target: DeleteTarget): string {
+  return target.kind === 'item'
+    ? `Supprimer la rubrique ${target.code} ?`
+    : `Supprimer cette saisie de ${target.itemCode} ?`
+}
+
 function consequence(target: DeleteTarget): string {
-  if (target.kind === 'line') {
-    return 'Son montant sera retiré pour toutes les années et les lignes suivantes seront renumérotées.'
+  if (target.kind === 'entry') {
+    return `« ${target.label ?? 'Sans libellé'} », ${formatAmount(target.amount)}. Le total de la case sera recalculé.`
   }
-  const lines =
-    target.lineCount === 0
-      ? 'Elle ne contient aucune ligne.'
-      : target.lineCount === 1
-        ? 'Sa ligne et ses montants (toutes années) seront aussi retirés.'
-        : `Ses ${target.lineCount} lignes et leurs montants (toutes années) seront aussi retirés.`
-  return `${lines} Les rubriques suivantes de la même lettre seront renumérotées.`
+  const children =
+    target.descendantCount === 0
+      ? 'Ses montants (toutes années) seront retirés.'
+      : target.descendantCount === 1
+        ? 'Sa sous-rubrique et les montants (toutes années) seront aussi retirés.'
+        : `Ses ${target.descendantCount} sous-rubriques et les montants (toutes années) seront aussi retirés.`
+  return `« ${target.description} ». ${children} Les rubriques suivantes seront renumérotées.`
 }
 
 /** Confirmation explicite avant toute suppression (focus par défaut sur « Annuler »). */
@@ -44,12 +51,8 @@ export function ConfirmDeleteDialog({
         {target && (
           <>
             <AlertDialogHeader>
-              <AlertDialogTitle>
-                Supprimer {target.kind === 'section' ? 'la rubrique' : 'la ligne'} {target.code} ?
-              </AlertDialogTitle>
-              <AlertDialogDescription>
-                « {target.description} ». {consequence(target)}
-              </AlertDialogDescription>
+              <AlertDialogTitle>{title(target)}</AlertDialogTitle>
+              <AlertDialogDescription>{consequence(target)}</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Annuler</AlertDialogCancel>

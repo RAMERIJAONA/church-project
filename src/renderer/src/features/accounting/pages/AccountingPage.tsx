@@ -3,28 +3,39 @@ import { useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import { Button } from '@renderer/components/ui/button'
 import { getErrorMessage } from '@renderer/lib/error-messages'
-import { yearSchema, type CreateSectionInput } from '@shared/domain/accounting/accounting.types'
+import { countDescendants } from '@shared/domain/accounting/accounting.tree'
+import { MAX_YEAR, yearSchema } from '@shared/domain/accounting/accounting.types'
 import { AccountingEmptyState } from '../components/AccountingEmptyState'
 import { AccountingSheet } from '../components/AccountingSheet'
 import { AccountingToolbar } from '../components/AccountingToolbar'
 import { ConfirmDeleteDialog, type DeleteTarget } from '../components/ConfirmDeleteDialog'
-import { NewSectionForm } from '../components/NewSectionForm'
+import { EntriesDialog } from '../components/EntriesDialog'
+import { NewSectionForm, type NewRootInput } from '../components/NewSectionForm'
 import { SheetActionsProvider, type SheetActions } from '../components/sheet-actions'
+import { columnLabel, columnTarget, type AmountColumn } from '../accounting.utils'
 import {
   useAccountingSheet,
-  useCreateLine,
-  useCreateSection,
-  useDeleteLine,
-  useDeleteSection,
-  useMoveLine,
-  useMoveSection,
-  useSetAmount,
-  useUpdateLine,
-  useUpdateSection
+  useAddEntry,
+  useCellEntries,
+  useCreateItem,
+  useDeleteEntry,
+  useDeleteItem,
+  useMoveItem,
+  useSetTotal,
+  useUpdateEntry,
+  useUpdateItem
 } from '../queries'
 
 const onError = (err: unknown): void => {
   toast.error(getErrorMessage(err))
+}
+
+/** Case dont le détail est ouvert (code et description figés à l'ouverture, pour le titre). */
+interface DetailTarget {
+  itemId: number
+  code: string
+  description: string
+  col: AmountColumn
 }
 
 /** Container : année (dans l'URL, conservée en changeant de page), données, actions. */
@@ -36,59 +47,74 @@ export function AccountingPage(): React.JSX.Element {
   const setYear = (y: number): void => setParams({ annee: String(y) }, { replace: true })
 
   const [creating, setCreating] = useState(false)
-  const [addingLineTo, setAddingLineTo] = useState<number | null>(null)
+  const [addingChildTo, setAddingChildTo] = useState<number | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null)
+  const [detail, setDetail] = useState<DetailTarget | null>(null)
 
   const sheet = useAccountingSheet(year)
   // Année des données affichées (pendant un changement d'année, l'ancien tableau reste visible :
   // une saisie faite à ce moment doit aller dans l'année qu'on voit)
   const shownYear = sheet.data?.year ?? year
-  const createSection = useCreateSection()
-  const { mutate: updateSection } = useUpdateSection()
-  const { mutate: deleteSection } = useDeleteSection()
-  const { mutate: moveSection } = useMoveSection()
-  const { mutateAsync: createLine } = useCreateLine()
-  const { mutate: updateLine } = useUpdateLine()
-  const { mutate: deleteLine } = useDeleteLine()
-  const { mutate: moveLine } = useMoveLine()
-  const { mutate: setAmount } = useSetAmount()
+  const createItem = useCreateItem()
+  const createItemAsync = createItem.mutateAsync
+  const { mutate: updateItem } = useUpdateItem()
+  const { mutate: deleteItem } = useDeleteItem()
+  const { mutate: moveItem } = useMoveItem()
+  const { mutate: setTotal } = useSetTotal()
+  const { mutateAsync: addEntry } = useAddEntry()
+  const { mutateAsync: updateEntry } = useUpdateEntry()
+  const { mutate: deleteEntry } = useDeleteEntry()
+
+  const detailCell = detail
+    ? { itemId: detail.itemId, ...columnTarget(shownYear, detail.col) }
+    : null
+  const entries = useCellEntries(detailCell)
 
   const actions = useMemo<SheetActions>(
     () => ({
       year: shownYear,
-      renameSection: (id, description) => updateSection({ id, description }, { onError }),
-      moveSection: (id, direction) => moveSection({ id, direction }, { onError }),
-      askDeleteSection: (s) =>
+      rename: (id, description) => updateItem({ id, description }, { onError }),
+      move: (id, direction) => moveItem({ id, direction }, { onError }),
+      askDelete: (item) =>
         setDeleteTarget({
-          kind: 'section',
-          id: s.id,
-          code: s.code,
-          description: s.description,
-          lineCount: s.lines.length
+          kind: 'item',
+          id: item.id,
+          code: item.code,
+          description: item.description,
+          descendantCount: countDescendants(item)
         }),
-      renameLine: (id, description) => updateLine({ id, description }, { onError }),
-      moveLine: (id, direction) => moveLine({ id, direction }, { onError }),
-      askDeleteLine: (l) =>
-        setDeleteTarget({ kind: 'line', id: l.id, code: l.code, description: l.description }),
-      setAmount: (lineId, amount) => setAmount({ lineId, year: shownYear, amount }, { onError }),
-      openAddLine: setAddingLineTo,
-      addLine: async (sectionId, description, amount) => {
+      setTotal: (itemId, col, amount) =>
+        setTotal({ year: shownYear, itemId, col, amount }, { onError }),
+      openDetail: (item, col) =>
+        setDetail({ itemId: item.id, code: item.code, description: item.description, col }),
+      openAddChild: setAddingChildTo,
+      addChild: async (parentId, description) => {
         try {
-          await createLine({ sectionId, description, amount, year: shownYear })
+          await createItemAsync({ parentId, description })
         } catch (err) {
           onError(err)
           throw err // le formulaire garde la saisie
         }
       }
     }),
-    [shownYear, updateSection, moveSection, updateLine, moveLine, setAmount, createLine]
+    [shownYear, updateItem, moveItem, setTotal, createItemAsync]
   )
 
-  const submitSection = async (input: CreateSectionInput): Promise<void> => {
+  /** Écriture depuis le détail : toast en cas d'erreur, rejet pour garder la saisie. */
+  const withToast = async (run: () => Promise<unknown>): Promise<void> => {
     try {
-      const created = await createSection.mutateAsync(input)
+      await run()
+    } catch (err) {
+      onError(err)
+      throw err
+    }
+  }
+
+  const submitRoot = async (input: NewRootInput): Promise<void> => {
+    try {
+      const created = await createItem.mutateAsync({ parentId: null, ...input })
       setCreating(false)
-      setAddingLineTo(created.id) // on enchaîne directement sur la saisie des lignes
+      setAddingChildTo(created.id) // on enchaîne directement sur les sous-rubriques
     } catch (err) {
       onError(err)
     }
@@ -96,13 +122,17 @@ export function AccountingPage(): React.JSX.Element {
 
   const confirmDelete = (target: DeleteTarget): void => {
     setDeleteTarget(null)
-    const label = target.kind === 'section' ? `Rubrique ${target.code}` : `Ligne ${target.code}`
-    const options = { onSuccess: () => toast.success(`${label} supprimée`), onError }
-    if (target.kind === 'section') deleteSection(target.id, options)
-    else deleteLine(target.id, options)
+    if (target.kind === 'item') {
+      deleteItem(target.id, {
+        onSuccess: () => toast.success(`Rubrique ${target.code} supprimée`),
+        onError
+      })
+    } else {
+      deleteEntry(target.id, { onSuccess: () => toast.success('Saisie supprimée'), onError })
+    }
   }
 
-  const sections = sheet.data?.sections ?? []
+  const items = sheet.data?.items ?? []
   return (
     <div className="flex flex-col gap-5">
       <AccountingToolbar
@@ -115,9 +145,9 @@ export function AccountingPage(): React.JSX.Element {
 
       {creating && (
         <NewSectionForm
-          sections={sections}
-          busy={createSection.isPending}
-          onSubmit={submitSection}
+          roots={items}
+          busy={createItem.isPending}
+          onSubmit={submitRoot}
           onCancel={() => setCreating(false)}
         />
       )}
@@ -131,13 +161,38 @@ export function AccountingPage(): React.JSX.Element {
           </Button>
         </div>
       )}
-      {sheet.data && sections.length === 0 && !creating && (
+      {sheet.data && items.length === 0 && !creating && (
         <AccountingEmptyState onCreate={() => setCreating(true)} />
       )}
-      {sections.length > 0 && (
+      {items.length > 0 && (
         <SheetActionsProvider value={actions}>
-          <AccountingSheet year={shownYear} sections={sections} addingLineTo={addingLineTo} />
+          <AccountingSheet year={shownYear} items={items} addingChildTo={addingChildTo} />
         </SheetActionsProvider>
+      )}
+
+      {detail && detailCell && (
+        <EntriesDialog
+          open
+          title={`${columnLabel(shownYear, detail.col)} de ${detail.code}`}
+          subtitle={detail.description}
+          entries={entries.data}
+          loading={entries.isPending}
+          error={entries.isError ? entries.error : null}
+          disabled={detailCell.year > MAX_YEAR}
+          onAdd={(amount, label) => withToast(() => addEntry({ ...detailCell, amount, label }))}
+          onUpdate={(id, amount, label) => withToast(() => updateEntry({ id, amount, label }))}
+          onAskDelete={(entry) =>
+            setDeleteTarget({
+              kind: 'entry',
+              id: entry.id,
+              itemCode: detail.code,
+              label: entry.label,
+              amount: entry.amount
+            })
+          }
+          onRetry={() => void entries.refetch()}
+          onClose={() => setDetail(null)}
+        />
       )}
 
       <ConfirmDeleteDialog
