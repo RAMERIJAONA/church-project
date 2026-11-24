@@ -22,7 +22,10 @@
     "test:watch": "cross-env ELECTRON_RUN_AS_NODE=1 electron ./node_modules/vitest/vitest.mjs",
     "format:check": "prettier --check .",
     "db:generate": "drizzle-kit generate",
-    "db:check": "drizzle-kit check"
+    "db:check": "drizzle-kit check",
+    "fixture:snapshot": "cross-env ELECTRON_RUN_AS_NODE=1 FIXTURE_SNAPSHOT=1 electron ./node_modules/vitest/vitest.mjs run --project fixtures",
+    "test:e2e": "playwright test",
+    "test:e2e:smoke": "playwright test --grep @smoke"
   },
   "dependencies": {
     "better-sqlite3": "^13.2.0",
@@ -35,10 +38,13 @@
     "@electron-toolkit/eslint-config-ts": "^4.0.0",
     "@electron-toolkit/tsconfig": "^2.0.0",
     "@hookform/resolvers": "^7.0.9",
+    "@playwright/test": "^1.65.1",
     "@tailwindcss/vite": "^4.3.5",
     "@tanstack/react-query": "^5.108.4",
     "@tanstack/react-table": "^9.3.1",
     "@tanstack/react-virtual": "^3.14.28",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.13",
     "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^24.19.2",
     "@types/react": "^19.3.0",
@@ -56,6 +62,7 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.7",
+    "jsdom": "^31.0.1",
     "lucide-react": "^1.79.0",
     "prettier": "^3.9.10",
     "prettier-plugin-tailwindcss": "^0.8.1",

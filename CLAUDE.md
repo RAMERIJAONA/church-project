@@ -429,6 +429,9 @@ export async function invoke<C extends Channel>(channel: C, input: IpcInput<C>):
   `"test": "cross-env ELECTRON_RUN_AS_NODE=1 electron ./node_modules/vitest/vitest.mjs run"`
 - Tests d'intégration : `createTestDb()` = SQLite `:memory:` + **toutes les migrations réelles appliquées** (jamais un schéma recréé à la main).
 - Couverture (seuils bloquants en CI) : `shared/domain` ≥ 90 %, `main/services` ≥ 80 %. Pas de seuil sur l'UI (on teste les comportements, pas les lignes).
+- Pas de globals Vitest : `tests/setup/renderer.ts` appelle `cleanup()` de Testing Library. Pas de `@testing-library/jest-dom` (non listé) : on teste les propriétés DOM (`toHaveProperty('disabled', true)`).
+- Factories : `tests/factories/*.factory.ts` sans dépendance DB (utilisables côté renderer), `*.seed.ts` pour écrire en base.
+- `npm run fixture:snapshot` est un projet Vitest dédié (`scripts/fixture-snapshot.task.ts`, activé par `FIXTURE_SNAPSHOT=1`) : mêmes alias, même runtime. Il refuse d'écraser une fixture existante et écrit un manifeste `v<version>.json` (lignes par table) que lit le test de migrations.
 
 ### 9.3 Règles de non-régression (obligatoires)
 1. **Tout bug corrigé commence par un test qui le reproduit** et échoue, dans `tests/regression/<AAAA-MM-JJ>-<slug>.test.ts` (ou colocalisé si purement unitaire), avec un commentaire décrivant le bug. Ensuite seulement le correctif. Le test reste à vie.
@@ -450,6 +453,7 @@ Les utilisateurs mettent à jour une DB existante, pas une DB neuve. Donc :
 
 ### 9.5 E2E Playwright
 - `@playwright/test` avec `_electron.launch()` sur le build `electron-vite build` (support Electron de Playwright = expérimental, suffisant pour nos parcours).
+  Lancement : `_electron.launch({ args: ['.'] })` depuis la racine (pour que `app.getAppPath()` pointe sur la racine et trouve `drizzle/`). Helper : `tests/e2e/app.ts` (`launchApp()`). En E2E, les sauvegardes vont aussi dans le dossier temporaire.
 - **Isolation** : chaque test lance l'app avec la variable `APP_USER_DATA=<dossier temporaire>` ; `main/index.ts` appelle `app.setPath('userData', …)` avant `ready`, **uniquement si `!app.isPackaged`**.
 - Sélecteurs par rôle/label accessible (`getByRole`, `getByLabel`), `data-testid` en dernier recours. Jamais par classe CSS.
 - Tag `@smoke` pour la suite rapide.

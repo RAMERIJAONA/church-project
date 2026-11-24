@@ -10,6 +10,11 @@ import { createLogger } from '@main/logging/logger'
 
 const isDev = !app.isPackaged
 
+// Isolation des tests E2E : dossier de données dédié, JAMAIS dans l'app installée.
+// Doit précéder toute lecture de userData (logger compris).
+const testUserData = process.env['APP_USER_DATA']
+if (!app.isPackaged && testUserData) app.setPath('userData', testUserData)
+
 const logger = createLogger(
   createElectronLogSink({
     logsDir: join(app.getPath('userData'), 'logs'),
@@ -77,7 +82,11 @@ async function start(): Promise<void> {
   container = await createContainer(
     {
       userData: app.getPath('userData'),
-      backupsDir: join(app.getPath('documents'), app.getName(), 'Sauvegardes'),
+      // En test E2E, les sauvegardes restent dans le dossier temporaire (pas dans Documents)
+      backupsDir:
+        testUserData && !app.isPackaged
+          ? join(testUserData, 'Sauvegardes')
+          : join(app.getPath('documents'), app.getName(), 'Sauvegardes'),
       migrationsFolder: app.isPackaged
         ? join(process.resourcesPath, 'drizzle')
         : join(app.getAppPath(), 'drizzle')
