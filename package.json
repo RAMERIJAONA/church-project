@@ -1,9 +1,9 @@
 {
-  "name": "church-manager",
+  "name": "fjkm-ambatondrazaka-fitiavana",
   "version": "0.1.0",
   "description": "Logiciel de gestion de l’église FJKM Ambatondrazaka Fitiavana (desktop, offline)",
   "main": "./out/main/index.js",
-  "author": "Church Manager",
+  "author": "FJKM Ambatondrazaka Fitiavana",
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint --cache .",
@@ -79,5 +79,5 @@
     "vitest": "^5.1.1",
     "zod": "^4.6.7"
   },
-  "productName": "Church Manager"
+  "productName": "FJKM Ambatondrazaka Fitiavana"
 }

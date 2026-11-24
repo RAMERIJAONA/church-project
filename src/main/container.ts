@@ -17,10 +17,10 @@ import { createMaintenanceService } from '@main/services/maintenance.service'
 import { createSettingsService } from '@main/services/settings.service'
 
 export interface AppPaths {
-  /** %APPDATA%\Church Manager (data.db, logs) */
+  /** %APPDATA%\<productName> (data.db, logs) */
   userData: string
   logsDir: string
-  /** Documents\Church Manager\Sauvegardes */
+  /** Documents\<productName>\Sauvegardes */
   backupsDir: string
   documentsDir: string
   /** dossier drizzle/ (dev : racine du projet, prod : resources/drizzle) */

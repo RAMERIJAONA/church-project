@@ -5,7 +5,7 @@ import { MIGRATIONS_TABLE } from './migrate'
 export interface DatabaseFileReport {
   /** Fichier SQLite lisible et `PRAGMA integrity_check` = ok */
   readable: boolean
-  /** Contient les tables d'une base Church Manager */
+  /** Contient les tables d'une base de l'application */
   isAppDatabase: boolean
   /** Horodatage de la dernière migration appliquée dans ce fichier */
   lastMigrationMillis: number | null

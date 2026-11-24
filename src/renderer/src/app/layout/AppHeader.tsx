@@ -1,5 +1,6 @@
 import { capitalize, formatLongDate } from '@shared/utils/dates'
 import { useRouteHandle } from './route-handle'
+import { APP_NAME } from '@shared/domain/identity'
 
 export function AppHeader(): React.JSX.Element {
   const handle = useRouteHandle()
@@ -11,7 +12,7 @@ export function AppHeader(): React.JSX.Element {
     >
       <div className="min-w-0 py-3">
         <h1 className="truncate font-display text-2xl font-semibold tracking-tight">
-          {handle?.title ?? 'Church Manager'}
+          {handle?.title ?? APP_NAME}
         </h1>
         {handle?.description && (
           <p className="truncate text-sm text-muted-foreground">{handle.description}</p>

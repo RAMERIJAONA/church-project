@@ -12,6 +12,7 @@ import { createLogger } from '@main/logging/logger'
 import { WINDOW_BACKGROUND } from '@main/window-theme'
 import { settingsToQuery } from '@shared/domain/settings/settings.theme'
 import type { AppSettings } from '@shared/domain/settings/settings.types'
+import { APP_NAME } from '@shared/domain/identity'
 
 // Stack traces des logs ramenées au code TypeScript (sourcemaps main/preload)
 process.setSourceMapsEnabled(true)
@@ -34,7 +35,7 @@ const logger = createLogger(
 process.on('uncaughtException', (err) => {
   logger.error({ err }, 'exception non gérée (main)')
   dialog.showErrorBox(
-    'Church Manager a rencontré une erreur',
+    `${APP_NAME} a rencontré une erreur`,
     'Une erreur inattendue est survenue. Le détail est enregistré dans le fichier de log. Si le problème persiste, redémarrez l’application.'
   )
 })
@@ -196,7 +197,7 @@ if (!app.requestSingleInstanceLock()) {
     .catch((err: unknown) => {
       logger.error({ err }, 'échec du démarrage')
       dialog.showErrorBox(
-        'Church Manager ne peut pas démarrer',
+        `${APP_NAME} ne peut pas démarrer`,
         "Une erreur est survenue à l'ouverture des données. Le détail est enregistré dans le fichier de log."
       )
       app.exit(1)

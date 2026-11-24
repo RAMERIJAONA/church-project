@@ -10,7 +10,7 @@
 
 - **Type** : logiciel de gestion pour l'église **FJKM Ambatondrazaka Fitiavana** (constante `CHURCH_NAME` dans `src/shared/domain/identity.ts`).
 - **Métier** : règles de gestion et fonctionnalités **fournies plus tard par le porteur du projet**. Ne rien inventer ni coder de métier avant de les avoir reçues (cf. §14).
-- **Nom** : « Church Manager » (`productName`), `appId` : `mg.church.manager` (modifiables plus tard).
+- **Nom du logiciel** : « FJKM Ambatondrazaka Fitiavana » (`productName`, constante `APP_NAME`), `appId` : `mg.church.manager` (identifiant interne, invisible). **Ne plus changer `productName` ni `appId` après la première installation** : `productName` fixe les dossiers `%APPDATA%\<productName>` (données) et `Documents\<productName>\Sauvegardes`, `appId` l'identité Windows (raccourcis, désinstallation). Un test vérifie que `package.json`, `electron-builder.yml` et `APP_NAME` concordent.
 - **Utilisateur** : non-technique. Il double-clique sur un `.exe`, point. Zéro dépendance à installer, zéro config, zéro base externe.
 - **Mode** : 100 % offline, mono-poste, mono-utilisateur (pour l'instant).
 - **Langue UI** : français. Formats `fr-FR` (dates, nombres, monnaie via `Intl`).

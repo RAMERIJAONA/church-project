@@ -1,4 +1,4 @@
-# Church Manager
+# FJKM Ambatondrazaka Fitiavana
 
 Logiciel de gestion de l'église **FJKM Ambatondrazaka Fitiavana**.
 
@@ -49,8 +49,8 @@ npm run dev     # lance l'application avec rechargement à chaud
 
 En développement, les données sont dans le dossier `userData` d'Electron :
 
-- macOS : `~/Library/Application Support/Church Manager/`
-- Windows : `%APPDATA%\Church Manager\`
+- macOS : `~/Library/Application Support/FJKM Ambatondrazaka Fitiavana/`
+- Windows : `%APPDATA%\FJKM Ambatondrazaka Fitiavana\`
 
 Pour travailler sur des données jetables, lancer avec un dossier dédié (ignoré dans l'app installée) :
 
@@ -104,13 +104,13 @@ git push origin main --tags
 
 Sur un tag `v*`, la CI lance toutes les vérifications, les tests de bout en bout complets, puis
 génère l'installeur. Le télécharger dans GitHub : onglet **Actions** → le run du tag → artefact
-**installer-windows** (`church-manager-<version>-setup.exe`).
+**installer-windows** (`fjkm-ambatondrazaka-fitiavana-<version>-setup.exe`).
 
 ### Sur un PC Windows de développement
 
 ```bash
 npm install
-npm run build:win        # → dist/church-manager-<version>-setup.exe
+npm run build:win        # → dist/fjkm-ambatondrazaka-fitiavana-<version>-setup.exe
 ```
 
 ### Build de contrôle sur macOS (non distribué)
@@ -121,12 +121,12 @@ npm run build:unpack     # application non empaquetée dans dist/, pour vérifie
 
 ## Installation et utilisation sur le PC de l'église
 
-- Lancer `church-manager-<version>-setup.exe` : installation sans droits administrateur, raccourci
+- Lancer `fjkm-ambatondrazaka-fitiavana-<version>-setup.exe` : installation sans droits administrateur, raccourci
   créé sur le bureau. L'exe n'est pas signé : au premier lancement, Windows SmartScreen affiche un
   avertissement (« Informations complémentaires » → « Exécuter quand même »).
-- Données : `%APPDATA%\Church Manager\data.db`
-- Logs : `%APPDATA%\Church Manager\logs\` (aussi accessibles via **Paramètres → Aide**)
-- Sauvegardes automatiques : `Documents\Church Manager\Sauvegardes\` (les 14 dernières)
+- Données : `%APPDATA%\FJKM Ambatondrazaka Fitiavana\data.db`
+- Logs : `%APPDATA%\FJKM Ambatondrazaka Fitiavana\logs\` (aussi accessibles via **Paramètres → Aide**)
+- Sauvegardes automatiques : `Documents\FJKM Ambatondrazaka Fitiavana\Sauvegardes\` (les 14 dernières)
 - Export et restauration d'une sauvegarde : **Paramètres → Sauvegardes**
 - Désinstaller ne supprime ni les données ni les sauvegardes.
 

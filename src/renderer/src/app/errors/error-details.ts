@@ -1,5 +1,6 @@
 import { isRouteErrorResponse } from 'react-router'
 import { getErrorCode } from '@renderer/lib/error-messages'
+import { APP_NAME } from '@shared/domain/identity'
 
 export interface ErrorDetailsInput {
   error: unknown
@@ -19,7 +20,7 @@ export function buildErrorDetails({ error, route, version, at }: ErrorDetailsInp
   } else message = String(error)
 
   return [
-    `Church Manager ${version}`,
+    `${APP_NAME} ${version}`,
     `Date : ${at.toISOString()}`,
     `Écran : ${route}`,
     `Code : ${getErrorCode(error)}`,

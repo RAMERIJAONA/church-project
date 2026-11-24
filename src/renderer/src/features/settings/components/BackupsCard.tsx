@@ -11,6 +11,7 @@ import type { BackupDTO } from '@shared/ipc/contract'
 import { formatDateTime } from '@shared/utils/dates'
 import { formatBytes } from '@shared/utils/format'
 import { backupReasonLabel } from '../settings.utils'
+import { APP_NAME } from '@shared/domain/identity'
 
 export interface BackupsCardProps {
   backups: BackupDTO[] | undefined
@@ -34,7 +35,7 @@ export function BackupsCard(props: BackupsCardProps): React.JSX.Element {
         <CardTitle className="text-base">Sauvegardes</CardTitle>
         <CardDescription>
           Une sauvegarde automatique est faite chaque jour au démarrage (les 14 dernières sont
-          conservées dans Documents › Church Manager › Sauvegardes).
+          conservées dans Documents › {APP_NAME} › Sauvegardes).
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-5">

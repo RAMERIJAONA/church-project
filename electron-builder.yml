@@ -1,7 +1,7 @@
 # Packaging (CLAUDE.md par. 11). Le .exe officiel sort de la CI Windows, jamais du Mac.
 appId: mg.church.manager
-productName: Church Manager
-copyright: Church Manager
+productName: FJKM Ambatondrazaka Fitiavana
+copyright: FJKM Ambatondrazaka Fitiavana
 
 directories:
   buildResources: build
@@ -35,7 +35,7 @@ electronLanguages: [fr, en-US]
 publish: null
 
 win:
-  executableName: church-manager
+  executableName: fjkm-ambatondrazaka-fitiavana
   icon: build/icon.ico
   target:
     - target: nsis
@@ -49,9 +49,9 @@ nsis:
   perMachine: false # pas de droits admin
   createDesktopShortcut: always
   runAfterFinish: true
-  shortcutName: Church Manager
-  uninstallDisplayName: Church Manager
-  artifactName: church-manager-${version}-setup.${ext}
+  shortcutName: FJKM Ambatondrazaka Fitiavana
+  uninstallDisplayName: FJKM Ambatondrazaka Fitiavana
+  artifactName: fjkm-ambatondrazaka-fitiavana-${version}-setup.${ext}
   # Les données (%APPDATA%) et sauvegardes (Documents) restent en cas de désinstallation
   deleteAppDataOnUninstall: false
   installerLanguages: [fr_FR]

@@ -3,11 +3,12 @@ import { join } from 'node:path'
 import Database from 'better-sqlite3'
 import { expect, test } from '@playwright/test'
 import { launchApp, removeDir } from './app'
+import { APP_NAME } from '@shared/domain/identity'
 
 test('@smoke démarrage à vide : migrations OK puis écran affiché', async () => {
   const { window, userData, close } = await launchApp()
   try {
-    await expect(window).toHaveTitle('Church Manager')
+    await expect(window).toHaveTitle(APP_NAME)
     await expect(window.getByRole('heading', { level: 1, name: 'Accueil' })).toBeVisible()
     await expect(window.getByRole('navigation', { name: 'Navigation principale' })).toBeVisible()
 

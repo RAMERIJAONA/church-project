@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle
 } from '@renderer/components/ui/card'
+import { APP_NAME } from '@shared/domain/identity'
 
 export interface WelcomePanelProps {
   version?: string
@@ -20,7 +21,7 @@ export function WelcomePanel({ version }: WelcomePanelProps): React.JSX.Element 
         <CardHeader>
           <CardTitle className="font-display text-xl">Bienvenue</CardTitle>
           <CardDescription>
-            Church Manager fonctionne entièrement sur cet ordinateur, sans connexion internet. Vos
+            {APP_NAME} fonctionne entièrement sur cet ordinateur, sans connexion internet. Vos
             données restent ici et sont sauvegardées automatiquement chaque jour.
           </CardDescription>
         </CardHeader>

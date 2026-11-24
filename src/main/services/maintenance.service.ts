@@ -9,6 +9,7 @@ import type { Logger } from '@main/logging/logger'
 import { AppError } from '@shared/domain/errors'
 import type { BackupDTO, ExportResultDTO, RestoreResultDTO } from '@shared/ipc/contract'
 import { formatDateTime } from '@shared/utils/dates'
+import { APP_NAME, APP_SLUG } from '@shared/domain/identity'
 
 const pad = (n: number): string => String(n).padStart(2, '0')
 
@@ -47,7 +48,7 @@ export function createMaintenanceService(deps: {
 
     async exportBackup(): Promise<ExportResultDTO> {
       const d = deps.clock()
-      const name = `church-manager_${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}.db`
+      const name = `${APP_SLUG}_${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}.db`
       const target = await deps.dialog.chooseSavePath({
         title: 'Exporter une sauvegarde',
         defaultPath: join(deps.paths.documentsDir, name)
@@ -78,7 +79,7 @@ export function createMaintenanceService(deps: {
         logger.warn({ source, report }, 'restauration refusée : fichier invalide')
         throw new AppError(
           'BUSINESS_RULE',
-          'Ce fichier n’est pas une sauvegarde Church Manager valide (ou il est endommagé).',
+          `Ce fichier n’est pas une sauvegarde ${APP_NAME} valide (ou il est endommagé).`,
           { source }
         )
       }
@@ -89,7 +90,7 @@ export function createMaintenanceService(deps: {
       ) {
         throw new AppError(
           'BUSINESS_RULE',
-          'Cette sauvegarde provient d’une version plus récente de Church Manager. Mettez d’abord le logiciel à jour.',
+          `Cette sauvegarde provient d’une version plus récente du logiciel ${APP_NAME}. Mettez d’abord le logiciel à jour.`,
           { source }
         )
       }

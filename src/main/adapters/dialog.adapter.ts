@@ -1,4 +1,5 @@
 import { BrowserWindow, dialog } from 'electron'
+import { APP_NAME } from '@shared/domain/identity'
 
 /** Boîtes de dialogue natives, remplaçables par un fake en test. */
 export interface DialogAdapter {
@@ -14,7 +15,7 @@ export interface DialogAdapter {
   }): Promise<boolean>
 }
 
-const DB_FILTERS = [{ name: 'Sauvegarde Church Manager', extensions: ['db'] }]
+const DB_FILTERS = [{ name: `Sauvegarde ${APP_NAME}`, extensions: ['db'] }]
 
 function parent(): BrowserWindow | undefined {
   return BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
