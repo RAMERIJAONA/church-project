@@ -339,19 +339,22 @@ export async function invoke<C extends Channel>(channel: C, input: IpcInput<C>):
 ## 6. Styles (séparation CSS)
 
 - **Tokens** (`styles/tokens.css`) : la seule source des valeurs brutes. Tout le reste référence des variables.
+  Noms **alignés sur shadcn/ui** (`--background`, `--foreground`, `--primary`…) pour que les primitives shadcn marchent sans retouche.
   ```css
   :root {
-    --color-bg: oklch(0.99 0 0);
-    --color-fg: oklch(0.2 0 0);
-    --color-primary: oklch(0.55 0.15 250);
+    --background: oklch(0.985 0.003 85);
+    --foreground: oklch(0.22 0.02 265);
+    --primary: oklch(0.47 0.16 270);
     --radius: 0.5rem;
     --density: 1;            /* 0.85 compact | 1 confortable */
     --font-size-base: 14px;
   }
-  [data-theme='dark'] { --color-bg: oklch(0.18 0 0); --color-fg: oklch(0.95 0 0); }
-  [data-accent='green'] { --color-primary: oklch(0.6 0.15 150); }
+  [data-theme='dark'] { --background: oklch(0.19 0.012 265); --foreground: oklch(0.94 0.006 85); }
+  [data-accent='green'] { --primary: oklch(0.5 0.12 160); }
+  [data-density='compact'] { --density: 0.85; }
   ```
-- **`globals.css`** : `@import "tailwindcss"`, `@theme` qui mappe les tokens vers les utilitaires Tailwind, styles de base. Pas de styles de composants.
+- **`globals.css`** : `@import "tailwindcss"`, `tw-animate-css`, `shadcn/tailwind.css`, puis `@theme inline` qui mappe les tokens vers les utilitaires (`--color-background: var(--background)`, `--spacing: calc(0.25rem * var(--density))` pour que toute l'échelle d'espacement suive la densité). Mode sombre : `@custom-variant dark` sur `[data-theme='dark']` (pas la classe `.dark` de shadcn). Pas de styles de composants.
+- **shadcn/ui** : `components.json` écrit à la main (le CLI ne détecte pas electron-vite), style `radix-nova` (primitives Radix via le package `radix-ui`, helper `cn` via le package `cn`). Ajout : `npx shadcn add <composant> -y`. Les fichiers de `components/ui` sont à nous : on les adapte (ex. retirer les `transition-all`).
 - **Composants** :
   - classes utilitaires pour la mise en page simple ;
   - dès qu'il y a des **variantes** (taille, état, intent) ou une liste de classes longue → `xxx.styles.ts` avec `cva`, importé par le composant ;

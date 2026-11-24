@@ -227,6 +227,15 @@ export default defineConfig(
       ]
     }
   },
+  // Primitives shadcn (code vendored, régénérable par le CLI) : règles de style assouplies,
+  // les frontières de couches restent actives.
+  {
+    files: ['src/renderer/src/components/ui/**'],
+    rules: {
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      'react-refresh/only-export-components': 'off'
+    }
+  },
   ...boundaries,
   eslintConfigPrettier
 )

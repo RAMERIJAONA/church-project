@@ -1,0 +1,39 @@
+/* Impression (reçus, attestations, listes). Chargé avec media="print". */
+@page {
+  size: A4;
+  margin: 15mm;
+}
+
+@media print {
+  html {
+    font-size: 11pt;
+  }
+  body {
+    background: var(--print-background);
+    color: var(--print-foreground);
+  }
+  /* Masquer la coque de l'application */
+  [data-print='hide'],
+  nav,
+  aside,
+  header[data-app-header] {
+    display: none !important;
+  }
+  [data-print='only'] {
+    display: block !important;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+  tr,
+  img {
+    break-inside: avoid;
+  }
+}
+
+@media screen {
+  [data-print='only'] {
+    display: none !important;
+  }
+}
