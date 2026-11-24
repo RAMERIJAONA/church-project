@@ -2,7 +2,8 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import type { AccountingItemDTO } from '@shared/domain/accounting/accounting.types'
-import { makeItemDTO, makeRootDTO } from '@tests/factories/accounting.factory'
+import { formatAmount } from '@shared/utils/money'
+import { makeCellDTO, makeItemDTO, makeRootDTO } from '@tests/factories/accounting.factory'
 import { AccountingSheet } from './AccountingSheet'
 import { SheetActionsProvider, type SheetActions } from './sheet-actions'
 
@@ -31,13 +32,36 @@ function church(): AccountingItemDTO[] {
   return [makeRootDTO({ id: 1, code: 'F1', prefix: 'F', children: [i, ii] })]
 }
 
+const shown = (text: string): string => text.replace(/\s/g, ' ')
+const rowText = (code: string): string =>
+  shown(screen.getByRole('rowheader', { name: code }).closest('tr')?.textContent ?? '')
+
+/** Réalisation 2026 sur 3 feuilles : F1-I-1 420 000, A) 250 000, B) 100 000 ; Estimation sur F1-I-1 */
+function withAmounts(items: AccountingItemDTO[]): AccountingItemDTO[] {
+  const actual: Record<number, number> = { 3: 420000, 6: 250000, 7: 100000 }
+  const fill = (item: AccountingItemDTO): AccountingItemDTO => ({
+    ...item,
+    amounts: item.amounts && {
+      ...item.amounts,
+      actual: makeCellDTO({ total: actual[item.id] ?? null }),
+      estimate: makeCellDTO({ total: item.id === 3 ? 500000 : null })
+    },
+    children: item.children.map(fill)
+  })
+  return items.map(fill)
+}
+
 function renderSheet(
-  { year = 2026, addingChildTo = null }: { year?: number; addingChildTo?: number | null } = {},
+  {
+    year = 2026,
+    addingChildTo = null,
+    items = church()
+  }: { year?: number; addingChildTo?: number | null; items?: AccountingItemDTO[] } = {},
   actions = makeActions({ year })
 ) {
   render(
     <SheetActionsProvider value={actions}>
-      <AccountingSheet year={year} items={church()} addingChildTo={addingChildTo} />
+      <AccountingSheet year={year} items={items} addingChildTo={addingChildTo} />
     </SheetActionsProvider>
   )
   return actions
@@ -53,7 +77,8 @@ describe('AccountingSheet', () => {
       'F1-II',
       'F1-II-1',
       'F1-II-1 A)',
-      'F1-II-1 B)'
+      'F1-II-1 B)',
+      'Total général'
     ])
     expect(screen.getAllByRole('columnheader').map((h) => h.textContent)).toEqual([
       'N°',
@@ -110,7 +135,7 @@ describe('AccountingSheet', () => {
       name: 'Description de la nouvelle sous-rubrique F1-III'
     })
     const rows = screen.getAllByRole('row')
-    expect(rows.at(-1)?.contains(input)).toBe(true) // après F1-II-1 B)
+    expect(rows.at(-2)?.contains(input)).toBe(true) // après F1-II-1 B), avant le total
     await userEvent.type(input, 'Fanampiana{Enter}')
     expect(actions.addChild).toHaveBeenCalledWith(1, 'Fanampiana')
   })
@@ -119,5 +144,19 @@ describe('AccountingSheet', () => {
     const actions = renderSheet()
     await userEvent.click(screen.getByRole('button', { name: 'Supprimer F1-II' }))
     expect(actions.askDelete).toHaveBeenCalledWith(expect.objectContaining({ id: 4 }))
+  })
+
+  it('affiche le sous-total de chaque groupe et le total général, par colonne', () => {
+    renderSheet({ items: withAmounts(church()) })
+    const amount = (n: number): string => shown(formatAmount(n))
+    expect(rowText('F1-II-1')).toContain(amount(350000))
+    expect(rowText('F1-I')).toContain(amount(420000))
+    expect(rowText('F1')).toContain(amount(770000))
+    expect(rowText('F1')).toContain(amount(500000))
+    const total = rowText('Total général')
+    expect(total).toContain(amount(500000))
+    expect(total).toContain(amount(770000))
+    // Les sous-totaux ne sont pas modifiables
+    expect(screen.queryByRole('textbox', { name: 'Réalisation 2026 de F1' })).toBeNull()
   })
 })

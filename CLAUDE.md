@@ -450,7 +450,7 @@ export async function invoke<C extends Channel>(channel: C, input: IpcInput<C>):
    - [ ] Imprimer / générer le PDF d'une facture
    - [x] Sauvegarde manuelle → restauration → données identiques (`tests/e2e/backup.spec.ts`)
    - [x] Changer le thème → persisté après redémarrage (`tests/e2e/theme.spec.ts`)
-   - [x] Comptabilité : arborescence 4 niveaux → 3 colonnes de montants → détail des saisies → vues mois/semaine/jour → suppression/renumérotation → persisté (`tests/e2e/accounting.spec.ts`)
+   - [x] Comptabilité : arborescence 4 niveaux → 3 colonnes de montants → détail des saisies → totaux → vues mois/semaine/jour → suppression/renumérotation → persisté (`tests/e2e/accounting.spec.ts`)
 4. **Aucun test supprimé ou désactivé** (`.skip`) sans justification écrite dans la PR.
 5. Un test qui échoue de façon aléatoire (flaky) se corrige en priorité, il ne se relance pas en boucle.
 
@@ -634,5 +634,5 @@ UI en français d'abord ; les termes malgaches sont gardés en glossaire (traduc
 - Saisie des montants : toujours groupés par 3 avec une espace insécable de largeur normale (`2 000 000`, U+00A0, `formatAmount`), **y compris pendant la frappe** (`lib/money-input.ts`) : seuls les chiffres sont acceptés, le curseur reste en place, Retour arrière sur une espace efface le chiffre voisin. Entrée = enregistre et passe à la case suivante.
 - Suppression douce (`deleted_at`) ; supprimer un élément supprime toute sa descendance. Confirmation obligatoire dans l'UI.
 - Migration `0002` (SQL de reprise écrit à la main dans le fichier généré) : anciennes rubriques → niveau 1, anciennes lignes → niveau 2, anciens montants → saisies « réalisation » sans libellé. Migration `0003` : date d'opération des réalisations existantes = date de saisie si elle tombe dans l'année de la case, sinon 31 décembre.
-- Pas de totaux (ni par groupe ni global) : non demandés.
+- **Totaux** (demandés le 2026-11-24) : chaque groupe affiche, par colonne, la somme de toute sa descendance (lecture seule) ; ligne « Total général » (vue Année, 3 colonnes) ou « Total » (vues par période) en pied de tableau. Calcul pur `rollUp` (`accounting.totals.ts`), fait à l'écran pour suivre chaque saisie immédiatement ; `null` (case vide) si aucune rubrique concernée n'a de montant, 0 est un montant.
 - Tableau non virtualisé : un plan comptable reste sous 200 lignes. À virtualiser s'il dépasse (§2).

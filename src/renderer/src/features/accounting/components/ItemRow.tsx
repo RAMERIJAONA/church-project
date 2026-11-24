@@ -4,11 +4,12 @@ import {
   MAX_YEAR,
   type AccountingItemDTO
 } from '@shared/domain/accounting/accounting.types'
-import { AMOUNT_COLUMNS, columnLabel, columnTarget } from '../accounting.utils'
+import { formatAmount } from '@shared/utils/money'
+import { AMOUNT_COLUMNS, columnLabel, columnTarget, type ColumnTotals } from '../accounting.utils'
 import { AmountCell } from './AmountCell'
 import { EditableDescription } from './EditableDescription'
 import { RowActions } from './RowActions'
-import { codeCell, descriptionCell, sheetRow } from './accounting.styles'
+import { codeCell, descriptionCell, sheetRow, totalCell } from './accounting.styles'
 import { useSheetActions } from './sheet-actions'
 
 export interface ItemRowProps {
@@ -16,6 +17,8 @@ export interface ItemRowProps {
   /** Premier / dernier parmi ses frères (déplacement impossible au-delà) */
   isFirst: boolean
   isLast: boolean
+  /** Groupe : somme de sa descendance, par colonne (lecture seule) */
+  subtotals?: ColumnTotals
 }
 
 function addChildBlockedReason(item: AccountingItemDTO): string | null {
@@ -29,7 +32,8 @@ function addChildBlockedReason(item: AccountingItemDTO): string | null {
 export const ItemRow = memo(function ItemRow({
   item,
   isFirst,
-  isLast
+  isLast,
+  subtotals
 }: ItemRowProps): React.JSX.Element {
   const actions = useSheetActions()
   const [editing, setEditing] = useState(false)
@@ -40,7 +44,7 @@ export const ItemRow = memo(function ItemRow({
       <th scope="row" className={codeCell({ kind })}>
         {item.code}
       </th>
-      <td className={descriptionCell({ level: item.level })} colSpan={amounts ? 1 : 4}>
+      <td className={descriptionCell({ level: item.level })}>
         <EditableDescription
           kind={kind === 'root' ? 'section' : kind === 'group' ? 'group' : 'line'}
           value={item.description}
@@ -50,6 +54,15 @@ export const ItemRow = memo(function ItemRow({
           onSave={(d) => actions.rename(item.id, d)}
         />
       </td>
+      {!amounts &&
+        AMOUNT_COLUMNS.map((col) => {
+          const value = subtotals?.[col] ?? null
+          return (
+            <td key={col} className={totalCell} title="Sous-total (somme des sous-rubriques)">
+              {value === null ? '' : formatAmount(value)}
+            </td>
+          )
+        })}
       {amounts &&
         AMOUNT_COLUMNS.map((col) => (
           <AmountCell

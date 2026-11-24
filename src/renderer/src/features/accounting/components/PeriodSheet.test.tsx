@@ -40,7 +40,8 @@ describe('PeriodSheet', () => {
       'A1-I',
       'A1-I-1',
       'A1-I-2',
-      'B1'
+      'B1',
+      'Total'
     ])
     expect(screen.getByRole('columnheader', { name: 'Réalisations' })).toBeDefined()
     expect(
@@ -52,6 +53,26 @@ describe('PeriodSheet', () => {
     expect(rowOf('B1')).toContain(shown(formatAmount(1000)))
     expect(rowOf('A1-I-2')).toBe('A1-I-2Fanomezana')
     expect(screen.queryAllByRole('textbox')).toHaveLength(0)
+  })
+
+  it('affiche les sous-totaux des groupes et le total de la période', () => {
+    render(
+      <PeriodSheet
+        label="Novembre 2026"
+        items={items}
+        totals={
+          new Map([
+            [3, 420000],
+            [5, 1000]
+          ])
+        }
+      />
+    )
+    const rowOf = (code: string) =>
+      shown(screen.getByRole('rowheader', { name: code }).closest('tr')?.textContent ?? '')
+    expect(rowOf('A1-I')).toContain(shown(formatAmount(420000)))
+    expect(rowOf('A1')).toContain(shown(formatAmount(420000)))
+    expect(rowOf('Total')).toContain(shown(formatAmount(421000)))
   })
 
   it('signale une période sans réalisation', () => {

@@ -86,6 +86,14 @@ test('@smoke comptabilité : arborescence, 3 colonnes, détail, persistés aprè
     await expect(cell(w, `Réalisation ${Y} de A1-II-1 A)`)).toHaveCount(0)
     await expect(row(w, 'A1-II-1 A)')).toContainText(/350\s000/)
 
+    // Sous-totaux des groupes et total général, par colonne
+    await expect(row(w, 'A1-II')).toContainText(/350\s000/)
+    for (const code of ['A1', 'Total général']) {
+      await expect(row(w, code)).toContainText(/500\s000/)
+      await expect(row(w, code)).toContainText(/770\s000/)
+      await expect(row(w, code)).toContainText(/600\s000/)
+    }
+
     // Vues par période : réalisations par date d'opération (aujourd'hui par défaut), lecture seule
     const view = (name: string): Locator => w.getByRole('button', { name, exact: true })
     for (const name of ['Mois', 'Semaine', 'Jour']) {
@@ -94,6 +102,7 @@ test('@smoke comptabilité : arborescence, 3 colonnes, détail, persistés aprè
       await expect(row(w, 'A1-I-1')).toContainText(/420\s000/)
       await expect(row(w, 'A1-II-1 A)')).toContainText(/350\s000/)
       await expect(w.getByRole('textbox')).toHaveCount(0)
+      await expect(row(w, 'Total')).toContainText(/770\s000/)
     }
     await w.getByRole('button', { name: 'Période précédente' }).click()
     await expect(w.getByText('Aucune réalisation sur cette période.')).toBeVisible()
@@ -120,6 +129,8 @@ test('@smoke comptabilité : arborescence, 3 colonnes, détail, persistés aprè
     await expect(w.getByRole('button', { name: 'Mpitandrina', exact: true })).toHaveCount(0)
     await expect(row(w, 'A1-I')).toContainText('Trano Fiangonana')
     await expect(row(w, 'A1-I-1 A)')).toContainText(/350\s000/)
+    await expect(row(w, 'Total général')).toContainText(/350\s000/)
+    await expect(row(w, 'Total général')).not.toContainText(/770/)
 
     await running.close()
     running = null

@@ -1,4 +1,5 @@
 /** Helpers d'affichage purs de la comptabilité (aucun appel IPC). */
+import { rollUp, type RollUp } from '@shared/domain/accounting/accounting.totals'
 import { formatLongDate } from '@shared/utils/dates'
 import type {
   AccountingItemDTO,
@@ -10,6 +11,9 @@ import type {
 /** Les 3 colonnes de l'année affichée N, dans l'ordre du tableau. */
 export const AMOUNT_COLUMNS = ['estimate', 'actual', 'nextEstimate'] as const
 export type AmountColumn = (typeof AMOUNT_COLUMNS)[number]
+
+/** Sous-totaux ou total général des 3 colonnes. */
+export type ColumnTotals = Record<AmountColumn, number | null>
 
 /** Année et type réellement écrits par une colonne (Estimation N+1 = estimation de N+1). */
 export function columnTarget(year: number, col: AmountColumn): { year: number; type: EntryType } {
@@ -82,4 +86,26 @@ export const VIEW_LABELS: Record<AccountingView, string> = {
   month: 'Mois',
   week: 'Semaine',
   day: 'Jour'
+}
+
+/** Sous-totaux de chaque élément et total général, pour les 3 colonnes de l'année. */
+export function sheetTotals(items: readonly AccountingItemDTO[]): {
+  byItem: Map<number, ColumnTotals>
+  grand: ColumnTotals
+} {
+  const [estimate, actual, nextEstimate] = AMOUNT_COLUMNS.map((col) =>
+    rollUp(items, (item) => item.amounts?.[col].total ?? null)
+  ) as [RollUp, RollUp, RollUp]
+  const byItem = new Map<number, ColumnTotals>()
+  for (const id of estimate.byItem.keys()) {
+    byItem.set(id, {
+      estimate: estimate.byItem.get(id) ?? null,
+      actual: actual.byItem.get(id) ?? null,
+      nextEstimate: nextEstimate.byItem.get(id) ?? null
+    })
+  }
+  return {
+    byItem,
+    grand: { estimate: estimate.grand, actual: actual.grand, nextEstimate: nextEstimate.grand }
+  }
 }

@@ -53,6 +53,12 @@ export const editableText = cva(
   }
 )
 
+/** Sous-total d'un groupe ou total général : lecture seule, appuyé. */
+export const totalCell = 'px-3 py-1 text-right font-semibold tabular-nums whitespace-nowrap'
+
+/** Ligne « Total général » en pied de tableau. */
+export const totalRow = 'border-t-2 bg-muted/60'
+
 /** Case montant : saisie + bouton détail côte à côte. */
 export const amountCell = 'flex items-center gap-0.5'
 
