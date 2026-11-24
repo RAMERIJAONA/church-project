@@ -1,10 +1,9 @@
 {
   "name": "church-manager",
-  "version": "1.0.0",
-  "description": "An Electron application with React and TypeScript",
+  "version": "0.1.0",
+  "description": "Logiciel de gestion pour une église (desktop, offline)",
   "main": "./out/main/index.js",
-  "author": "example.com",
-  "homepage": "https://electron-vite.org",
+  "author": "Church Manager",
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint --cache .",
@@ -14,17 +13,21 @@
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
     "build": "npm run typecheck && electron-vite build",
-    "postinstall": "install-electron && electron-builder install-app-deps",
+    "postinstall": "install-electron",
     "build:unpack": "npm run build && electron-builder --dir",
     "build:win": "npm run build && electron-builder --win",
     "build:mac": "electron-vite build && electron-builder --mac",
     "build:linux": "electron-vite build && electron-builder --linux",
     "test": "cross-env ELECTRON_RUN_AS_NODE=1 electron ./node_modules/vitest/vitest.mjs run",
     "test:watch": "cross-env ELECTRON_RUN_AS_NODE=1 electron ./node_modules/vitest/vitest.mjs",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "db:generate": "drizzle-kit generate",
+    "db:check": "drizzle-kit check"
   },
   "dependencies": {
-    "@electron-toolkit/utils": "^4.0.0",
+    "better-sqlite3": "^13.2.0",
+    "drizzle-orm": "^0.45.4",
+    "electron-log": "^5.4.4",
     "zod": "^4.6.7"
   },
   "devDependencies": {
@@ -36,6 +39,7 @@
     "@tanstack/react-query": "^5.108.4",
     "@tanstack/react-table": "^9.3.1",
     "@tanstack/react-virtual": "^3.14.28",
+    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^24.19.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
@@ -44,6 +48,7 @@
     "class-variance-authority": "^0.7.1",
     "cn": "^0.5.2",
     "cross-env": "^10.1.0",
+    "drizzle-kit": "^0.31.11",
     "electron": "^44.7.2",
     "electron-builder": "^26.15.3",
     "electron-vite": "^6.0.0",
@@ -66,5 +71,6 @@
     "typescript": "^5.9.3",
     "vite": "^8.3.4",
     "vitest": "^5.1.1"
-  }
+  },
+  "productName": "Church Manager"
 }

@@ -377,10 +377,12 @@ export async function invoke<C extends Channel>(channel: C, input: IpcInput<C>):
 
 - Fichier DB : `app.getPath('userData')/data.db` (= `%APPDATA%\<productName>\`). **Jamais** dans le dossier d'installation.
 - Pragmas à l'ouverture : `journal_mode = WAL`, `foreign_keys = ON`, `synchronous = NORMAL`, `busy_timeout = 5000`.
-- Migrations : `drizzle-kit generate` → SQL dans `drizzle/`, appliquées au démarrage. En prod : `process.resourcesPath/drizzle` (via `extraResources`).
+- Migrations : `npm run db:generate` (`drizzle-kit generate`) → SQL dans `drizzle/`, appliquées au démarrage. En prod : `process.resourcesPath/drizzle` (via `extraResources`).
+  - Drizzle **0.45 stable** (pas la 1.0 beta). Le migrator better-sqlite3 est synchrone et applique toutes les migrations en attente dans **une seule transaction** ; suivi dans `__drizzle_migrations` (`created_at` = horodatage du journal).
+  - `PRAGMA foreign_keys` est sans effet dans une transaction : `runMigrations()` lance `PRAGMA foreign_key_check` après coup et échoue s'il y a des orphelins.
   - **Une migration publiée n'est JAMAIS modifiée.** Correction = nouvelle migration.
   - Toute migration est couverte par le test de non-régression des données (§9.4).
-- Montants : **entiers** dans la plus petite unité (pas de float). Dates : une seule convention pour tout le projet (ISO 8601 TEXT ou timestamp INTEGER).
+- Montants : **entiers** dans la plus petite unité (pas de float). Dates : **TEXT ISO 8601 en UTC** (`2026-11-24T10:00:00.000Z`), produites par l'horloge injectée ; affichage en heure locale via `Intl` (`fr-FR`).
 - Soft delete (`deleted_at`) pour les entités référencées (clients, produits).
 - **Sauvegardes** :
   - auto au démarrage si la dernière a plus de 24 h → `Documents/<App>/Sauvegardes/`, rotation sur 14, via `sqlite.backup()` (safe en WAL) ;
@@ -419,7 +421,7 @@ export async function invoke<C extends Channel>(channel: C, input: IpcInput<C>):
 
 ### 9.2 Configuration Vitest
 - Un seul `vitest.config.ts` avec `test.projects` : `shared` (env node), `main` (env node), `renderer` (env jsdom).
-- ⚠️ better-sqlite3 est compilé pour l'ABI d'Electron → lancer Vitest **via Electron** :
+- Vitest est lancé **via Electron** (même Node/V8 qu'en prod). better-sqlite3 ≥ 12 est en N-API avec binaires précompilés (`prebuilds/<os>-<arch>.node`) : plus de problème d'ABI, mais on garde la parité d'exécution :
   `"test": "cross-env ELECTRON_RUN_AS_NODE=1 electron ./node_modules/vitest/vitest.mjs run"`
 - Tests d'intégration : `createTestDb()` = SQLite `:memory:` + **toutes les migrations réelles appliquées** (jamais un schéma recréé à la main).
 - Couverture (seuils bloquants en CI) : `shared/domain` ≥ 90 %, `main/services` ≥ 80 %. Pas de seuil sur l'UI (on teste les comportements, pas les lignes).
@@ -467,7 +469,7 @@ Les utilisateurs mettent à jour une DB existante, pas une DB neuve. Donc :
 
 ### Local (Mac)
 - `npm run dev` → dev quotidien.
-- better-sqlite3 est natif : le `postinstall` (`electron-builder install-app-deps`) le recompile pour l'Electron local. Après chaque upgrade d'Electron : `npm run postinstall`.
+- better-sqlite3 est natif mais livré précompilé en N-API (indépendant de la version d'Electron) : **aucune recompilation**. Le `postinstall` se limite à `install-electron` (téléchargement du binaire Electron, script d'install bloqué par défaut par npm 11). `electron-builder install-app-deps` a été retiré : il lançait une compilation node-gyp inutile.
 - **Ne pas compter sur un build Windows depuis le Mac** (module natif + NSIS/Wine = fragile). Le `.exe` officiel sort de la CI.
 
 ### CI — `.github/workflows/ci.yml`
@@ -554,7 +556,7 @@ nsis:
 
 - [ ] **Version de Windows sur le PC cible** (`winver`) + **32 ou 64 bits**
   - Windows 10/11 64 bits → stack telle quelle
-  - Windows 10 32 bits → même stack, build `ia32`
+  - Windows 10 32 bits → build `ia32`, **mais better-sqlite3 ne fournit pas de binaire `win32-ia32`** : il faudra le compiler en CI (node-gyp, `--arch=ia32`) ou figer une version qui en fournit un
   - **Windows 7/8** → figer **Electron 22** (dernière version compatible) **et** passer à **Tailwind v3** (v4 nécessite un Chromium plus récent)
 - [ ] Domaine métier exact + liste des entités v1
 - [ ] Besoin d'impression (A4 ? ticket thermique ?)
