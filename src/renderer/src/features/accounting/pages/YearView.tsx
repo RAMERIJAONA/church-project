@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@renderer/components/ui/button'
 import { getErrorMessage } from '@renderer/lib/error-messages'
+import { printPage } from '@renderer/lib/print'
 import { countDescendants } from '@shared/domain/accounting/accounting.tree'
 import { defaultOperationDate } from '@shared/domain/accounting/accounting.periods'
 import { MAX_YEAR } from '@shared/domain/accounting/accounting.types'
@@ -11,6 +12,7 @@ import { AccountingToolbar } from '../components/AccountingToolbar'
 import { ConfirmDeleteDialog, type DeleteTarget } from '../components/ConfirmDeleteDialog'
 import { EntriesDialog } from '../components/EntriesDialog'
 import { NewSectionForm, type NewRootInput } from '../components/NewSectionForm'
+import { PrintHeader } from '../components/PrintHeader'
 import { SheetActionsProvider, type SheetActions } from '../components/sheet-actions'
 import { YearStepper } from '../components/YearStepper'
 import {
@@ -151,17 +153,21 @@ export function YearView({
         view="year"
         onViewChange={onViewChange}
         navigation={<YearStepper year={year} currentYear={currentYear} onChange={onYearChange} />}
+        onPrint={() => void printPage().catch(onError)}
         onNewSection={() => setCreating(true)}
         creating={creating}
       />
+      <PrintHeader title={`Année ${shownYear}`} printedAt={new Date()} />
 
       {creating && (
-        <NewSectionForm
-          roots={items}
-          busy={createItem.isPending}
-          onSubmit={submitRoot}
-          onCancel={() => setCreating(false)}
-        />
+        <div data-print="hide">
+          <NewSectionForm
+            roots={items}
+            busy={createItem.isPending}
+            onSubmit={submitRoot}
+            onCancel={() => setCreating(false)}
+          />
+        </div>
       )}
 
       {sheet.isPending && <p className="text-sm text-muted-foreground">Chargement…</p>}

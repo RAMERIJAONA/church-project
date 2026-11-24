@@ -1,4 +1,5 @@
-import { useRef, useState } from 'react'
+import { useId, useRef, useState } from 'react'
+import { DateField } from '@renderer/components/common/DateField'
 import { Button } from '@renderer/components/ui/button'
 import { Input } from '@renderer/components/ui/input'
 import { getMoneyInputProps } from '@renderer/lib/money-input'
@@ -37,6 +38,7 @@ export function EntryForm({
 }: EntryFormProps): React.JSX.Element {
   const [label, setLabel] = useState(initial?.label ?? '')
   const [amount, setAmount] = useState(initial ? formatAmount(initial.amount) : '')
+  const dateLabelId = useId()
   const [operatedOn, setOperatedOn] = useState(initial?.operatedOn ?? dates?.initial ?? '')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -91,19 +93,19 @@ export function EntryForm({
     <div className="flex flex-col gap-1.5">
       <div className="flex items-center gap-2">
         {dates && (
-          <Input
-            type="date"
-            aria-label={`Date ${target}`}
-            title="Date de l’opération"
-            className="w-40"
-            min={dates.min}
-            max={dates.max}
-            required
-            value={operatedOn}
-            disabled={disabled}
-            onChange={(e) => setOperatedOn(e.currentTarget.value)}
-            onKeyDown={onKeyDown}
-          />
+          <>
+            <span id={dateLabelId} className="sr-only">
+              Date {target}
+            </span>
+            <DateField
+              labelId={dateLabelId}
+              value={operatedOn}
+              min={dates.min}
+              max={dates.max}
+              disabled={disabled}
+              onChange={setOperatedOn}
+            />
+          </>
         )}
         <Input
           ref={labelRef}

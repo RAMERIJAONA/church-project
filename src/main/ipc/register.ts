@@ -2,7 +2,7 @@ import type { AccountingService } from '@main/services/accounting.service'
 import type { Logger } from '@main/logging/logger'
 import type { MaintenanceService } from '@main/services/maintenance.service'
 import type { SettingsService } from '@main/services/settings.service'
-import type { AppInfoDTO } from '@shared/ipc/contract'
+import type { AppInfoDTO, PrintResultDTO } from '@shared/ipc/contract'
 import type { IpcMain } from 'electron'
 import { registerAccountingIpc } from './accounting.ipc'
 import { registerAppIpc } from './app.ipc'
@@ -12,6 +12,8 @@ import { registerSettingsIpc } from './settings.ipc'
 
 export interface IpcServices {
   appInfo: AppInfoDTO
+  /** Imprime la fenêtre (adapter Electron injecté par main/index.ts) */
+  print: () => Promise<PrintResultDTO['status']>
   settings: SettingsService
   maintenance: MaintenanceService
   accounting: AccountingService
@@ -24,7 +26,7 @@ export function registerIpc(
   services: IpcServices
 ): void {
   const handle = createHandle(ipcMain, logger.child({ module: 'ipc' }))
-  registerAppIpc(handle, services.appInfo)
+  registerAppIpc(handle, services.appInfo, services.print)
   registerSettingsIpc(handle, services.settings)
   registerMaintenanceIpc(handle, services.maintenance)
   registerAccountingIpc(handle, services.accounting)

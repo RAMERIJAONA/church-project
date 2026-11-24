@@ -43,6 +43,7 @@ export function AmountCell({
           size="icon-sm"
           title={cell.detailed ? `Détail (${cell.entryCount} saisies)` : 'Détailler ce montant'}
           aria-label={`Détail : ${label}`}
+          data-print="hide"
           disabled={disabled}
           className="shrink-0 text-muted-foreground"
           onClick={onOpenDetail}

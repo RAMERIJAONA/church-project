@@ -1,18 +1,33 @@
-/* Impression (reçus, attestations, listes). Chargé avec media="print". */
+/* Impression (tableaux de comptabilité, reçus, listes). Chargé avec media="print". */
 @page {
   size: A4;
-  margin: 15mm;
+  margin: 12mm;
 }
 
 @media print {
+  /* Toujours noir sur blanc, quel que soit le thème : les tokens d'écran sont remappés */
+  :root,
+  :root[data-theme] {
+    --background: var(--print-background);
+    --foreground: var(--print-foreground);
+    --card: var(--print-background);
+    --card-foreground: var(--print-foreground);
+    --muted: var(--print-muted);
+    --muted-foreground: var(--print-muted-foreground);
+    --accent: var(--print-muted);
+    --accent-foreground: var(--print-foreground);
+    --primary: var(--print-foreground);
+    --border: var(--print-border);
+    --input: var(--print-border);
+  }
   html {
-    font-size: 11pt;
+    font-size: 10pt;
   }
   body {
     background: var(--print-background);
     color: var(--print-foreground);
   }
-  /* Masquer la coque de l'application */
+  /* Masquer la coque de l'application et tout ce qui sert à saisir */
   [data-print='hide'],
   nav,
   aside,
@@ -22,9 +37,52 @@
   [data-print='only'] {
     display: block !important;
   }
+
+  /* Tableaux : largeurs calculées sur le contenu, en-tête et total répétés à chaque page */
   table {
     border-collapse: collapse;
     width: 100%;
+    table-layout: auto !important;
+  }
+  col {
+    width: auto !important;
+  }
+  thead {
+    display: table-header-group;
+  }
+  tfoot {
+    display: table-footer-group;
+  }
+  th,
+  td {
+    border: 1px solid var(--print-border);
+    padding: 2pt 5pt !important;
+  }
+  thead th {
+    position: static !important;
+    background: var(--print-muted) !important;
+  }
+  tr[data-row='root'],
+  tfoot tr {
+    background: var(--print-muted) !important;
+  }
+  tr[data-row='leaf'],
+  tr[data-row='group'] {
+    background: transparent !important;
+  }
+  /* Champs et boutons du tableau : seulement leur texte */
+  td input,
+  td button {
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    height: auto !important;
+    color: inherit !important;
+  }
+  /* Cadre arrondi de l'écran */
+  .rounded-xl {
+    border-radius: 0 !important;
   }
   tr,
   img {

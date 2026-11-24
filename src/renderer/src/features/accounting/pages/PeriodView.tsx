@@ -1,10 +1,13 @@
 import { useMemo } from 'react'
 import { Button } from '@renderer/components/ui/button'
+import { toast } from 'sonner'
 import { getErrorMessage } from '@renderer/lib/error-messages'
+import { printPage } from '@renderer/lib/print'
 import type { DateRange } from '@shared/domain/accounting/accounting.periods'
 import type { AccountingView } from '../accounting.utils'
 import { AccountingToolbar } from '../components/AccountingToolbar'
 import { PeriodSheet } from '../components/PeriodSheet'
+import { PrintHeader } from '../components/PrintHeader'
 import { useAccountingSheet, usePeriodTotals } from '../queries'
 
 export interface PeriodViewProps {
@@ -40,8 +43,14 @@ export function PeriodView({
   const items = sheet.data?.items ?? []
   return (
     <div className="flex flex-col gap-5">
-      <AccountingToolbar view={view} onViewChange={onViewChange} navigation={navigation} />
-      <p className="text-sm text-muted-foreground">
+      <AccountingToolbar
+        view={view}
+        onViewChange={onViewChange}
+        navigation={navigation}
+        onPrint={() => void printPage().catch((err: unknown) => toast.error(getErrorMessage(err)))}
+      />
+      <PrintHeader title={`Réalisations : ${label}`} printedAt={new Date()} />
+      <p data-print="hide" className="text-sm text-muted-foreground">
         Somme des réalisations par date d’opération. Pour saisir ou modifier, passez en vue Année.
       </p>
 

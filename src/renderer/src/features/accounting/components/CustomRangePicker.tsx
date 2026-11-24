@@ -1,6 +1,5 @@
-import { Input } from '@renderer/components/ui/input'
-import { Label } from '@renderer/components/ui/label'
-import { isCalendarDate, type DateRange } from '@shared/domain/accounting/accounting.periods'
+import { DateField } from '@renderer/components/common/DateField'
+import type { DateRange } from '@shared/domain/accounting/accounting.periods'
 
 export interface CustomRangePickerProps {
   range: DateRange
@@ -8,32 +7,27 @@ export interface CustomRangePickerProps {
 }
 
 /**
- * Période personnalisée : « Du » et « Au » avec le calendrier natif de Chromium (aucune
- * dépendance). Les dates restent dans l'ordre : choisir un début après la fin déplace la fin.
+ * Période personnalisée : « Du » et « Au », chacun avec le calendrier en français. Les dates
+ * restent dans l'ordre : choisir un début après la fin déplace la fin (et inversement).
  */
 export function CustomRangePicker({ range, onChange }: CustomRangePickerProps): React.JSX.Element {
-  const change = (bound: 'from' | 'to', value: string): void => {
-    if (!isCalendarDate(value)) return
-    if (bound === 'from') onChange({ from: value, to: value > range.to ? value : range.to })
-    else onChange({ from: value < range.from ? value : range.from, to: value })
-  }
   return (
     <div role="group" aria-label="Période personnalisée" className="flex items-center gap-2">
-      <Label htmlFor="range-from">Du</Label>
-      <Input
-        id="range-from"
-        type="date"
-        className="w-40"
+      <span id="range-from-label" className="text-sm font-medium">
+        Du
+      </span>
+      <DateField
+        labelId="range-from-label"
         value={range.from}
-        onChange={(e) => change('from', e.currentTarget.value)}
+        onChange={(from) => onChange({ from, to: from > range.to ? from : range.to })}
       />
-      <Label htmlFor="range-to">Au</Label>
-      <Input
-        id="range-to"
-        type="date"
-        className="w-40"
+      <span id="range-to-label" className="text-sm font-medium">
+        Au
+      </span>
+      <DateField
+        labelId="range-to-label"
         value={range.to}
-        onChange={(e) => change('to', e.currentTarget.value)}
+        onChange={(to) => onChange({ from: to < range.from ? to : range.from, to })}
       />
     </div>
   )

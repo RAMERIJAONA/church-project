@@ -16,6 +16,24 @@ const newChild = (w: Page, code: string): Locator =>
     exact: true
   })
 
+/** Choisit une date dans le calendrier du champ « Du » ou « Au ». */
+async function pickDate(w: Page, field: 'Du' | 'Au', date: string): Promise<void> {
+  await w.getByRole('button', { name: new RegExp(`^${field} `) }).click()
+  const calendar = w.getByRole('dialog', { name: 'Choisir une date' })
+  const [y = 0, m = 1, d = 1] = date.split('-').map(Number)
+  await calendar.getByLabel('Année', { exact: true }).selectOption(String(y))
+  await calendar.getByLabel('Mois', { exact: true }).selectOption(String(m - 1))
+  const name = new Intl.DateTimeFormat('fr-FR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC'
+  }).format(new Date(Date.UTC(y, m - 1, d)))
+  await calendar.getByRole('button', { name, exact: true }).click()
+  await expect(calendar).toHaveCount(0) // fin de l'animation de fermeture
+}
+
 /** Ajoute des sous-rubriques à la suite (le formulaire reste ouvert), puis le ferme. */
 async function addChildren(w: Page, parent: string, items: Array<[string, string]>): Promise<void> {
   await w
@@ -115,15 +133,24 @@ test('@smoke comptabilité : arborescence, 3 colonnes, détail, persistés aprè
     await expect(row(w, 'A1-I-1')).toContainText(/420\s000/)
     // Période personnalisée : Du / Au avec le calendrier natif
     await view('Personnalisé').click()
-    await w.getByLabel('Du', { exact: true }).fill(`${Y}-01-01`)
-    await w.getByLabel('Au', { exact: true }).fill(TODAY)
+    await pickDate(w, 'Du', `${Y}-01-01`)
+    await pickDate(w, 'Au', TODAY)
     await expect(row(w, 'Total')).toContainText(/770\s000/)
-    await w.getByLabel('Du', { exact: true }).fill(YESTERDAY)
-    await w.getByLabel('Au', { exact: true }).fill(YESTERDAY)
+    await pickDate(w, 'Du', YESTERDAY) // l'autre borne suit si besoin
+    await pickDate(w, 'Au', YESTERDAY)
     await expect(w.getByText('Aucune réalisation sur cette période.')).toBeVisible()
 
     await view('Année').click()
     await expect(cell(w, `Réalisation ${Y} de A1-I-1`)).toHaveValue(/^420\s000$/)
+
+    // Impression : seul le tableau et son en-tête s'impriment
+    await expect(w.getByRole('button', { name: 'Imprimer' })).toBeVisible()
+    await w.emulateMedia({ media: 'print' })
+    await expect(w.getByRole('button', { name: 'Imprimer' })).toBeHidden()
+    await expect(w.getByRole('heading', { name: /: comptabilité$/ })).toBeVisible()
+    await expect(w.getByRole('button', { name: 'Supprimer A1', exact: true })).toBeHidden()
+    await expect(row(w, 'Total général')).toContainText(/770\s000/)
+    await w.emulateMedia({ media: 'screen' })
 
     // Une rubrique qui a des montants ne reçoit pas de sous-rubrique
     await expect(

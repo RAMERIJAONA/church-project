@@ -6,6 +6,7 @@ import { join } from 'node:path'
 import { electronDialog } from '@main/adapters/dialog.adapter'
 import { electronSystem } from '@main/adapters/system.adapter'
 import { createContainer, type Container } from '@main/container'
+import { electronPrint } from '@main/adapters/print.adapter'
 import { registerIpc } from '@main/ipc/register'
 import { createElectronLogSink } from '@main/logging/electron-log.sink'
 import { createLogger } from '@main/logging/logger'
@@ -155,6 +156,7 @@ async function start(): Promise<void> {
 
   registerIpc(ipcMain, logger, {
     appInfo: { name: app.getName(), version: app.getVersion(), isDebug },
+    print: () => electronPrint.printWindow(),
     settings: services.settings,
     maintenance: services.maintenance,
     accounting: services.accounting

@@ -44,7 +44,7 @@ export function AccountingSheet({
           {AMOUNT_COLUMNS.map((c) => (
             <col key={c} className={col.amount} />
           ))}
-          <col className={col.actions} />
+          <col data-print="hide" className={col.actions} />
         </colgroup>
         <thead>
           <tr>
@@ -59,7 +59,7 @@ export function AccountingSheet({
                 {columnLabel(year, c)}
               </th>
             ))}
-            <th scope="col" className={headCell()}>
+            <th scope="col" data-print="hide" className={headCell()}>
               <span className="sr-only">Actions</span>
             </th>
           </tr>
@@ -90,7 +90,7 @@ export function AccountingSheet({
                 </td>
               )
             })}
-            <td />
+            <td data-print="hide" />
           </tr>
         </tfoot>
       </table>

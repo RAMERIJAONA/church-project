@@ -102,3 +102,15 @@ export function periodLabel(kind: PeriodKind, range: DateRange): string {
   if (kind === 'month') return capitalize(monthYear.format(toUtc(range.from)))
   return `Semaine ${rangeLabel(range).replace(/^Du /, 'du ')}`
 }
+
+/** Grille du mois de `anchor` pour un calendrier : semaines du lundi au dimanche (4 à 6). */
+export function monthGrid(anchor: string): string[][] {
+  const month = periodRange('month', anchor)
+  const weeks: string[][] = []
+  for (let start = periodRange('week', month.from).from; start <= month.to;) {
+    const week = Array.from({ length: 7 }, (_, i) => addDays(start, i))
+    weeks.push(week)
+    start = addDays(start, 7)
+  }
+  return weeks
+}

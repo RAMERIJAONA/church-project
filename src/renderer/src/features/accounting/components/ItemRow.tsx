@@ -40,7 +40,7 @@ export const ItemRow = memo(function ItemRow({
   const kind = item.level === 1 ? 'root' : item.amounts === null ? 'group' : 'leaf'
   const amounts = item.amounts
   return (
-    <tr className={sheetRow({ kind })}>
+    <tr data-row={kind} className={sheetRow({ kind })}>
       <th scope="row" className={codeCell({ kind })}>
         {item.code}
       </th>
@@ -74,7 +74,7 @@ export const ItemRow = memo(function ItemRow({
             onOpenDetail={() => actions.openDetail(item, col)}
           />
         ))}
-      <td className="px-2">
+      <td data-print="hide" className="px-2">
         <RowActions
           code={item.code}
           addChildBlockedReason={addChildBlockedReason(item)}

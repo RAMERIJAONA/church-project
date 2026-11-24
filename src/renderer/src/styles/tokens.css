@@ -62,6 +62,9 @@
   /* Impression : toujours noir sur blanc, quel que soit le thème */
   --print-background: oklch(1 0 0);
   --print-foreground: oklch(0 0 0);
+  --print-muted: oklch(0.95 0 0);
+  --print-muted-foreground: oklch(0.35 0 0);
+  --print-border: oklch(0.7 0 0);
 
   /* Fond de fenêtre avant le premier rendu : doit égaler --background (lu par main) */
   color-scheme: light;

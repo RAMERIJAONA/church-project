@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   defaultOperationDate,
   localDateOf,
+  monthGrid,
   periodLabel,
   periodRange,
   rangeLabel,
@@ -77,5 +78,27 @@ describe('période personnalisée', () => {
       'Du 1 septembre 2025 au 31 août 2026'
     )
     expect(rangeLabel({ from: '2026-11-24', to: '2026-11-24' })).toBe('Mardi 24 novembre 2026')
+  })
+})
+
+describe('calendrier', () => {
+  it('donne les semaines du mois, du lundi au dimanche, avec les jours voisins', () => {
+    const grid = monthGrid('2026-11-24')
+    expect(grid[0]).toEqual([
+      '2026-10-26',
+      '2026-10-27',
+      '2026-10-28',
+      '2026-10-29',
+      '2026-10-30',
+      '2026-10-31',
+      '2026-11-01'
+    ])
+    expect(grid.at(-1)?.at(-1)).toBe('2026-12-06')
+    expect(grid).toHaveLength(6)
+    expect(grid.every((week) => week.length === 7)).toBe(true)
+  })
+
+  it('commence au lundi même quand le mois commence un lundi', () => {
+    expect(monthGrid('2027-02-10')[0]?.[0]).toBe('2027-02-01')
   })
 })

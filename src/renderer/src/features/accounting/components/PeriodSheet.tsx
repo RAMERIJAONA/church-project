@@ -65,7 +65,7 @@ export function PeriodSheet({ label, items, totals }: PeriodSheetProps): React.J
               const kind = item.level === 1 ? 'root' : item.amounts === null ? 'group' : 'leaf'
               const total = sums.byItem.get(item.id) ?? null
               return (
-                <tr key={item.id} className={sheetRow({ kind })}>
+                <tr key={item.id} data-row={kind} className={sheetRow({ kind })}>
                   <th scope="row" className={codeCell({ kind })}>
                     {item.code}
                   </th>

@@ -16,6 +16,7 @@ export const CHANNELS = [
   'accounting.periodTotals',
   'app.info',
   'app.openLogsFolder',
+  'app.print',
   'backup.list',
   'backup.create',
   'backup.export',

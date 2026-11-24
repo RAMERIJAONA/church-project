@@ -450,7 +450,7 @@ export async function invoke<C extends Channel>(channel: C, input: IpcInput<C>):
    - [ ] Imprimer / générer le PDF d'une facture
    - [x] Sauvegarde manuelle → restauration → données identiques (`tests/e2e/backup.spec.ts`)
    - [x] Changer le thème → persisté après redémarrage (`tests/e2e/theme.spec.ts`)
-   - [x] Comptabilité : arborescence 4 niveaux → 3 colonnes de montants → détail des saisies → totaux → vues mois/semaine/jour/personnalisée → suppression/renumérotation → persisté (`tests/e2e/accounting.spec.ts`)
+   - [x] Comptabilité : arborescence 4 niveaux → 3 colonnes de montants → détail des saisies → totaux → vues mois/semaine/jour/personnalisée (calendrier) → rendu imprimé → suppression/renumérotation → persisté (`tests/e2e/accounting.spec.ts`)
 4. **Aucun test supprimé ou désactivé** (`.skip`) sans justification écrite dans la PR.
 5. Un test qui échoue de façon aléatoire (flaky) se corrige en priorité, il ne se relance pas en boucle.
 
@@ -479,7 +479,7 @@ Les utilisateurs mettent à jour une DB existante, pas une DB neuve. Donc :
 - `webPreferences` : `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`. CSP stricte dans `index.html`.
 - Menu natif minimal (aucun sous Windows, Édition sur macOS), DevTools désactivés en prod (sauf `--debug`, F12). Navigation hors de l'app bloquée (`will-navigate`), liens externes ouverts dans le navigateur.
 - `process.on('uncaughtException')` côté main → log + dialog ; Error Boundaries côté renderer.
-- Impression / PDF : `webContents.print()` / `printToPDF()` via `adapters/print.adapter.ts`.
+- Impression / PDF : `webContents.print()` via `adapters/print.adapter.ts` (canal `app.print`, boîte de dialogue système : imprimante ou « Microsoft Print to PDF »). Mise en page dans `styles/print.css` : `data-print="hide"` (ne s'imprime pas), `data-print="only"` (imprimé seulement), tokens remappés en noir sur blanc quel que soit le thème, en-tête et total de tableau répétés à chaque page.
 
 ## 11. Build & distribution
 
@@ -630,7 +630,9 @@ UI en français d'abord ; les termes malgaches sont gardés en glossaire (traduc
   - **Date d'opération** (`operated_on`, « AAAA-MM-JJ », date du calendrier sans fuseau) : obligatoire pour une réalisation et dans l'année de la case, absente pour une estimation (annuelle). Contrôlée par `operationDateError` (service, `VALIDATION`) et par un CHECK SQL. Par défaut : aujourd'hui ramené dans l'année (`defaultOperationDate` : 31 décembre pour une année passée, 1er janvier pour une année future). Un total direct garde sa date quand on le modifie.
   - Case **simple** (0 saisie, ou 1 sans libellé) : saisie directe dans le tableau ; modifier garde la date de création ; vider = suppression douce.
   - Case **détaillée** (libellé ou ≥ 2 saisies) : total en lecture seule ; modifications dans le panneau de détail (libellé, montant, date et heure de création et de modification ; ajout, modification, suppression confirmée).
-- **Vues** (`?vue=` dans l'URL) : **Année** (3 colonnes, modifiable) ; **Mois**, **Semaine** (lundi au dimanche), **Jour** : même arbre, une colonne « Réalisations » = somme des réalisations dont la date d'opération tombe dans la période (`accounting.periodTotals`, `accounting.periods.ts`), lecture seule, navigation précédente / suivante. **Personnalisé** : champs Du / Au (calendrier natif de Chromium, aucune dépendance), période de n'importe quelle durée, l'autre borne suit si l'ordre est inversé.
+- **Vues** (`?vue=` dans l'URL) : **Année** (3 colonnes, modifiable) ; **Mois**, **Semaine** (lundi au dimanche), **Jour** : même arbre, une colonne « Réalisations » = somme des réalisations dont la date d'opération tombe dans la période (`accounting.periodTotals`, `accounting.periods.ts`), lecture seule, navigation précédente / suivante. **Personnalisé** : champs Du / Au, période de n'importe quelle durée, l'autre borne suit si l'ordre est inversé.
+- **Calendrier** (champs Du / Au, date d'opération) : composant maison `components/common/DateField.tsx` + `Calendar.tsx` (Popover Radix, grille `monthGrid`), en français, semaines du lundi au dimanche, mois / année en listes, clavier (flèches, Page préc. / suiv., Entrée), bornes min / max. Pas de bibliothèque de calendrier (refusée à l'installation, et non nécessaire).
+- **Impression** : bouton « Imprimer » dans chaque vue ; imprime le tableau affiché (rubriques, montants, sous-totaux, total) sous un en-tête « <église> : comptabilité · <vue> · Imprimé le … », sans la barre d'outils, les actions, les boutons de détail ni les formulaires.
 - Saisie des montants : toujours groupés par 3 avec une espace insécable de largeur normale (`2 000 000`, U+00A0, `formatAmount`), **y compris pendant la frappe** (`lib/money-input.ts`) : seuls les chiffres sont acceptés, le curseur reste en place, Retour arrière sur une espace efface le chiffre voisin. Entrée = enregistre et passe à la case suivante.
 - Suppression douce (`deleted_at`) ; supprimer un élément supprime toute sa descendance. Confirmation obligatoire dans l'UI.
 - Migration `0002` (SQL de reprise écrit à la main dans le fichier généré) : anciennes rubriques → niveau 1, anciennes lignes → niveau 2, anciens montants → saisies « réalisation » sans libellé. Migration `0003` : date d'opération des réalisations existantes = date de saisie si elle tombe dans l'année de la case, sinon 31 décembre.

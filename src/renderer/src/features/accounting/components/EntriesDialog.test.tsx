@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import type { EntryDTO } from '@shared/domain/accounting/accounting.types'
@@ -72,19 +72,30 @@ describe('EntriesDialog', () => {
     expect(onAdd).toHaveBeenCalledWith(250000, 'Kojakoja', '2026-11-24')
   })
 
-  it('choisit la date d’opération d’une réalisation', async () => {
+  it('choisit la date d’opération d’une réalisation dans le calendrier', async () => {
     const { onAdd } = setup()
-    const date = screen.getByLabelText<HTMLInputElement>('Date de la nouvelle saisie')
-    expect(date.value).toBe('2026-11-24')
-    expect([date.min, date.max]).toEqual(['2026-01-01', '2026-12-31'])
-    fireEvent.change(date, { target: { value: '2026-03-15' } })
+    const date = screen.getByRole('button', { name: /^Date de la nouvelle saisie/ })
+    expect(date.textContent).toContain('24 nov. 2026')
+    await userEvent.click(date)
+    const calendar = screen.getByRole('dialog', { name: 'Choisir une date' })
+    // Hors de l'année de la case : impossible
+    await userEvent.selectOptions(within(calendar).getByLabelText('Mois'), '0')
+    expect(within(calendar).getByLabelText<HTMLSelectElement>('Année').value).toBe('2026')
+    expect(
+      Array.from(within(calendar).getByLabelText<HTMLSelectElement>('Année').options).map(
+        (o) => o.value
+      )
+    ).toEqual(['2026'])
+    await userEvent.selectOptions(within(calendar).getByLabelText('Mois'), '2')
+    await userEvent.click(within(calendar).getByRole('button', { name: 'dimanche 15 mars 2026' }))
+    expect(date.textContent).toContain('15 mars 2026')
     await userEvent.type(screen.getByLabelText('Montant de la nouvelle saisie'), '1000{Enter}')
     expect(onAdd).toHaveBeenCalledWith(1000, null, '2026-03-15')
   })
 
   it('n’a pas de date pour une estimation', async () => {
     const { onAdd } = setup({ dates: null })
-    expect(screen.queryByLabelText('Date de la nouvelle saisie')).toBeNull()
+    expect(screen.queryByRole('button', { name: /^Date de la nouvelle saisie/ })).toBeNull()
     await userEvent.type(screen.getByLabelText('Montant de la nouvelle saisie'), '1000{Enter}')
     expect(onAdd).toHaveBeenCalledWith(1000, null, null)
   })

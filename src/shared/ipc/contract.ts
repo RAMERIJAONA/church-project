@@ -37,6 +37,7 @@ export const ipcInputs = {
   'accounting.periodTotals': periodTotalsInputSchema,
   'app.info': z.undefined(),
   'app.openLogsFolder': z.undefined(),
+  'app.print': z.undefined(),
   'backup.list': z.undefined(),
   'backup.create': z.undefined(),
   'backup.export': z.undefined(),
@@ -60,6 +61,11 @@ export interface BackupDTO {
   createdAt: string
 }
 
+/** `cancelled` : l'utilisateur a fermé la boîte de dialogue d'impression. */
+export interface PrintResultDTO {
+  status: 'printed' | 'cancelled'
+}
+
 export type ExportResultDTO = { status: 'saved'; path: string } | { status: 'cancelled' }
 export type RestoreResultDTO = { status: 'restarting' } | { status: 'cancelled' }
 
@@ -77,6 +83,7 @@ export interface IpcOutputs {
   'accounting.periodTotals': PeriodTotalDTO[]
   'app.info': AppInfoDTO
   'app.openLogsFolder': null
+  'app.print': PrintResultDTO
   'backup.list': BackupDTO[]
   'backup.create': BackupDTO
   'backup.export': ExportResultDTO
