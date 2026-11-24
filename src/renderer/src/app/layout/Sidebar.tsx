@@ -1,6 +1,7 @@
 import { Church } from 'lucide-react'
 import { NavLink } from 'react-router'
 import { useAppInfo } from '@renderer/lib/app-info.queries'
+import { APP_NAME, CHURCH_NAME } from '@shared/domain/identity'
 import { FOOTER_NAV, MAIN_NAV, type NavItem } from './nav-items'
 import { navLink } from './sidebar.styles'
 
@@ -27,9 +28,11 @@ export function Sidebar(): React.JSX.Element {
         <span className="flex size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
           <Church className="size-4.5" aria-hidden />
         </span>
-        <div className="leading-tight">
-          <p className="font-display text-base font-semibold">Church Manager</p>
-          <p className="text-xs text-muted-foreground">Gestion de l’église</p>
+        <div className="min-w-0 leading-tight">
+          <p className="font-display text-base font-semibold">{APP_NAME}</p>
+          <p className="truncate text-xs text-muted-foreground" title={CHURCH_NAME}>
+            {CHURCH_NAME}
+          </p>
         </div>
       </div>
 

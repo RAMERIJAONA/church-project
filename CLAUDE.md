@@ -8,7 +8,8 @@
 
 ## 1. Contexte produit
 
-- **Type** : logiciel de gestion pour une **église** (périmètre métier à préciser : membres, familles, offrandes/dîmes, événements…, cf. §14).
+- **Type** : logiciel de gestion pour l'église **FJKM Ambatondrazaka Fitiavana** (constante `CHURCH_NAME` dans `src/shared/domain/identity.ts`).
+- **Métier** : règles de gestion et fonctionnalités **fournies plus tard par le porteur du projet**. Ne rien inventer ni coder de métier avant de les avoir reçues (cf. §14).
 - **Nom** : « Church Manager » (`productName`), `appId` : `mg.church.manager` (modifiables plus tard).
 - **Utilisateur** : non-technique. Il double-clique sur un `.exe`, point. Zéro dépendance à installer, zéro config, zéro base externe.
 - **Mode** : 100 % offline, mono-poste, mono-utilisateur (pour l'instant).
