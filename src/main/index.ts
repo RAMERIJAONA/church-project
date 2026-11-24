@@ -1,9 +1,10 @@
 /**
  * Bootstrap du process main : chemins, logger, container, fenêtre. Aucune logique métier.
  */
-import { app, BrowserWindow, dialog, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { join } from 'node:path'
 import { createContainer, type Container } from '@main/container'
+import { registerIpc } from '@main/ipc/register'
 import { createElectronLogSink } from '@main/logging/electron-log.sink'
 import { createLogger } from '@main/logging/logger'
 
@@ -40,6 +41,21 @@ function createWindow(): BrowserWindow {
     logger.info({}, 'fenêtre affichée')
   })
 
+  // Erreurs du renderer → fichier de log (sinon invisibles sur le PC de l'utilisateur)
+  const wc = mainWindow.webContents
+  wc.on('preload-error', (_e, path, err) => logger.error({ path, err }, 'erreur du preload'))
+  wc.on('did-fail-load', (_e, code, description, url) =>
+    logger.error({ code, description, url }, 'échec de chargement du renderer')
+  )
+  wc.on('render-process-gone', (_e, details) =>
+    logger.error({ ...details }, 'process renderer arrêté')
+  )
+  wc.on('console-message', (event) => {
+    if (event.level === 'error') {
+      logger.error({ source: event.sourceId, line: event.lineNumber }, `renderer: ${event.message}`)
+    }
+  })
+
   // Liens externes : navigateur système, jamais dans l'app
   mainWindow.webContents.setWindowOpenHandler((details) => {
     void shell.openExternal(details.url)
@@ -68,6 +84,11 @@ async function start(): Promise<void> {
     },
     logger
   )
+
+  registerIpc(ipcMain, logger, {
+    appInfo: { name: app.getName(), version: app.getVersion(), isDebug: isDev },
+    settings: container.settings
+  })
 
   createWindow()
 

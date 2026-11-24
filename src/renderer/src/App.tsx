@@ -1,10 +1,13 @@
-import { Button } from '@renderer/components/ui/button'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { useState } from 'react'
+import { SettingsPage } from '@renderer/features/settings/pages/SettingsPage'
+import { createQueryClient } from '@renderer/lib/query-client'
 
 export function App(): React.JSX.Element {
+  const [queryClient] = useState(createQueryClient)
   return (
-    <main className="flex h-screen flex-col items-center justify-center gap-4">
-      <h1 className="text-2xl font-semibold">Church Manager</h1>
-      <Button>Bouton shadcn</Button>
-    </main>
+    <QueryClientProvider client={queryClient}>
+      <SettingsPage />
+    </QueryClientProvider>
   )
 }

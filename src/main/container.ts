@@ -9,6 +9,8 @@ import { createBackupService } from '@main/backup/backup.service'
 import { prepareDatabase } from '@main/db/bootstrap'
 import { openDatabase } from '@main/db/client'
 import type { Logger } from '@main/logging/logger'
+import { createSettingsRepository } from '@main/repositories/settings.repository'
+import { createSettingsService } from '@main/services/settings.service'
 
 export interface AppPaths {
   /** %APPDATA%\Church Manager (data.db, logs) */
@@ -44,9 +46,17 @@ export async function createContainer(paths: AppPaths, logger: Logger) {
     throw err
   }
 
+  const settings = createSettingsService({
+    db: handle.db,
+    settings: createSettingsRepository(),
+    clock: systemClock,
+    logger: logger.child({ module: 'settings' })
+  })
+
   return {
     handle,
     backup,
+    settings,
     dispose(): void {
       handle.sqlite.close()
     }

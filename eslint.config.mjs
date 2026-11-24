@@ -227,13 +227,15 @@ export default defineConfig(
       ]
     }
   },
-  // Factories (CLAUDE.md par. 5.1) : le type est inféré puis exporté via ReturnType<typeof createXxx>
+  // Factories (CLAUDE.md par. 5.1) et hooks TanStack Query : types inférés (ReturnType<typeof createXxx>)
   {
     files: [
       'src/main/**/*.service.ts',
       'src/main/**/*.repository.ts',
       'src/main/container.ts',
-      'tests/**'
+      'src/renderer/src/features/*/queries.ts',
+      'tests/**',
+      'src/**/*.test.{ts,tsx}'
     ],
     rules: { '@typescript-eslint/explicit-function-return-type': 'off' }
   },

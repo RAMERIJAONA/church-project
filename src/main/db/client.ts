@@ -4,6 +4,10 @@ import * as schema from './schema'
 
 export type Db = BetterSQLite3Database<typeof schema>
 export type Sqlite = Database.Database
+/** Transaction synchrone Drizzle (better-sqlite3). */
+export type Tx = Parameters<Parameters<Db['transaction']>[0]>[0]
+/** Les repositories acceptent la base ou une transaction en cours. */
+export type DbOrTx = Db | Tx
 
 export interface DbHandle {
   sqlite: Sqlite

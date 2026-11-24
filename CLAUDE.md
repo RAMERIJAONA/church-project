@@ -249,6 +249,10 @@ export type IpcInput<C extends Channel> = z.input<(typeof ipcInputs)[C]>   // c�
 export type IpcParsed<C extends Channel> = z.output<(typeof ipcInputs)[C]> // côté main
 ```
 
+> **Implémentation réelle (Phase 0)** : la liste des canaux vit dans `shared/ipc/channels.ts`, **sans zod**, car le preload sandboxé l'importe pour filtrer les canaux (et doit rester un bundle minimal). `contract.ts` vérifie à la compilation qu'il couvre exactement ces canaux. Les canaux sans entrée utilisent `z.undefined()` (`invoke('settings.get', undefined)`).
+> `handle.ts` expose `runHandler()` (testable sans Electron) et `createHandle(ipcMain, logger)` ; tous les canaux sont enregistrés dans `main/ipc/register.ts`, appelé par `main/index.ts`.
+> ESLint : `explicit-function-return-type` est désactivé pour les factories (`*.service.ts`, `*.repository.ts`, `container.ts`), les `queries.ts` et les tests, qui exportent des types inférés.
+
 ```ts
 // main/ipc/handle.ts — UN seul wrapper pour tous les handlers
 export function handle<C extends Channel>(

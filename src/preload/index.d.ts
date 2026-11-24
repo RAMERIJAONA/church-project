@@ -1,6 +1,8 @@
+import type { WindowApi } from './api'
+
 declare global {
   interface Window {
-    api: Record<string, never>
+    api: WindowApi
   }
 }
 
