@@ -7,6 +7,12 @@ export type { Channel } from './channels'
 
 export const ipcInputs = {
   'app.info': z.undefined(),
+  'app.openLogsFolder': z.undefined(),
+  'backup.list': z.undefined(),
+  'backup.create': z.undefined(),
+  'backup.export': z.undefined(),
+  'backup.restore': z.undefined(),
+  'backup.openFolder': z.undefined(),
   'settings.get': z.undefined(),
   'settings.update': appSettingsPatchSchema
 } satisfies Record<Channel, z.ZodType>
@@ -17,8 +23,25 @@ export interface AppInfoDTO {
   isDebug: boolean
 }
 
+export interface BackupDTO {
+  fileName: string
+  /** octets */
+  size: number
+  /** ISO 8601 UTC */
+  createdAt: string
+}
+
+export type ExportResultDTO = { status: 'saved'; path: string } | { status: 'cancelled' }
+export type RestoreResultDTO = { status: 'restarting' } | { status: 'cancelled' }
+
 export interface IpcOutputs {
   'app.info': AppInfoDTO
+  'app.openLogsFolder': null
+  'backup.list': BackupDTO[]
+  'backup.create': BackupDTO
+  'backup.export': ExportResultDTO
+  'backup.restore': RestoreResultDTO
+  'backup.openFolder': null
   'settings.get': AppSettings
   'settings.update': AppSettings
 }

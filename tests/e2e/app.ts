@@ -16,15 +16,23 @@ const ROOT = resolve(__dirname, '../..')
  * Lance l'app buildée (out/) avec un userData temporaire. `userData` peut être fourni pour
  * relancer sur les mêmes données (tests de persistance).
  */
-export async function launchApp(options: { userData?: string } = {}): Promise<LaunchedApp> {
-  const userData = options.userData ?? mkdtempSync(join(tmpdir(), 'church-e2e-'))
+export function appEnv(userData: string): Record<string, string> {
   const env: Record<string, string> = {}
   for (const [k, v] of Object.entries(process.env)) if (v !== undefined) env[k] = v
   delete env['ELECTRON_RENDERER_URL'] // force le chargement de out/renderer
   delete env['ELECTRON_RUN_AS_NODE']
   env['APP_USER_DATA'] = userData
+  return env
+}
 
-  const app = await electron.launch({ args: ['.'], cwd: ROOT, env })
+/** Lance l'app sans attendre de fenêtre (ex. 2e instance qui doit s'arrêter). */
+export function launchRaw(userData: string): Promise<ElectronApplication> {
+  return electron.launch({ args: ['.'], cwd: ROOT, env: appEnv(userData) })
+}
+
+export async function launchApp(options: { userData?: string } = {}): Promise<LaunchedApp> {
+  const userData = options.userData ?? mkdtempSync(join(tmpdir(), 'church-e2e-'))
+  const app = await launchRaw(userData)
   const window = await app.firstWindow()
   await window.waitForLoadState('domcontentloaded')
   return {

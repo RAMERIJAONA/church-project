@@ -375,7 +375,7 @@ export async function invoke<C extends Channel>(channel: C, input: IpcInput<C>):
 - Fenêtre : `show: false` + `ready-to-show` + `backgroundColor` du thème → pas de flash blanc
   - Implémenté : main lit `settings` avant de créer la fenêtre, passe `backgroundColor` (hex de `main/window-theme.ts`, seule exception justifiée aux valeurs brutes hors `tokens.css`) et les préférences dans l'URL ; `main.tsx` les applique sur `<html>` avant le premier rendu React.
 - Typo : polices système uniquement (Segoe UI pour le texte, Cambria pour les titres, livrées avec Windows) → zéro fichier de police à charger.
-- Option de secours (paramètre) : `app.disableHardwareAcceleration()` si les vieux drivers GPU causent des glitches
+- Option de secours si les vieux drivers GPU causent des glitches : lancer l'exe avec `--disable-gpu` (switch Chromium natif, à ajouter dans la cible du raccourci). Pas de réglage dans l'UI : il faudrait le lire avant `app.ready`, donc hors de la base.
 
 ---
 
@@ -393,7 +393,7 @@ export async function invoke<C extends Channel>(channel: C, input: IpcInput<C>):
 - **Sauvegardes** :
   - auto au démarrage si la dernière a plus de 24 h → `Documents/<App>/Sauvegardes/`, rotation sur 14, via `sqlite.backup()` (safe en WAL) ;
   - **sauvegarde automatique avant chaque migration** (la plus critique) ;
-  - export / restauration manuels depuis Paramètres (dialog natif) ; restauration = fermer la DB → remplacer → relancer.
+  - export / restauration manuels depuis Paramètres (dialog natif). Restauration (`maintenance.service.ts`) : contrôle du fichier (`integrity_check`, tables attendues, schéma pas plus récent que l'app) → confirmation native → sauvegarde `avant-restauration` des données actuelles → fermeture DB → copie vers `data.db.restore-tmp`, suppression `-wal`/`-shm`, renommage → redémarrage (les migrations s'appliquent ensuite si la sauvegarde est plus ancienne).
 
 ---
 
@@ -443,7 +443,7 @@ export async function invoke<C extends Channel>(channel: C, input: IpcInput<C>):
    - [ ] Créer un client → apparaît dans la liste → recherche le retrouve
    - [ ] Créer une vente → stock décrémenté → total correct
    - [ ] Imprimer / générer le PDF d'une facture
-   - [ ] Sauvegarde manuelle → restauration → données identiques
+   - [x] Sauvegarde manuelle → restauration → données identiques (`tests/e2e/backup.spec.ts`)
    - [x] Changer le thème → persisté après redémarrage (`tests/e2e/theme.spec.ts`)
 4. **Aucun test supprimé ou désactivé** (`.skip`) sans justification écrite dans la PR.
 5. Un test qui échoue de façon aléatoire (flaky) se corrige en priorité, il ne se relance pas en boucle.
@@ -471,7 +471,7 @@ Les utilisateurs mettent à jour une DB existante, pas une DB neuve. Donc :
 
 - `app.requestSingleInstanceLock()` : une seule instance (deux process sur la même DB = corruption possible). 2e lancement → focus de la fenêtre existante.
 - `webPreferences` : `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`. CSP stricte dans `index.html`.
-- Menu natif minimal, DevTools désactivés en prod (sauf `--debug`).
+- Menu natif minimal (aucun sous Windows, Édition sur macOS), DevTools désactivés en prod (sauf `--debug`, F12). Navigation hors de l'app bloquée (`will-navigate`), liens externes ouverts dans le navigateur.
 - `process.on('uncaughtException')` côté main → log + dialog ; Error Boundaries côté renderer.
 - Impression / PDF : `webContents.print()` / `printToPDF()` via `adapters/print.adapter.ts`.
 

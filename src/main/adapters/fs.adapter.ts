@@ -1,4 +1,12 @@
-import { existsSync, mkdirSync, readdirSync, rmSync, statSync } from 'node:fs'
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  renameSync,
+  rmSync,
+  statSync
+} from 'node:fs'
 import { join } from 'node:path'
 
 export interface FileEntry {
@@ -14,6 +22,9 @@ export interface FsAdapter {
   exists(path: string): boolean
   listFiles(dir: string): FileEntry[]
   remove(path: string): void
+  copyFile(from: string, to: string): void
+  /** Renommage atomique sur un même volume (remplace la cible). */
+  rename(from: string, to: string): void
 }
 
 export const nodeFs: FsAdapter = {
@@ -33,5 +44,11 @@ export const nodeFs: FsAdapter = {
   },
   remove: (path) => {
     rmSync(path, { force: true })
+  },
+  copyFile: (from, to) => {
+    copyFileSync(from, to)
+  },
+  rename: (from, to) => {
+    renameSync(from, to)
   }
 }

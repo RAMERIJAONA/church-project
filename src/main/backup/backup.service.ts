@@ -4,7 +4,7 @@ import type { FsAdapter } from '@main/adapters/fs.adapter'
 import type { Sqlite } from '@main/db/client'
 import type { Logger } from '@main/logging/logger'
 
-export type BackupReason = 'auto' | 'avant-migration' | 'manuel'
+export type BackupReason = 'auto' | 'avant-migration' | 'avant-restauration' | 'manuel'
 
 export interface BackupInfo {
   fileName: string

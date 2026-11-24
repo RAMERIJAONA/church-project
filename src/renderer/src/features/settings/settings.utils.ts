@@ -17,3 +17,16 @@ export const FONT_SIZE_LABELS: Record<FontSize, string> = {
   normal: 'Normale',
   large: 'Grande'
 }
+
+const REASON_LABELS: Record<string, string> = {
+  auto: 'Automatique',
+  manuel: 'Manuelle',
+  'avant-migration': 'Avant mise à jour',
+  'avant-restauration': 'Avant restauration'
+}
+
+/** Raison lisible depuis le nom de fichier (`sauvegarde_<date>_<heure>_<raison>.db`). */
+export function backupReasonLabel(fileName: string): string {
+  const reason = /_([a-z-]+)\.db$/.exec(fileName)?.[1]
+  return (reason && REASON_LABELS[reason]) ?? 'Sauvegarde'
+}
