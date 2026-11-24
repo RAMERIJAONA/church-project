@@ -2,6 +2,10 @@ import { expect, test, type Locator, type Page } from '@playwright/test'
 import { launchApp, navLink, removeDir, type LaunchedApp } from './app'
 
 const Y = new Date().getFullYear()
+const localDate = (d: Date): string =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+const TODAY = localDate(new Date())
+const YESTERDAY = localDate(new Date(Date.now() - 86_400_000))
 
 const cell = (w: Page, name: string): Locator => w.getByRole('textbox', { name, exact: true })
 const row = (w: Page, code: string): Locator =>
@@ -109,6 +113,15 @@ test('@smoke comptabilité : arborescence, 3 colonnes, détail, persistés aprè
     await expect(row(w, 'A1-I-1')).not.toContainText(/420/)
     await w.getByRole('button', { name: 'Revenir à aujourd’hui' }).click()
     await expect(row(w, 'A1-I-1')).toContainText(/420\s000/)
+    // Période personnalisée : Du / Au avec le calendrier natif
+    await view('Personnalisé').click()
+    await w.getByLabel('Du', { exact: true }).fill(`${Y}-01-01`)
+    await w.getByLabel('Au', { exact: true }).fill(TODAY)
+    await expect(row(w, 'Total')).toContainText(/770\s000/)
+    await w.getByLabel('Du', { exact: true }).fill(YESTERDAY)
+    await w.getByLabel('Au', { exact: true }).fill(YESTERDAY)
+    await expect(w.getByText('Aucune réalisation sur cette période.')).toBeVisible()
+
     await view('Année').click()
     await expect(cell(w, `Réalisation ${Y} de A1-I-1`)).toHaveValue(/^420\s000$/)
 

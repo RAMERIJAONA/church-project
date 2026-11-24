@@ -6,9 +6,9 @@ export interface ViewSwitchProps {
   onChange: (view: AccountingView) => void
 }
 
-const VIEWS: AccountingView[] = ['year', 'month', 'week', 'day']
+const VIEWS: AccountingView[] = ['year', 'month', 'week', 'day', 'custom']
 
-/** Choix de la vue : Année (modifiable) ou réalisations par mois, semaine, jour. */
+/** Choix de la vue : Année (modifiable) ou réalisations par mois, semaine, jour, ou entre deux dates. */
 export function ViewSwitch({ view, onChange }: ViewSwitchProps): React.JSX.Element {
   return (
     <div

@@ -89,5 +89,7 @@ describe('ViewSwitch', () => {
     expect(screen.getByRole('button', { name: 'Mois' }).getAttribute('aria-pressed')).toBe('false')
     await userEvent.click(screen.getByRole('button', { name: 'Semaine' }))
     expect(onChange).toHaveBeenCalledWith('week')
+    await userEvent.click(screen.getByRole('button', { name: 'Personnalisé' }))
+    expect(onChange).toHaveBeenLastCalledWith('custom')
   })
 })

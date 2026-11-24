@@ -450,7 +450,7 @@ export async function invoke<C extends Channel>(channel: C, input: IpcInput<C>):
    - [ ] Imprimer / générer le PDF d'une facture
    - [x] Sauvegarde manuelle → restauration → données identiques (`tests/e2e/backup.spec.ts`)
    - [x] Changer le thème → persisté après redémarrage (`tests/e2e/theme.spec.ts`)
-   - [x] Comptabilité : arborescence 4 niveaux → 3 colonnes de montants → détail des saisies → totaux → vues mois/semaine/jour → suppression/renumérotation → persisté (`tests/e2e/accounting.spec.ts`)
+   - [x] Comptabilité : arborescence 4 niveaux → 3 colonnes de montants → détail des saisies → totaux → vues mois/semaine/jour/personnalisée → suppression/renumérotation → persisté (`tests/e2e/accounting.spec.ts`)
 4. **Aucun test supprimé ou désactivé** (`.skip`) sans justification écrite dans la PR.
 5. Un test qui échoue de façon aléatoire (flaky) se corrige en priorité, il ne se relance pas en boucle.
 
@@ -630,7 +630,7 @@ UI en français d'abord ; les termes malgaches sont gardés en glossaire (traduc
   - **Date d'opération** (`operated_on`, « AAAA-MM-JJ », date du calendrier sans fuseau) : obligatoire pour une réalisation et dans l'année de la case, absente pour une estimation (annuelle). Contrôlée par `operationDateError` (service, `VALIDATION`) et par un CHECK SQL. Par défaut : aujourd'hui ramené dans l'année (`defaultOperationDate` : 31 décembre pour une année passée, 1er janvier pour une année future). Un total direct garde sa date quand on le modifie.
   - Case **simple** (0 saisie, ou 1 sans libellé) : saisie directe dans le tableau ; modifier garde la date de création ; vider = suppression douce.
   - Case **détaillée** (libellé ou ≥ 2 saisies) : total en lecture seule ; modifications dans le panneau de détail (libellé, montant, date et heure de création et de modification ; ajout, modification, suppression confirmée).
-- **Vues** (`?vue=` dans l'URL) : **Année** (3 colonnes, modifiable) ; **Mois**, **Semaine** (lundi au dimanche), **Jour** : même arbre, une colonne « Réalisations » = somme des réalisations dont la date d'opération tombe dans la période (`accounting.periodTotals`, `accounting.periods.ts`), lecture seule, navigation précédente / suivante.
+- **Vues** (`?vue=` dans l'URL) : **Année** (3 colonnes, modifiable) ; **Mois**, **Semaine** (lundi au dimanche), **Jour** : même arbre, une colonne « Réalisations » = somme des réalisations dont la date d'opération tombe dans la période (`accounting.periodTotals`, `accounting.periods.ts`), lecture seule, navigation précédente / suivante. **Personnalisé** : champs Du / Au (calendrier natif de Chromium, aucune dépendance), période de n'importe quelle durée, l'autre borne suit si l'ordre est inversé.
 - Saisie des montants : toujours groupés par 3 avec une espace insécable de largeur normale (`2 000 000`, U+00A0, `formatAmount`), **y compris pendant la frappe** (`lib/money-input.ts`) : seuls les chiffres sont acceptés, le curseur reste en place, Retour arrière sur une espace efface le chiffre voisin. Entrée = enregistre et passe à la case suivante.
 - Suppression douce (`deleted_at`) ; supprimer un élément supprime toute sa descendance. Confirmation obligatoire dans l'UI.
 - Migration `0002` (SQL de reprise écrit à la main dans le fichier généré) : anciennes rubriques → niveau 1, anciennes lignes → niveau 2, anciens montants → saisies « réalisation » sans libellé. Migration `0003` : date d'opération des réalisations existantes = date de saisie si elle tombe dans l'année de la case, sinon 31 décembre.

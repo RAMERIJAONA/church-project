@@ -88,19 +88,14 @@ describe('saisie (schémas)', () => {
     expect(addEntryInputSchema.safeParse({ ...base, label: 'x'.repeat(121) }).success).toBe(false)
   })
 
-  it('n’accepte qu’une période d’au plus 366 jours, dans l’ordre', () => {
-    expect(
-      periodTotalsInputSchema.safeParse({ from: '2026-11-23', to: '2026-11-29' }).success
-    ).toBe(true)
-    expect(
-      periodTotalsInputSchema.safeParse({ from: '2026-11-29', to: '2026-11-23' }).success
-    ).toBe(false)
-    expect(
-      periodTotalsInputSchema.safeParse({ from: '2024-01-01', to: '2026-01-01' }).success
-    ).toBe(false)
-    expect(
-      periodTotalsInputSchema.safeParse({ from: '2026-02-30', to: '2026-03-01' }).success
-    ).toBe(false)
+  it('accepte une période de n’importe quelle durée, dans l’ordre', () => {
+    const ok = (from: string, to: string): boolean =>
+      periodTotalsInputSchema.safeParse({ from, to }).success
+    expect(ok('2026-11-23', '2026-11-29')).toBe(true)
+    expect(ok('2024-01-01', '2026-12-31')).toBe(true) // plusieurs années
+    expect(ok('2026-11-24', '2026-11-24')).toBe(true)
+    expect(ok('2026-11-29', '2026-11-23')).toBe(false)
+    expect(ok('2026-02-30', '2026-03-01')).toBe(false)
   })
 })
 

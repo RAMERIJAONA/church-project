@@ -79,13 +79,14 @@ export function operationDateLabel(date: string): string {
 }
 
 /** Vue du tableau : l'année (3 colonnes, modifiable) ou une période de réalisations. */
-export type AccountingView = 'year' | 'month' | 'week' | 'day'
+export type AccountingView = 'year' | 'month' | 'week' | 'day' | 'custom'
 
 export const VIEW_LABELS: Record<AccountingView, string> = {
   year: 'Année',
   month: 'Mois',
   week: 'Semaine',
-  day: 'Jour'
+  day: 'Jour',
+  custom: 'Personnalisé'
 }
 
 /** Sous-totaux de chaque élément et total général, pour les 3 colonnes de l'année. */

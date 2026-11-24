@@ -44,11 +44,6 @@ export function isCalendarDate(date: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(date) && fromUtc(toUtc(date)) === date
 }
 
-/** Nombre de jours de la période, bornes incluses (1 pour un seul jour). */
-export function rangeLength(range: DateRange): number {
-  return Math.round((toUtc(range.to).getTime() - toUtc(range.from).getTime()) / 86_400_000) + 1
-}
-
 function addDays(date: string, days: number): string {
   const d = toUtc(date)
   d.setUTCDate(d.getUTCDate() + days)
@@ -84,17 +79,26 @@ const dayMonthYear = fmt({ day: 'numeric', month: 'long', year: 'numeric' })
 const dayMonth = fmt({ day: 'numeric', month: 'long' })
 const monthYear = fmt({ month: 'long', year: 'numeric' })
 
-/** « Mardi 24 novembre 2026 », « Semaine du 23 au 29 novembre 2026 », « Novembre 2026 ». */
-export function periodLabel(kind: PeriodKind, range: DateRange): string {
+/**
+ * Période quelconque : « Du 3 au 24 novembre 2026 », « Du 1 septembre 2025 au 31 août 2026 ».
+ * Un seul jour : « Mardi 24 novembre 2026 ».
+ */
+export function rangeLabel(range: DateRange): string {
   const from = toUtc(range.from)
   const to = toUtc(range.to)
-  if (kind === 'day') return capitalize(dayLong.format(from))
-  if (kind === 'month') return capitalize(monthYear.format(from))
+  if (range.from === range.to) return capitalize(dayLong.format(from))
   const start =
     from.getUTCFullYear() !== to.getUTCFullYear()
       ? dayMonthYear.format(from)
       : from.getUTCMonth() !== to.getUTCMonth()
         ? dayMonth.format(from)
         : String(from.getUTCDate())
-  return `Semaine du ${start} au ${dayMonthYear.format(to)}`
+  return `Du ${start} au ${dayMonthYear.format(to)}`
+}
+
+/** « Mardi 24 novembre 2026 », « Semaine du 23 au 29 novembre 2026 », « Novembre 2026 ». */
+export function periodLabel(kind: PeriodKind, range: DateRange): string {
+  if (kind === 'day') return capitalize(dayLong.format(toUtc(range.from)))
+  if (kind === 'month') return capitalize(monthYear.format(toUtc(range.from)))
+  return `Semaine ${rangeLabel(range).replace(/^Du /, 'du ')}`
 }

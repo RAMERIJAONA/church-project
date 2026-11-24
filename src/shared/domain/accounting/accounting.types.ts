@@ -12,7 +12,7 @@
  */
 import { z } from 'zod'
 import { MAX_AMOUNT } from '@shared/utils/money'
-import { isCalendarDate, rangeLength } from './accounting.periods'
+import { isCalendarDate } from './accounting.periods'
 
 export const MIN_YEAR = 1900
 export const MAX_YEAR = 2200
@@ -134,11 +134,11 @@ export const updateEntryInputSchema = z
     operatedOn: operationDateSchema.nullable()
   })
   .strict()
-/** Période d'affichage des réalisations : au plus 366 jours, bornes incluses. */
+/** Période d'affichage des réalisations (bornes incluses, de n'importe quelle durée). */
 export const periodTotalsInputSchema = z
   .object({ from: operationDateSchema, to: operationDateSchema })
   .strict()
-  .refine((r) => r.from <= r.to && rangeLength(r) <= 366, 'Période invalide')
+  .refine((r) => r.from <= r.to, 'Période invalide : la date de début suit la date de fin')
 
 export type MoveDirection = z.infer<typeof directionSchema>
 export type CreateItemInput = z.infer<typeof createItemInputSchema>
