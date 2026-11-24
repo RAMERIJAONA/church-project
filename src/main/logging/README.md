@@ -1,0 +1,1 @@
+Logger structuré (electron-log).
