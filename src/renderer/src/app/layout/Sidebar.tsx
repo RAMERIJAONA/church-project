@@ -25,7 +25,7 @@ export function Sidebar(): React.JSX.Element {
   return (
     <aside className="flex w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
       <div className="flex min-h-16 items-center gap-3 px-5 py-3">
-        <span className="flex size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
           <Church className="size-4.5" aria-hidden />
         </span>
         <div className="min-w-0 leading-tight">
