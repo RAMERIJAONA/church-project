@@ -86,6 +86,23 @@ test('@smoke comptabilité : arborescence, 3 colonnes, détail, persistés aprè
     await expect(cell(w, `Réalisation ${Y} de A1-II-1 A)`)).toHaveCount(0)
     await expect(row(w, 'A1-II-1 A)')).toContainText(/350\s000/)
 
+    // Vues par période : réalisations par date d'opération (aujourd'hui par défaut), lecture seule
+    const view = (name: string): Locator => w.getByRole('button', { name, exact: true })
+    for (const name of ['Mois', 'Semaine', 'Jour']) {
+      await view(name).click()
+      await expect(view(name)).toHaveAttribute('aria-pressed', 'true')
+      await expect(row(w, 'A1-I-1')).toContainText(/420\s000/)
+      await expect(row(w, 'A1-II-1 A)')).toContainText(/350\s000/)
+      await expect(w.getByRole('textbox')).toHaveCount(0)
+    }
+    await w.getByRole('button', { name: 'Période précédente' }).click()
+    await expect(w.getByText('Aucune réalisation sur cette période.')).toBeVisible()
+    await expect(row(w, 'A1-I-1')).not.toContainText(/420/)
+    await w.getByRole('button', { name: 'Revenir à aujourd’hui' }).click()
+    await expect(row(w, 'A1-I-1')).toContainText(/420\s000/)
+    await view('Année').click()
+    await expect(cell(w, `Réalisation ${Y} de A1-I-1`)).toHaveValue(/^420\s000$/)
+
     // Une rubrique qui a des montants ne reçoit pas de sous-rubrique
     await expect(
       w.getByRole('button', { name: 'Ajouter une sous-rubrique à A1-I-1' })

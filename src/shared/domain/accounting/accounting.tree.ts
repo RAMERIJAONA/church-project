@@ -93,7 +93,7 @@ export function buildSheet(
       level,
       prefix: level === 1 ? row.prefix : null,
       description: row.description,
-      amounts: level === 1 || children.length > 0 ? null : amountsOf(row.id),
+      amounts: children.length > 0 ? null : amountsOf(row.id),
       canAddChild: level < MAX_DEPTH && !itemsWithEntries.has(row.id),
       children
     }

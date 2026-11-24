@@ -23,6 +23,7 @@ export function registerAccountingIpc(handle: Handle, accounting: AccountingServ
     accounting.updateEntry(input)
     return null
   })
+  handle('accounting.periodTotals', (range) => accounting.getPeriodTotals(range))
   handle('accounting.deleteEntry', ({ id }) => {
     accounting.deleteEntry(id)
     return null

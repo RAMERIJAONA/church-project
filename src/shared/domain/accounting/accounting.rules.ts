@@ -2,7 +2,7 @@
  * Règles pures de la comptabilité : normalisation des saisies et calcul des cases de montant.
  * Numérotation : accounting.codes.ts ; construction de l'arbre : accounting.tree.ts.
  */
-import type { CellDTO, ItemLevel } from './accounting.types'
+import type { CellDTO, EntryType, ItemLevel } from './accounting.types'
 
 /** « a » → « A ». La validation (alphabet malgache) est faite par `sectionPrefixSchema`. */
 export function normalizePrefix(prefix: string): string {
@@ -32,4 +32,21 @@ export function cellOf(entries: readonly EntryLike[]): CellDTO {
     entryCount: entries.length,
     detailed: isDetailed(entries)
   }
+}
+
+/**
+ * Réalisation : date d'opération obligatoire, dans l'année de la case. Estimation (annuelle) :
+ * aucune date. Renvoie le message d'erreur, ou `null` si la date convient.
+ */
+export function operationDateError(
+  type: EntryType,
+  year: number,
+  operatedOn: string | null
+): string | null {
+  if (type === 'estimate') {
+    return operatedOn === null ? null : 'Une estimation est annuelle : pas de date.'
+  }
+  return operatedOn !== null && Number(operatedOn.slice(0, 4)) === year
+    ? null
+    : `La date de la réalisation doit être en ${year}.`
 }

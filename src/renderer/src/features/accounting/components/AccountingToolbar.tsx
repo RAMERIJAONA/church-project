@@ -1,38 +1,45 @@
 import { Plus } from 'lucide-react'
 import { Button } from '@renderer/components/ui/button'
-import { YearStepper } from './YearStepper'
+import type { AccountingView } from '../accounting.utils'
+import { ViewSwitch } from './ViewSwitch'
 
 export interface AccountingToolbarProps {
-  year: number
-  currentYear: number
-  onYearChange: (year: number) => void
-  onNewSection: () => void
-  /** Masque le bouton pendant que le formulaire de création est ouvert */
-  creating: boolean
+  view: AccountingView
+  onViewChange: (view: AccountingView) => void
+  /** Navigation de la vue : année ou période */
+  navigation: React.ReactNode
+  /** Vue Année uniquement ; bouton masqué pendant la création */
+  onNewSection?: () => void
+  creating?: boolean
 }
 
 export function AccountingToolbar({
-  year,
-  currentYear,
-  onYearChange,
+  view,
+  onViewChange,
+  navigation,
   onNewSection,
-  creating
+  creating = false
 }: AccountingToolbarProps): React.JSX.Element {
   return (
     <div className="flex flex-wrap items-center justify-between gap-4">
-      <YearStepper year={year} currentYear={currentYear} onChange={onYearChange} />
-      <div className="flex items-center gap-4">
-        <p className="hidden text-xs text-muted-foreground lg:block">
-          Astuce : tapez un montant puis <kbd className="font-sans font-semibold">Entrée</kbd> pour
-          passer à la case suivante.
-        </p>
-        {!creating && (
-          <Button onClick={onNewSection}>
-            <Plus aria-hidden />
-            Nouvelle rubrique
-          </Button>
-        )}
+      <div className="flex flex-wrap items-center gap-4">
+        <ViewSwitch view={view} onChange={onViewChange} />
+        {navigation}
       </div>
+      {onNewSection && (
+        <div className="flex items-center gap-4">
+          <p className="hidden text-xs text-muted-foreground xl:block">
+            Astuce : tapez un montant puis <kbd className="font-sans font-semibold">Entrée</kbd>{' '}
+            pour passer à la case suivante.
+          </p>
+          {!creating && (
+            <Button onClick={onNewSection}>
+              <Plus aria-hidden />
+              Nouvelle rubrique
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   )
 }

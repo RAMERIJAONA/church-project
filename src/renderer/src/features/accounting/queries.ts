@@ -5,6 +5,7 @@ import type {
   CreateItemInput,
   EntryType,
   MoveDirection,
+  PeriodTotalsInput,
   UpdateEntryInput
 } from '@shared/domain/accounting/accounting.types'
 import { accountingApi } from './api'
@@ -15,7 +16,9 @@ export const accountingKeys = {
   all: ['accounting'] as const,
   sheet: (year: number) => [...accountingKeys.all, 'sheet', year] as const,
   entries: (itemId: number, year: number, type: EntryType) =>
-    [...accountingKeys.all, 'entries', itemId, year, type] as const
+    [...accountingKeys.all, 'entries', itemId, year, type] as const,
+  periodTotals: (range: PeriodTotalsInput) =>
+    [...accountingKeys.all, 'period', range.from, range.to] as const
 }
 
 export function useAccountingSheet(year: number) {
@@ -33,6 +36,15 @@ export function useCellEntries(cell: { itemId: number; year: number; type: Entry
     queryKey: cell ? accountingKeys.entries(cell.itemId, cell.year, cell.type) : accountingKeys.all,
     queryFn: () => (cell ? accountingApi.entries(cell) : Promise.resolve([])),
     enabled: cell !== null
+  })
+}
+
+/** Réalisations par élément sur une période ; l'ancienne période reste affichée au changement. */
+export function usePeriodTotals(range: PeriodTotalsInput) {
+  return useQuery({
+    queryKey: accountingKeys.periodTotals(range),
+    queryFn: () => accountingApi.periodTotals(range),
+    placeholderData: (previous) => previous
   })
 }
 

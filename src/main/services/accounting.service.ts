@@ -3,10 +3,12 @@ import type { Db, DbOrTx } from '@main/db/client'
 import type { Logger } from '@main/logging/logger'
 import type { AccountingRepository } from '@main/repositories/accounting.repository'
 import { availableLetters, childCode, rootCode } from '@shared/domain/accounting/accounting.codes'
+import { defaultOperationDate } from '@shared/domain/accounting/accounting.periods'
 import {
   isDetailed,
   normalizeDescription,
-  normalizePrefix
+  normalizePrefix,
+  operationDateError
 } from '@shared/domain/accounting/accounting.rules'
 import { buildSheet, countDescendants, findItem } from '@shared/domain/accounting/accounting.tree'
 import {
@@ -19,6 +21,9 @@ import {
   type CreatedEntryDTO,
   type CreatedItemDTO,
   type EntryDTO,
+  type EntryType,
+  type PeriodTotalDTO,
+  type PeriodTotalsInput,
   type ListEntriesInput,
   type MoveDirection,
   type MoveResultDTO,
@@ -49,10 +54,10 @@ export function createAccountingService(deps: {
     return item
   }
 
-  /** Élément qui peut porter des montants : niveau ≥ 2 et sans enfant. */
+  /** Élément qui peut porter des montants : sans enfant (à tous les niveaux). */
   function requireAmountHolder(tx: DbOrTx, id: number): AccountingItemDTO {
     const item = requireItem(tx, id)
-    if (item.level === 1 || item.children.length > 0) {
+    if (item.children.length > 0) {
       throw new AppError(
         'BUSINESS_RULE',
         `${item.code} regroupe d’autres rubriques : saisissez les montants sur ses sous-rubriques.`,
@@ -76,6 +81,11 @@ export function createAccountingService(deps: {
         { code, total }
       )
     }
+  }
+
+  function checkOperationDate(type: EntryType, year: number, operatedOn: string | null): void {
+    const message = operationDateError(type, year, operatedOn)
+    if (message) throw new AppError('VALIDATION', message, { type, year, operatedOn })
   }
 
   const sum = (entries: readonly EntryDTO[]): number => entries.reduce((n, x) => n + x.amount, 0)
@@ -205,9 +215,12 @@ export function createAccountingService(deps: {
         if (input.amount === null) {
           if (existing) repo.softDeleteEntry(tx, existing.id, at)
         } else if (existing) {
+          // La date d'opération d'un total existant est conservée
           repo.updateEntry(tx, existing.id, { amount: input.amount, label: null }, at)
         } else {
-          repo.insertEntry(tx, { ...input, amount: input.amount, label: null, at })
+          const operatedOn =
+            input.type === 'actual' ? defaultOperationDate(deps.clock(), input.year) : null
+          repo.insertEntry(tx, { ...input, amount: input.amount, label: null, operatedOn, at })
         }
       })
     },
@@ -222,6 +235,7 @@ export function createAccountingService(deps: {
     addEntry(input: AddEntryInput): CreatedEntryDTO {
       return deps.db.transaction((tx) => {
         const item = requireAmountHolder(tx, input.itemId)
+        checkOperationDate(input.type, input.year, input.operatedOn)
         const entries = repo.listCellEntries(tx, input.itemId, input.year, input.type)
         checkTotal(item.code, sum(entries) + input.amount)
         return { id: repo.insertEntry(tx, { ...input, at: now() }) }
@@ -232,12 +246,23 @@ export function createAccountingService(deps: {
       deps.db.transaction((tx) => {
         const entry = requireEntry(tx, input.id)
         const item = requireAmountHolder(tx, entry.itemId)
+        checkOperationDate(entry.type, entry.year, input.operatedOn)
         const others = repo
           .listCellEntries(tx, entry.itemId, entry.year, entry.type)
           .filter((x) => x.id !== entry.id)
         checkTotal(item.code, sum(others) + input.amount)
-        repo.updateEntry(tx, entry.id, { amount: input.amount, label: input.label }, now())
+        repo.updateEntry(
+          tx,
+          entry.id,
+          { amount: input.amount, label: input.label, operatedOn: input.operatedOn },
+          now()
+        )
       })
+    },
+
+    /** Réalisations par élément sur une période (date d'opération, bornes incluses). */
+    getPeriodTotals(range: PeriodTotalsInput): PeriodTotalDTO[] {
+      return deps.db.transaction((tx) => repo.sumActualBetween(tx, range.from, range.to))
     },
 
     deleteEntry(id: number): void {

@@ -1,8 +1,8 @@
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import type { EntryDTO } from '@shared/domain/accounting/accounting.types'
-import { formatDateTime } from '@shared/utils/dates'
+import { formatDateTime, formatLongDate } from '@shared/utils/dates'
 import { formatAmount } from '@shared/utils/money'
 import { makeEntryDTO } from '@tests/factories/accounting.factory'
 import { EntriesDialog, type EntriesDialogProps } from './EntriesDialog'
@@ -15,9 +15,11 @@ const fanatsarana = makeEntryDTO({
   id: 2,
   amount: 100000,
   label: 'Fanatsarana',
+  operatedOn: '2026-11-22',
   createdAt: '2026-11-24T10:00:00.000Z',
   updatedAt: '2026-11-24T11:30:00.000Z'
 })
+const DATES = { min: '2026-01-01', max: '2026-12-31', initial: '2026-11-24' }
 
 function setup(props: Partial<EntriesDialogProps> = {}) {
   const handlers = {
@@ -36,6 +38,7 @@ function setup(props: Partial<EntriesDialogProps> = {}) {
       loading={false}
       error={null}
       disabled={false}
+      dates={DATES}
       {...handlers}
       {...props}
     />
@@ -51,9 +54,9 @@ describe('EntriesDialog', () => {
     expect(rows).toHaveLength(2)
     expect(within(rows[0]!).getByText('Kojakoja')).toBeDefined()
     expect(within(rows[0]!).getByText(shown(formatAmount(250000)))).toBeDefined()
-    expect(
-      within(rows[0]!).getByText(shown(formatDateTime(new Date('2026-11-24T09:00:00.000Z'))))
-    ).toBeDefined()
+    expect(rows[0]?.textContent).toContain(
+      shown(`saisi le ${formatDateTime(new Date('2026-11-24T09:00:00.000Z'))}`)
+    )
     // Modifiée après sa création : les deux dates sont visibles
     expect(rows[1]?.textContent).toContain(
       shown(`modifié le ${formatDateTime(new Date('2026-11-24T11:30:00.000Z'))}`)
@@ -66,13 +69,38 @@ describe('EntriesDialog', () => {
     await userEvent.type(screen.getByLabelText('Libellé de la nouvelle saisie'), 'Kojakoja')
     await userEvent.type(screen.getByLabelText('Montant de la nouvelle saisie'), '250000')
     await userEvent.click(screen.getByRole('button', { name: 'Ajouter' }))
-    expect(onAdd).toHaveBeenCalledWith(250000, 'Kojakoja')
+    expect(onAdd).toHaveBeenCalledWith(250000, 'Kojakoja', '2026-11-24')
+  })
+
+  it('choisit la date d’opération d’une réalisation', async () => {
+    const { onAdd } = setup()
+    const date = screen.getByLabelText<HTMLInputElement>('Date de la nouvelle saisie')
+    expect(date.value).toBe('2026-11-24')
+    expect([date.min, date.max]).toEqual(['2026-01-01', '2026-12-31'])
+    fireEvent.change(date, { target: { value: '2026-03-15' } })
+    await userEvent.type(screen.getByLabelText('Montant de la nouvelle saisie'), '1000{Enter}')
+    expect(onAdd).toHaveBeenCalledWith(1000, null, '2026-03-15')
+  })
+
+  it('n’a pas de date pour une estimation', async () => {
+    const { onAdd } = setup({ dates: null })
+    expect(screen.queryByLabelText('Date de la nouvelle saisie')).toBeNull()
+    await userEvent.type(screen.getByLabelText('Montant de la nouvelle saisie'), '1000{Enter}')
+    expect(onAdd).toHaveBeenCalledWith(1000, null, null)
+  })
+
+  it('affiche la date d’opération de chaque réalisation', () => {
+    setup()
+    const rows = screen.getAllByRole('listitem')
+    expect(rows[1]?.textContent).toContain(
+      shown(`Opération du ${formatLongDate(new Date(2026, 10, 22, 12))}`)
+    )
   })
 
   it('ajoute une saisie sans libellé avec Entrée', async () => {
     const { onAdd } = setup()
     await userEvent.type(screen.getByLabelText('Montant de la nouvelle saisie'), '1000{Enter}')
-    expect(onAdd).toHaveBeenCalledWith(1000, null)
+    expect(onAdd).toHaveBeenCalledWith(1000, null, '2026-11-24')
   })
 
   it('refuse une saisie sans montant', async () => {
@@ -90,7 +118,7 @@ describe('EntriesDialog', () => {
     await userEvent.clear(amount)
     await userEvent.type(amount, '300000')
     await userEvent.click(screen.getByRole('button', { name: 'Enregistrer' }))
-    expect(onUpdate).toHaveBeenCalledWith(1, 300000, 'Kojakoja')
+    expect(onUpdate).toHaveBeenCalledWith(1, 300000, 'Kojakoja', '2026-11-24')
   })
 
   it('demande la suppression d’une saisie', async () => {

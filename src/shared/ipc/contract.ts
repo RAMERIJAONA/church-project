@@ -7,6 +7,7 @@ import {
   listEntriesInputSchema,
   listSheetInputSchema,
   moveInputSchema,
+  periodTotalsInputSchema,
   setTotalInputSchema,
   updateEntryInputSchema,
   updateItemInputSchema,
@@ -14,7 +15,8 @@ import {
   type CreatedEntryDTO,
   type CreatedItemDTO,
   type EntryDTO,
-  type MoveResultDTO
+  type MoveResultDTO,
+  type PeriodTotalDTO
 } from '../domain/accounting/accounting.types'
 import { appSettingsPatchSchema, type AppSettings } from '../domain/settings/settings.types'
 import type { Channel } from './channels'
@@ -32,6 +34,7 @@ export const ipcInputs = {
   'accounting.addEntry': addEntryInputSchema,
   'accounting.updateEntry': updateEntryInputSchema,
   'accounting.deleteEntry': idInputSchema,
+  'accounting.periodTotals': periodTotalsInputSchema,
   'app.info': z.undefined(),
   'app.openLogsFolder': z.undefined(),
   'backup.list': z.undefined(),
@@ -71,6 +74,7 @@ export interface IpcOutputs {
   'accounting.addEntry': CreatedEntryDTO
   'accounting.updateEntry': null
   'accounting.deleteEntry': null
+  'accounting.periodTotals': PeriodTotalDTO[]
   'app.info': AppInfoDTO
   'app.openLogsFolder': null
   'backup.list': BackupDTO[]

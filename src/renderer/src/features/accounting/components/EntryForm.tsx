@@ -5,14 +5,23 @@ import { getMoneyInputProps } from '@renderer/lib/money-input'
 import { labelSchema } from '@shared/domain/accounting/accounting.types'
 import { formatAmount, parseAmount } from '@shared/utils/money'
 
+/** Bornes et valeur proposée du champ date (réalisations seulement). */
+export interface OperationDateBounds {
+  min: string
+  max: string
+  initial: string
+}
+
 export interface EntryFormProps {
   /** Complète les noms accessibles : « de la nouvelle saisie », « de la saisie Kojakoja » */
   target: string
-  initial?: { amount: number; label: string | null }
+  initial?: { amount: number; label: string | null; operatedOn: string | null }
+  /** Réalisation : champ date d'opération ; `null` pour une estimation (pas de date) */
+  dates: OperationDateBounds | null
   submitLabel: string
   disabled: boolean
   /** Rejette en cas d'échec (la saisie est alors conservée) */
-  onSubmit: (amount: number, label: string | null) => Promise<void>
+  onSubmit: (amount: number, label: string | null, operatedOn: string | null) => Promise<void>
   onCancel?: () => void
 }
 
@@ -20,6 +29,7 @@ export interface EntryFormProps {
 export function EntryForm({
   target,
   initial,
+  dates,
   submitLabel,
   disabled,
   onSubmit,
@@ -27,6 +37,7 @@ export function EntryForm({
 }: EntryFormProps): React.JSX.Element {
   const [label, setLabel] = useState(initial?.label ?? '')
   const [amount, setAmount] = useState(initial ? formatAmount(initial.amount) : '')
+  const [operatedOn, setOperatedOn] = useState(initial?.operatedOn ?? dates?.initial ?? '')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const labelRef = useRef<HTMLInputElement>(null)
@@ -46,9 +57,13 @@ export function EntryForm({
       amountRef.current?.focus()
       return
     }
+    if (dates && !(operatedOn >= dates.min && operatedOn <= dates.max)) {
+      setError(`Choisissez une date entre le ${dates.min} et le ${dates.max}.`)
+      return
+    }
     setBusy(true)
     try {
-      await onSubmit(parsedAmount.value, parsedLabel.data)
+      await onSubmit(parsedAmount.value, parsedLabel.data, dates ? operatedOn : null)
       setError(null)
       if (!initial) {
         setLabel('')
@@ -75,6 +90,21 @@ export function EntryForm({
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-center gap-2">
+        {dates && (
+          <Input
+            type="date"
+            aria-label={`Date ${target}`}
+            title="Date de l’opération"
+            className="w-40"
+            min={dates.min}
+            max={dates.max}
+            required
+            value={operatedOn}
+            disabled={disabled}
+            onChange={(e) => setOperatedOn(e.currentTarget.value)}
+            onKeyDown={onKeyDown}
+          />
+        )}
         <Input
           ref={labelRef}
           aria-label={`Libellé ${target}`}

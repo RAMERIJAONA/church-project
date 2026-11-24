@@ -1,8 +1,26 @@
-import { and, asc, desc, eq, gt, inArray, isNull, lt, max, sql, type SQL } from 'drizzle-orm'
+import {
+  and,
+  asc,
+  between,
+  desc,
+  eq,
+  gt,
+  inArray,
+  isNull,
+  lt,
+  max,
+  sql,
+  type SQL
+} from 'drizzle-orm'
 import type { DbOrTx } from '@main/db/client'
 import { accountingEntries, accountingItems } from '@main/db/schema'
 import type { EntryRow, ItemRow } from '@shared/domain/accounting/accounting.tree'
-import type { EntryDTO, EntryType, MoveDirection } from '@shared/domain/accounting/accounting.types'
+import type {
+  EntryDTO,
+  EntryType,
+  MoveDirection,
+  PeriodTotalDTO
+} from '@shared/domain/accounting/accounting.types'
 
 const itemCols = {
   id: accountingItems.id,
@@ -15,6 +33,7 @@ const entryCols = {
   id: accountingEntries.id,
   amount: accountingEntries.amount,
   label: accountingEntries.label,
+  operatedOn: accountingEntries.operatedOn,
   createdAt: accountingEntries.createdAt,
   updatedAt: accountingEntries.updatedAt
 }
@@ -172,6 +191,7 @@ export function createAccountingRepository() {
         type: EntryType
         amount: number
         label: string | null
+        operatedOn: string | null
         at: string
       }
     ): number {
@@ -186,13 +206,35 @@ export function createAccountingRepository() {
     updateEntry(
       db: DbOrTx,
       id: number,
-      values: { amount: number; label: string | null },
+      values: { amount: number; label: string | null; operatedOn?: string | null },
       at: string
     ): void {
       db.update(e)
         .set({ ...values, updatedAt: at })
         .where(eq(e.id, id))
         .run()
+    },
+
+    /** Somme des réalisations actives par élément actif, date d'opération dans [from, to]. */
+    sumActualBetween(db: DbOrTx, from: string, to: string): PeriodTotalDTO[] {
+      return db
+        .select({
+          itemId: e.itemId,
+          total: sql<number>`sum(${e.amount})`,
+          entryCount: sql<number>`count(*)`
+        })
+        .from(e)
+        .innerJoin(t, eq(t.id, e.itemId))
+        .where(
+          and(
+            eq(e.type, 'actual'),
+            isNull(e.deletedAt),
+            isNull(t.deletedAt),
+            between(e.operatedOn, from, to)
+          )
+        )
+        .groupBy(e.itemId)
+        .all()
     },
 
     softDeleteEntry(db: DbOrTx, id: number, at: string): void {

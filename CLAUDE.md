@@ -450,7 +450,7 @@ export async function invoke<C extends Channel>(channel: C, input: IpcInput<C>):
    - [ ] Imprimer / générer le PDF d'une facture
    - [x] Sauvegarde manuelle → restauration → données identiques (`tests/e2e/backup.spec.ts`)
    - [x] Changer le thème → persisté après redémarrage (`tests/e2e/theme.spec.ts`)
-   - [x] Comptabilité : arborescence 4 niveaux → 3 colonnes de montants → détail des saisies → suppression/renumérotation → persisté (`tests/e2e/accounting.spec.ts`)
+   - [x] Comptabilité : arborescence 4 niveaux → 3 colonnes de montants → détail des saisies → vues mois/semaine/jour → suppression/renumérotation → persisté (`tests/e2e/accounting.spec.ts`)
 4. **Aucun test supprimé ou désactivé** (`.skip`) sans justification écrite dans la PR.
 5. Un test qui échoue de façon aléatoire (flaky) se corrige en priorité, il ne se relance pas en boucle.
 
@@ -608,7 +608,7 @@ nsis:
 
 ## 16. Règles métier reçues
 
-### 16.1 Comptabilité (`features/accounting`, reçue le 2026-11-24, arborescence et montants revus le même jour)
+### 16.1 Comptabilité (`features/accounting`, reçue le 2026-11-24 ; arborescence, montants, dates d'opération et vues par période ajoutées le même jour)
 
 UI en français d'abord ; les termes malgaches sont gardés en glossaire (traduction prévue plus tard).
 
@@ -623,14 +623,16 @@ UI en français d'abord ; les termes malgaches sont gardés en glossaire (traduc
   - niveau 1 : lettre de l'**alphabet malgache** (21 lettres, sans C, Q, U, W, X ; puis AA, AB…) + rang dans la lettre : `F1`. La lettre est automatique : une lettre déjà utilisée (→ F2) ou la suivante proposée ; le service refuse toute autre (`availableLetters`), la base aussi (CHECK) ;
   - niveau 2 : chiffres romains `F1-I`, `F1-II` ; niveau 3 : chiffres `F1-II-1` ; niveau 4 : lettres malgaches `F1-II-1 A)`, `B)`, `D)`… Pas de 5e niveau.
 - Les numéros découlent de `position` parmi les frères actifs (même parent ; au niveau 1, même lettre). Suppression ou ↑ ↓ → renumérotation sans trou ; les montants suivent l'élément (liés à son id). Pas de changement de parent.
-- **Groupe ou montant, sans type stocké** : un élément qui a des enfants est un groupe (pas de montant) ; un élément sans enfant, à partir du niveau 2, porte des montants ; le niveau 1 n'en a jamais. Refus (`BUSINESS_RULE`) : enfant sous un élément qui a des saisies (toutes années), montant sur un groupe ou au niveau 1.
+- **Groupe ou montant, sans type stocké** : un élément qui a des enfants est un groupe (pas de montant) ; un élément sans enfant porte des montants, **à tous les niveaux** (une rubrique principale sans sous-rubrique aussi). Refus (`BUSINESS_RULE`) : enfant sous un élément qui a des saisies (toutes années), montant sur un groupe.
 - Description du niveau 1 toujours en **MAJUSCULES** (`normalizeDescription`) ; autres niveaux : casse saisie.
 - **3 colonnes pour l'année affichée N** : Estimation N, Réalisation N, Estimation N+1. La 3e est l'estimation de l'année N+1 (un seul chiffre, `columnTarget`). En 2200 (`MAX_YEAR`), elle est désactivée.
-- **Saisies** (`accounting_entries` : `year`, `type` `estimate`|`actual`, `amount` entier ≥ 0, `label` facultatif, `created_at`, `updated_at`, `deleted_at`). Le montant d'une case = somme des saisies actives (`cellOf`), plafonnée à `MAX_AMOUNT`.
+- **Saisies** (`accounting_entries` : `year`, `type` `estimate`|`actual`, `amount` entier ≥ 0, `label` facultatif, `operated_on`, `created_at`, `updated_at`, `deleted_at`). Le montant d'une case = somme des saisies actives (`cellOf`), plafonnée à `MAX_AMOUNT`.
+  - **Date d'opération** (`operated_on`, « AAAA-MM-JJ », date du calendrier sans fuseau) : obligatoire pour une réalisation et dans l'année de la case, absente pour une estimation (annuelle). Contrôlée par `operationDateError` (service, `VALIDATION`) et par un CHECK SQL. Par défaut : aujourd'hui ramené dans l'année (`defaultOperationDate` : 31 décembre pour une année passée, 1er janvier pour une année future). Un total direct garde sa date quand on le modifie.
   - Case **simple** (0 saisie, ou 1 sans libellé) : saisie directe dans le tableau ; modifier garde la date de création ; vider = suppression douce.
   - Case **détaillée** (libellé ou ≥ 2 saisies) : total en lecture seule ; modifications dans le panneau de détail (libellé, montant, date et heure de création et de modification ; ajout, modification, suppression confirmée).
+- **Vues** (`?vue=` dans l'URL) : **Année** (3 colonnes, modifiable) ; **Mois**, **Semaine** (lundi au dimanche), **Jour** : même arbre, une colonne « Réalisations » = somme des réalisations dont la date d'opération tombe dans la période (`accounting.periodTotals`, `accounting.periods.ts`), lecture seule, navigation précédente / suivante.
 - Saisie des montants : toujours groupés par 3 avec une espace insécable de largeur normale (`2 000 000`, U+00A0, `formatAmount`), **y compris pendant la frappe** (`lib/money-input.ts`) : seuls les chiffres sont acceptés, le curseur reste en place, Retour arrière sur une espace efface le chiffre voisin. Entrée = enregistre et passe à la case suivante.
 - Suppression douce (`deleted_at`) ; supprimer un élément supprime toute sa descendance. Confirmation obligatoire dans l'UI.
-- Migration `0002` (SQL de reprise écrit à la main dans le fichier généré) : anciennes rubriques → niveau 1, anciennes lignes → niveau 2, anciens montants → saisies « réalisation » sans libellé.
+- Migration `0002` (SQL de reprise écrit à la main dans le fichier généré) : anciennes rubriques → niveau 1, anciennes lignes → niveau 2, anciens montants → saisies « réalisation » sans libellé. Migration `0003` : date d'opération des réalisations existantes = date de saisie si elle tombe dans l'année de la case, sinon 31 décembre.
 - Pas de totaux (ni par groupe ni global) : non demandés.
 - Tableau non virtualisé : un plan comptable reste sous 200 lignes. À virtualiser s'il dépasse (§2).

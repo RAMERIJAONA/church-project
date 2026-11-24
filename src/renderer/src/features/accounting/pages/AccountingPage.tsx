@@ -1,205 +1,70 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useSearchParams } from 'react-router'
-import { toast } from 'sonner'
-import { Button } from '@renderer/components/ui/button'
-import { getErrorMessage } from '@renderer/lib/error-messages'
-import { countDescendants } from '@shared/domain/accounting/accounting.tree'
-import { MAX_YEAR, yearSchema } from '@shared/domain/accounting/accounting.types'
-import { AccountingEmptyState } from '../components/AccountingEmptyState'
-import { AccountingSheet } from '../components/AccountingSheet'
-import { AccountingToolbar } from '../components/AccountingToolbar'
-import { ConfirmDeleteDialog, type DeleteTarget } from '../components/ConfirmDeleteDialog'
-import { EntriesDialog } from '../components/EntriesDialog'
-import { NewSectionForm, type NewRootInput } from '../components/NewSectionForm'
-import { SheetActionsProvider, type SheetActions } from '../components/sheet-actions'
-import { columnLabel, columnTarget, type AmountColumn } from '../accounting.utils'
 import {
-  useAccountingSheet,
-  useAddEntry,
-  useCellEntries,
-  useCreateItem,
-  useDeleteEntry,
-  useDeleteItem,
-  useMoveItem,
-  useSetTotal,
-  useUpdateEntry,
-  useUpdateItem
-} from '../queries'
+  defaultOperationDate,
+  localDateOf,
+  type PeriodKind
+} from '@shared/domain/accounting/accounting.periods'
+import {
+  MAX_YEAR,
+  MIN_YEAR,
+  operationDateSchema,
+  yearSchema
+} from '@shared/domain/accounting/accounting.types'
+import type { AccountingView } from '../accounting.utils'
+import { PeriodView } from './PeriodView'
+import { YearView } from './YearView'
 
-const onError = (err: unknown): void => {
-  toast.error(getErrorMessage(err))
+/** Vue dans l'URL (`?vue=mois&date=2026-11-24`, ou `?annee=2026` pour la vue Année). */
+const VIEW_PARAM: Record<PeriodKind, string> = { month: 'mois', week: 'semaine', day: 'jour' }
+
+function parseKind(value: string | null): PeriodKind | null {
+  const found = (Object.keys(VIEW_PARAM) as PeriodKind[]).find((k) => VIEW_PARAM[k] === value)
+  return found ?? null
 }
 
-/** Case dont le détail est ouvert (code et description figés à l'ouverture, pour le titre). */
-interface DetailTarget {
-  itemId: number
-  code: string
-  description: string
-  col: AmountColumn
-}
-
-/** Container : année (dans l'URL, conservée en changeant de page), données, actions. */
+/**
+ * Container : lit la vue, l'année ou la date dans l'URL (conservées en changeant de page) et
+ * affiche la vue Année ou une vue par période.
+ */
 export function AccountingPage(): React.JSX.Element {
-  const currentYear = useMemo(() => new Date().getFullYear(), [])
+  const today = useMemo(() => localDateOf(new Date()), [])
+  const currentYear = Number(today.slice(0, 4))
   const [params, setParams] = useSearchParams()
-  const fromUrl = yearSchema.safeParse(Number(params.get('annee')))
-  const year = fromUrl.success ? fromUrl.data : currentYear
-  const setYear = (y: number): void => setParams({ annee: String(y) }, { replace: true })
 
-  const [creating, setCreating] = useState(false)
-  const [addingChildTo, setAddingChildTo] = useState<number | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null)
-  const [detail, setDetail] = useState<DetailTarget | null>(null)
+  const kind = parseKind(params.get('vue'))
+  const yearParam = yearSchema.safeParse(Number(params.get('annee')))
+  const year = yearParam.success ? yearParam.data : currentYear
+  const dateParam = operationDateSchema.safeParse(params.get('date'))
+  const datedYear = dateParam.success ? Number(dateParam.data.slice(0, 4)) : NaN
+  const anchor =
+    dateParam.success && datedYear >= MIN_YEAR && datedYear <= MAX_YEAR
+      ? dateParam.data
+      : defaultOperationDate(new Date(), year)
 
-  const sheet = useAccountingSheet(year)
-  // Année des données affichées (pendant un changement d'année, l'ancien tableau reste visible :
-  // une saisie faite à ce moment doit aller dans l'année qu'on voit)
-  const shownYear = sheet.data?.year ?? year
-  const createItem = useCreateItem()
-  const createItemAsync = createItem.mutateAsync
-  const { mutate: updateItem } = useUpdateItem()
-  const { mutate: deleteItem } = useDeleteItem()
-  const { mutate: moveItem } = useMoveItem()
-  const { mutate: setTotal } = useSetTotal()
-  const { mutateAsync: addEntry } = useAddEntry()
-  const { mutateAsync: updateEntry } = useUpdateEntry()
-  const { mutate: deleteEntry } = useDeleteEntry()
-
-  const detailCell = detail
-    ? { itemId: detail.itemId, ...columnTarget(shownYear, detail.col) }
-    : null
-  const entries = useCellEntries(detailCell)
-
-  const actions = useMemo<SheetActions>(
-    () => ({
-      year: shownYear,
-      rename: (id, description) => updateItem({ id, description }, { onError }),
-      move: (id, direction) => moveItem({ id, direction }, { onError }),
-      askDelete: (item) =>
-        setDeleteTarget({
-          kind: 'item',
-          id: item.id,
-          code: item.code,
-          description: item.description,
-          descendantCount: countDescendants(item)
-        }),
-      setTotal: (itemId, col, amount) =>
-        setTotal({ year: shownYear, itemId, col, amount }, { onError }),
-      openDetail: (item, col) =>
-        setDetail({ itemId: item.id, code: item.code, description: item.description, col }),
-      openAddChild: setAddingChildTo,
-      addChild: async (parentId, description) => {
-        try {
-          await createItemAsync({ parentId, description })
-        } catch (err) {
-          onError(err)
-          throw err // le formulaire garde la saisie
-        }
-      }
-    }),
-    [shownYear, updateItem, moveItem, setTotal, createItemAsync]
-  )
-
-  /** Écriture depuis le détail : toast en cas d'erreur, rejet pour garder la saisie. */
-  const withToast = async (run: () => Promise<unknown>): Promise<void> => {
-    try {
-      await run()
-    } catch (err) {
-      onError(err)
-      throw err
-    }
+  const replace = (next: Record<string, string>): void => setParams(next, { replace: true })
+  const changeView = (view: AccountingView): void => {
+    if (view === 'year') replace({ annee: kind ? anchor.slice(0, 4) : String(year) })
+    else replace({ vue: VIEW_PARAM[view], date: anchor })
   }
 
-  const submitRoot = async (input: NewRootInput): Promise<void> => {
-    try {
-      const created = await createItem.mutateAsync({ parentId: null, ...input })
-      setCreating(false)
-      setAddingChildTo(created.id) // on enchaîne directement sur les sous-rubriques
-    } catch (err) {
-      onError(err)
-    }
+  if (kind) {
+    return (
+      <PeriodView
+        kind={kind}
+        anchor={anchor}
+        today={today}
+        onAnchorChange={(date) => replace({ vue: VIEW_PARAM[kind], date })}
+        onViewChange={changeView}
+      />
+    )
   }
-
-  const confirmDelete = (target: DeleteTarget): void => {
-    setDeleteTarget(null)
-    if (target.kind === 'item') {
-      deleteItem(target.id, {
-        onSuccess: () => toast.success(`Rubrique ${target.code} supprimée`),
-        onError
-      })
-    } else {
-      deleteEntry(target.id, { onSuccess: () => toast.success('Saisie supprimée'), onError })
-    }
-  }
-
-  const items = sheet.data?.items ?? []
   return (
-    <div className="flex flex-col gap-5">
-      <AccountingToolbar
-        year={year}
-        currentYear={currentYear}
-        onYearChange={setYear}
-        onNewSection={() => setCreating(true)}
-        creating={creating}
-      />
-
-      {creating && (
-        <NewSectionForm
-          roots={items}
-          busy={createItem.isPending}
-          onSubmit={submitRoot}
-          onCancel={() => setCreating(false)}
-        />
-      )}
-
-      {sheet.isPending && <p className="text-sm text-muted-foreground">Chargement…</p>}
-      {sheet.isError && (
-        <div role="alert" className="flex items-center gap-3 text-sm text-destructive">
-          {getErrorMessage(sheet.error)}
-          <Button variant="outline" size="sm" onClick={() => void sheet.refetch()}>
-            Réessayer
-          </Button>
-        </div>
-      )}
-      {sheet.data && items.length === 0 && !creating && (
-        <AccountingEmptyState onCreate={() => setCreating(true)} />
-      )}
-      {items.length > 0 && (
-        <SheetActionsProvider value={actions}>
-          <AccountingSheet year={shownYear} items={items} addingChildTo={addingChildTo} />
-        </SheetActionsProvider>
-      )}
-
-      {detail && detailCell && (
-        <EntriesDialog
-          open
-          title={`${columnLabel(shownYear, detail.col)} de ${detail.code}`}
-          subtitle={detail.description}
-          entries={entries.data}
-          loading={entries.isPending}
-          error={entries.isError ? entries.error : null}
-          disabled={detailCell.year > MAX_YEAR}
-          onAdd={(amount, label) => withToast(() => addEntry({ ...detailCell, amount, label }))}
-          onUpdate={(id, amount, label) => withToast(() => updateEntry({ id, amount, label }))}
-          onAskDelete={(entry) =>
-            setDeleteTarget({
-              kind: 'entry',
-              id: entry.id,
-              itemCode: detail.code,
-              label: entry.label,
-              amount: entry.amount
-            })
-          }
-          onRetry={() => void entries.refetch()}
-          onClose={() => setDetail(null)}
-        />
-      )}
-
-      <ConfirmDeleteDialog
-        target={deleteTarget}
-        onConfirm={confirmDelete}
-        onCancel={() => setDeleteTarget(null)}
-      />
-    </div>
+    <YearView
+      year={year}
+      currentYear={currentYear}
+      onYearChange={(y) => replace({ annee: String(y) })}
+      onViewChange={changeView}
+    />
   )
 }

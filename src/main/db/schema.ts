@@ -59,7 +59,8 @@ export const accountingItems = sqliteTable(
 /**
  * Saisie d'un montant (Ariary, entier ≥ 0) pour un élément, une année et un type
  * (estimation / réalisation). Le montant d'une case est la somme de ses saisies actives.
- * `label` NULL = total direct.
+ * `label` NULL = total direct. `operated_on` : date d'opération (« AAAA-MM-JJ ») d'une
+ * réalisation, dans l'année de la case ; NULL pour une estimation (annuelle).
  */
 export const accountingEntries = sqliteTable(
   'accounting_entries',
@@ -72,13 +73,19 @@ export const accountingEntries = sqliteTable(
     type: text('type', { enum: ['estimate', 'actual'] }).notNull(),
     amount: integer('amount').notNull(),
     label: text('label'),
+    operatedOn: text('operated_on'),
     createdAt: text('created_at').notNull(),
     updatedAt: text('updated_at').notNull(),
     deletedAt: text('deleted_at')
   },
   (t) => [
     index('accounting_entries_year_item_idx').on(t.year, t.itemId),
+    index('accounting_entries_operated_on_idx').on(t.operatedOn),
     check('accounting_entries_type_check', sql`${t.type} IN ('estimate', 'actual')`),
-    check('accounting_entries_amount_check', sql`${t.amount} >= 0`)
+    check('accounting_entries_amount_check', sql`${t.amount} >= 0`),
+    check(
+      'accounting_entries_operated_on_check',
+      sql`(${t.type} = 'estimate' AND ${t.operatedOn} IS NULL) OR (${t.type} = 'actual' AND ${t.operatedOn} IS NOT NULL AND CAST(substr(${t.operatedOn}, 1, 4) AS INTEGER) = ${t.year})`
+    )
   ]
 )

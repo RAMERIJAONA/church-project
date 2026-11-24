@@ -35,7 +35,7 @@ export function makeItemDTO(overrides: Partial<AccountingItemDTO> = {}): Account
   }
 }
 
-/** Groupe de niveau 1 « A1 ASA IOMBONANA ». */
+/** Niveau 1 « A1 ASA IOMBONANA », en groupe (sans montant) : passer `amounts` pour une feuille. */
 export function makeRootDTO(overrides: Partial<AccountingItemDTO> = {}): AccountingItemDTO {
   return makeItemDTO({
     id: 1,
@@ -54,6 +54,7 @@ export function makeEntryDTO(overrides: Partial<EntryDTO> = {}): EntryDTO {
     id: 1,
     amount: 250000,
     label: 'Kojakoja',
+    operatedOn: '2026-11-24',
     createdAt: '2026-11-24T09:00:00.000Z',
     updatedAt: '2026-11-24T09:00:00.000Z',
     ...overrides

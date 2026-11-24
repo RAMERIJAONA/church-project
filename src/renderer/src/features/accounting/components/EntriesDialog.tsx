@@ -14,7 +14,8 @@ import { cellOf } from '@shared/domain/accounting/accounting.rules'
 import type { EntryDTO } from '@shared/domain/accounting/accounting.types'
 import { formatDateTime } from '@shared/utils/dates'
 import { formatAmount } from '@shared/utils/money'
-import { EntryForm } from './EntryForm'
+import { operationDateLabel } from '../accounting.utils'
+import { EntryForm, type OperationDateBounds } from './EntryForm'
 
 export interface EntriesDialogProps {
   open: boolean
@@ -27,8 +28,15 @@ export interface EntriesDialogProps {
   error: unknown
   /** Case non modifiable (ex. Estimation 2201) */
   disabled: boolean
-  onAdd: (amount: number, label: string | null) => Promise<void>
-  onUpdate: (id: number, amount: number, label: string | null) => Promise<void>
+  /** Réalisation : bornes de la date d'opération ; `null` pour une estimation */
+  dates: OperationDateBounds | null
+  onAdd: (amount: number, label: string | null, operatedOn: string | null) => Promise<void>
+  onUpdate: (
+    id: number,
+    amount: number,
+    label: string | null,
+    operatedOn: string | null
+  ) => Promise<void>
   onAskDelete: (entry: EntryDTO) => void
   onRetry: () => void
   onClose: () => void
@@ -45,6 +53,7 @@ export function EntriesDialog({
   loading,
   error,
   disabled,
+  dates,
   onAdd,
   onUpdate,
   onAskDelete,
@@ -82,10 +91,11 @@ export function EntriesDialog({
                   <EntryForm
                     target={`de la saisie ${nameOf(entry)}`}
                     initial={entry}
+                    dates={dates}
                     submitLabel="Enregistrer"
                     disabled={disabled}
-                    onSubmit={async (amount, label) => {
-                      await onUpdate(entry.id, amount, label)
+                    onSubmit={async (amount, label, operatedOn) => {
+                      await onUpdate(entry.id, amount, label, operatedOn)
                       setEditingId(null)
                     }}
                     onCancel={() => setEditingId(null)}
@@ -97,7 +107,12 @@ export function EntriesDialog({
                         {entry.label ?? 'Sans libellé'}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        <span>{formatDateTime(new Date(entry.createdAt))}</span>
+                        {entry.operatedOn && (
+                          <span className="font-medium text-foreground">
+                            Opération du {operationDateLabel(entry.operatedOn)} ·{' '}
+                          </span>
+                        )}
+                        <span>saisi le {formatDateTime(new Date(entry.createdAt))}</span>
                         {entry.updatedAt !== entry.createdAt && (
                           <span> · modifié le {formatDateTime(new Date(entry.updatedAt))}</span>
                         )}
@@ -134,6 +149,7 @@ export function EntriesDialog({
 
         <EntryForm
           target="de la nouvelle saisie"
+          dates={dates}
           submitLabel="Ajouter"
           disabled={disabled || entries === undefined}
           onSubmit={onAdd}

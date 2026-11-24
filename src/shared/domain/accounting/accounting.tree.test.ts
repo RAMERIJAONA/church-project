@@ -50,14 +50,21 @@ describe('buildSheet : arborescence', () => {
     ])
   })
 
-  it('ne donne pas de montants au niveau 1 ni aux groupes', () => {
+  it('ne donne pas de montants aux groupes', () => {
     const sheet = buildSheet(2026, church, [], new Set())
     for (const id of [1, 2, 4, 5]) expect(findItem(sheet, id)?.amounts, String(id)).toBeNull()
     for (const id of [3, 6, 7]) expect(findItem(sheet, id)?.amounts, String(id)).not.toBeNull()
-    // Un niveau 1 vide n'a pas non plus de montant
-    expect(
-      buildSheet(2026, [item({ id: 9, prefix: 'A' })], [], new Set()).items[0]?.amounts
-    ).toBeNull()
+  })
+
+  it('donne des montants à une rubrique principale sans sous-rubrique', () => {
+    const sheet = buildSheet(
+      2026,
+      [item({ id: 9, prefix: 'A' })],
+      [{ itemId: 9, year: 2026, type: 'actual', amount: 1000, label: null }],
+      new Set([9])
+    )
+    expect(sheet.items[0]?.amounts?.actual.total).toBe(1000)
+    expect(sheet.items[0]?.canAddChild).toBe(false)
   })
 
   it('remplit Estimation N+1 avec l’estimation de l’année suivante', () => {

@@ -1,4 +1,5 @@
 /** Helpers d'affichage purs de la comptabilité (aucun appel IPC). */
+import { formatLongDate } from '@shared/utils/dates'
 import type {
   AccountingItemDTO,
   AccountingSheetDTO,
@@ -65,4 +66,20 @@ export function withTotal(
       return item.children.length > 0 ? { ...item, children: update(item.children) } : item
     })
   return { ...sheet, items: update(sheet.items) }
+}
+
+/** « 2026-11-22 » → « dimanche 22 novembre 2026 » (date du calendrier, sans fuseau). */
+export function operationDateLabel(date: string): string {
+  const [y, m, d] = date.split('-').map(Number)
+  return formatLongDate(new Date(y ?? 0, (m ?? 1) - 1, d ?? 1, 12))
+}
+
+/** Vue du tableau : l'année (3 colonnes, modifiable) ou une période de réalisations. */
+export type AccountingView = 'year' | 'month' | 'week' | 'day'
+
+export const VIEW_LABELS: Record<AccountingView, string> = {
+  year: 'Année',
+  month: 'Mois',
+  week: 'Semaine',
+  day: 'Jour'
 }

@@ -1,8 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { cellOf, isDetailed, normalizeDescription, normalizePrefix } from './accounting.rules'
+import {
+  cellOf,
+  isDetailed,
+  normalizeDescription,
+  normalizePrefix,
+  operationDateError
+} from './accounting.rules'
 import {
   addEntryInputSchema,
   createItemInputSchema,
+  periodTotalsInputSchema,
   setTotalInputSchema,
   updateEntryInputSchema
 } from './accounting.types'
@@ -72,10 +79,43 @@ describe('saisie (schémas)', () => {
   })
 
   it('transforme un libellé vide en saisie sans libellé', () => {
-    const base = { itemId: 1, year: 2026, type: 'estimate', amount: 10 }
+    const base = { itemId: 1, year: 2026, type: 'estimate', amount: 10, operatedOn: null }
     expect(addEntryInputSchema.parse({ ...base, label: '   ' }).label).toBeNull()
     expect(addEntryInputSchema.parse({ ...base, label: ' Kojakoja ' }).label).toBe('Kojakoja')
-    expect(updateEntryInputSchema.parse({ id: 1, amount: 10, label: null }).label).toBeNull()
+    expect(
+      updateEntryInputSchema.parse({ id: 1, amount: 10, label: null, operatedOn: null }).label
+    ).toBeNull()
     expect(addEntryInputSchema.safeParse({ ...base, label: 'x'.repeat(121) }).success).toBe(false)
+  })
+
+  it('n’accepte qu’une période d’au plus 366 jours, dans l’ordre', () => {
+    expect(
+      periodTotalsInputSchema.safeParse({ from: '2026-11-23', to: '2026-11-29' }).success
+    ).toBe(true)
+    expect(
+      periodTotalsInputSchema.safeParse({ from: '2026-11-29', to: '2026-11-23' }).success
+    ).toBe(false)
+    expect(
+      periodTotalsInputSchema.safeParse({ from: '2024-01-01', to: '2026-01-01' }).success
+    ).toBe(false)
+    expect(
+      periodTotalsInputSchema.safeParse({ from: '2026-02-30', to: '2026-03-01' }).success
+    ).toBe(false)
+  })
+})
+
+describe('date d’opération', () => {
+  it('exige une date dans l’année pour une réalisation, aucune pour une estimation', () => {
+    expect(operationDateError('actual', 2026, '2026-03-15')).toBeNull()
+    expect(operationDateError('estimate', 2026, null)).toBeNull()
+    expect(operationDateError('actual', 2026, null)).toBe(
+      'La date de la réalisation doit être en 2026.'
+    )
+    expect(operationDateError('actual', 2026, '2025-12-31')).toBe(
+      'La date de la réalisation doit être en 2026.'
+    )
+    expect(operationDateError('estimate', 2026, '2026-03-15')).toBe(
+      'Une estimation est annuelle : pas de date.'
+    )
   })
 })

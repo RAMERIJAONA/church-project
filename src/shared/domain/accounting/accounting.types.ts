@@ -3,8 +3,8 @@
  *
  * Vocabulaire (français → malgache) :
  * - élément (`item`) : rubrique, sous-rubrique… (ex. « F1 ANATINY », « F1-I Mpitandrina »)
- * - un élément qui a des enfants est un groupe, sans montant ; un élément sans enfant, à partir
- *   du niveau 2, porte des montants. Le niveau 1 n'a jamais de montant.
+ * - un élément qui a des enfants est un groupe, sans montant ; un élément sans enfant porte des
+ *   montants, à tous les niveaux (y compris une rubrique principale sans sous-rubrique).
  * - numéro (Laharana, « Lah. ») : calculé, jamais stocké (cf. accounting.codes.ts)
  * - description (Antony) : texte saisi
  * - saisie (`entry`) : un montant daté, avec un libellé facultatif. Le montant d'une case est la
@@ -12,6 +12,7 @@
  */
 import { z } from 'zod'
 import { MAX_AMOUNT } from '@shared/utils/money'
+import { isCalendarDate, rangeLength } from './accounting.periods'
 
 export const MIN_YEAR = 1900
 export const MAX_YEAR = 2200
@@ -73,6 +74,11 @@ export const labelSchema = z
   .transform((s) => (s === '' ? null : s))
   .nullable()
 
+/** Date d'opération d'une réalisation : « AAAA-MM-JJ », date existante du calendrier. */
+export const operationDateSchema = z
+  .string()
+  .refine(isCalendarDate, 'Date attendue au format AAAA-MM-JJ')
+
 export const yearSchema = z.number().int().min(MIN_YEAR).max(MAX_YEAR)
 export const amountSchema = z.number().int().min(0).max(MAX_AMOUNT)
 export const entryTypeSchema = z.enum(ENTRY_TYPES)
@@ -108,12 +114,31 @@ export const setTotalInputSchema = z
   .object({ ...cellTarget, amount: amountSchema.nullable() })
   .strict()
 export const listEntriesInputSchema = z.object(cellTarget).strict()
+/**
+ * `operatedOn` : date d'opération, obligatoire pour une réalisation (dans l'année de la case),
+ * `null` pour une estimation. Contrôlé par le service, qui connaît le type de la case.
+ */
 export const addEntryInputSchema = z
-  .object({ ...cellTarget, amount: amountSchema, label: labelSchema })
+  .object({
+    ...cellTarget,
+    amount: amountSchema,
+    label: labelSchema,
+    operatedOn: operationDateSchema.nullable()
+  })
   .strict()
 export const updateEntryInputSchema = z
-  .object({ id: idSchema, amount: amountSchema, label: labelSchema })
+  .object({
+    id: idSchema,
+    amount: amountSchema,
+    label: labelSchema,
+    operatedOn: operationDateSchema.nullable()
+  })
   .strict()
+/** Période d'affichage des réalisations : au plus 366 jours, bornes incluses. */
+export const periodTotalsInputSchema = z
+  .object({ from: operationDateSchema, to: operationDateSchema })
+  .strict()
+  .refine((r) => r.from <= r.to && rangeLength(r) <= 366, 'Période invalide')
 
 export type MoveDirection = z.infer<typeof directionSchema>
 export type CreateItemInput = z.infer<typeof createItemInputSchema>
@@ -121,6 +146,7 @@ export type SetTotalInput = z.infer<typeof setTotalInputSchema>
 export type ListEntriesInput = z.infer<typeof listEntriesInputSchema>
 export type AddEntryInput = z.infer<typeof addEntryInputSchema>
 export type UpdateEntryInput = z.infer<typeof updateEntryInputSchema>
+export type PeriodTotalsInput = z.infer<typeof periodTotalsInputSchema>
 
 /** Une case du tableau (un type, une année). */
 export interface CellDTO {
@@ -147,7 +173,7 @@ export interface AccountingItemDTO {
   /** Lettre du niveau 1, `null` aux autres niveaux */
   prefix: string | null
   description: string
-  /** `null` : niveau 1 ou groupe (a des enfants) */
+  /** `null` : groupe (a des enfants) */
   amounts: ItemAmountsDTO | null
   /** Niveau < 4 et aucune saisie active (toutes années) */
   canAddChild: boolean
@@ -164,9 +190,18 @@ export interface EntryDTO {
   id: number
   amount: number
   label: string | null
+  /** Date d'opération « AAAA-MM-JJ » (réalisations) ; `null` pour une estimation */
+  operatedOn: string | null
   /** ISO 8601 UTC */
   createdAt: string
   updatedAt: string
+}
+
+/** Somme des réalisations d'un élément sur une période (date d'opération). */
+export interface PeriodTotalDTO {
+  itemId: number
+  total: number
+  entryCount: number
 }
 
 export interface CreatedItemDTO {

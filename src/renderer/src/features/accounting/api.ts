@@ -3,6 +3,7 @@ import type {
   AddEntryInput,
   CreateItemInput,
   ListEntriesInput,
+  PeriodTotalsInput,
   MoveDirection,
   SetTotalInput,
   UpdateEntryInput
@@ -20,5 +21,6 @@ export const accountingApi = {
   entries: (input: ListEntriesInput) => invoke('accounting.entries', input),
   addEntry: (input: AddEntryInput) => invoke('accounting.addEntry', input),
   updateEntry: (input: UpdateEntryInput) => invoke('accounting.updateEntry', input),
-  deleteEntry: (id: number) => invoke('accounting.deleteEntry', { id })
+  deleteEntry: (id: number) => invoke('accounting.deleteEntry', { id }),
+  periodTotals: (range: PeriodTotalsInput) => invoke('accounting.periodTotals', range)
 }
