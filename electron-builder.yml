@@ -1,43 +1,66 @@
-appId: com.electron.app
-productName: church-manager
+# Packaging (CLAUDE.md par. 11). Le .exe officiel sort de la CI Windows, jamais du Mac.
+appId: mg.church.manager
+productName: Church Manager
+copyright: Church Manager
+
 directories:
   buildResources: build
+  output: dist
+
 files:
-  - '!**/.vscode/*'
-  - '!src/*'
-  - '!electron.vite.config.{js,ts,mjs,cjs}'
-  - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
-  - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
-  - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+  - out/**
+  - package.json
+  - '!**/*.{md,ts,tsx,map.json}'
+  - '!node_modules/better-sqlite3/{deps,src,binding.gyp}{,/**}'
+
+# Binaire natif hors de l'asar (un .node ne se charge pas depuis une archive asar)
 asarUnpack:
-  - resources/**
+  - '**/node_modules/better-sqlite3/**'
+
+# Migrations lues au démarrage depuis process.resourcesPath/drizzle
+extraResources:
+  - from: drizzle
+    to: drizzle
+    filter: ['**/*']
+
+# better-sqlite3 >= 12 : binaires N-API précompilés, aucune recompilation
+npmRebuild: false
+nodeGypRebuild: false
+buildDependenciesFromSource: false
+
+# Seules les langues utiles : installeur plus léger, installation plus rapide sur HDD
+electronLanguages: [fr, en-US]
+
+# Pas d'auto-update réseau (exclu, CLAUDE.md par. 3)
+publish: null
+
 win:
   executableName: church-manager
-nsis:
-  artifactName: ${name}-${version}-setup.${ext}
-  shortcutName: ${productName}
-  uninstallDisplayName: ${productName}
-  createDesktopShortcut: always
-mac:
-  entitlementsInherit: build/entitlements.mac.plist
-  extendInfo:
-    - NSCameraUsageDescription: Application requests access to the device's camera.
-    - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
-    - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
-    - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
-  notarize: false
-dmg:
-  artifactName: ${name}-${version}.${ext}
-linux:
+  icon: build/icon.ico
   target:
-    - AppImage
-    - snap
-    - deb
-  maintainer: electronjs.org
-  category: Utility
-appImage:
-  artifactName: ${name}-${version}.${ext}
-npmRebuild: false
-publish:
-  provider: generic
-  url: https://example.com/auto-updates
+    - target: nsis
+      arch: [x64] # ia32 si Windows 32 bits (cf. par. 14 : better-sqlite3 sans binaire ia32)
+  files:
+    # Ne garder que le binaire SQLite de la cible
+    - '!node_modules/better-sqlite3/prebuilds/!(win32-x64).node'
+
+nsis:
+  oneClick: true
+  perMachine: false # pas de droits admin
+  createDesktopShortcut: always
+  runAfterFinish: true
+  shortcutName: Church Manager
+  uninstallDisplayName: Church Manager
+  artifactName: church-manager-${version}-setup.${ext}
+  # Les données (%APPDATA%) et sauvegardes (Documents) restent en cas de désinstallation
+  deleteAppDataOnUninstall: false
+  installerLanguages: [fr_FR]
+  language: '1036'
+
+# Builds locaux de contrôle uniquement (non distribués)
+mac:
+  target: dir
+  files:
+    - '!node_modules/better-sqlite3/prebuilds/!(darwin-*).node'
+linux:
+  target: dir

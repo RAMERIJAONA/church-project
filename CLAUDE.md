@@ -54,6 +54,8 @@
 | Qualité | ESLint (flat config) + Prettier + `prettier-plugin-tailwindcss` | |
 | CI | GitHub Actions `windows-latest` | build natif Windows, sans Wine |
 
+**Placement des dépendances** : seul ce qui doit rester externe au bundle main va dans `dependencies` (aujourd'hui **uniquement better-sqlite3**, natif). Tout le reste (React, TanStack, zod, drizzle-orm, electron-log…) est en `devDependencies` : electron-vite le bundle (tree-shaking) et electron-builder ne le recopie pas dans l'asar (19 Mo → 8 Mo, moins de résolution de modules au démarrage sur HDD).
+
 **Exclus volontairement** : serveur local (Express, etc.), base externe, CDN (polices, scripts), Google Fonts, auto-update réseau, libs d'animation lourdes, conteneur d'injection de dépendances, state manager global (Redux…) tant qu'un vrai besoin n'est pas démontré.
 
 ---
@@ -538,6 +540,9 @@ nsis:
   runAfterFinish: true
 ```
 - Cible `portable` possible mais décompression dans `%TEMP%` à chaque lancement → lent sur HDD. NSIS préféré.
+- Points ajoutés : `npmRebuild: false` (prebuilds N-API), `electronLanguages: [fr, en-US]` (installeur plus léger), `publish: null` (aucun auto-update), `deleteAppDataOnUninstall: false` (données conservées), seul le binaire SQLite de la cible est embarqué, `process.setSourceMapsEnabled(true)` dans main.
+- CI : Node lu depuis `.nvmrc` (24), installeur généré par `electron-builder --win --publish never` après le build déjà fait, traces Playwright publiées en cas d'échec.
+- Icône : `build/icon.ico` est encore celle du template Electron, **à remplacer**.
 - Pas de signature de code au départ → avertissement SmartScreen au 1er lancement, à documenter pour l'utilisateur.
 - VM Windows sur Mac Apple Silicon = ARM + émulation → **pas représentatif**. Valider chaque release sur le vrai PC.
 
@@ -594,3 +599,5 @@ nsis:
 10. **Packaging** : `electron-builder.yml`, icône `.ico`, workflow CI §11, tag `v0.1.0` → `.exe` → **test sur le vrai PC** (démarrage, RAM dans le Gestionnaire des tâches, fluidité). Générer la 1re fixture `tests/fixtures/db/v0.1.0.db`.
 
 **Ne pas commencer les features métier avant que l'étape 10 soit validée sur la machine cible.**
+
+> **État (2026-11-24)** : étapes 1 à 10 faites sur le Mac (lint, typecheck, 60 tests, 4 E2E, build, fixture `v0.1.0`). Reste : pousser sur GitHub, CI verte, tag `v0.1.0`, test du `.exe` sur le vrai PC. Note : Vitest est installé dès l'étape 3 (pour que `npm test` existe à chaque étape).

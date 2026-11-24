@@ -13,6 +13,9 @@ import { WINDOW_BACKGROUND } from '@main/window-theme'
 import { settingsToQuery } from '@shared/domain/settings/settings.theme'
 import type { AppSettings } from '@shared/domain/settings/settings.types'
 
+// Stack traces des logs ramenées au code TypeScript (sourcemaps main/preload)
+process.setSourceMapsEnabled(true)
+
 const isDev = !app.isPackaged
 /** `--debug` : DevTools (F12) + logs détaillés, y compris dans l'app installée. */
 const isDebug = isDev || process.argv.includes('--debug')
