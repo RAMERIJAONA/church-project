@@ -40,3 +40,10 @@ export async function launchApp(options: { userData?: string } = {}): Promise<La
 export function removeDir(dir: string): void {
   rmSync(dir, { recursive: true, force: true })
 }
+
+/** Lien de la barre latérale (évite les ambiguïtés avec les liens du contenu). */
+export function navLink(window: Page, name: string): ReturnType<Page['getByRole']> {
+  return window
+    .getByRole('navigation', { name: 'Navigation principale' })
+    .getByRole('link', { name, exact: true })
+}

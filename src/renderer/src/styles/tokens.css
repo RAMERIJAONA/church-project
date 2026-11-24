@@ -11,6 +11,8 @@
   /* Typographie : polices système (zéro fichier à charger, rendu ClearType natif sous Windows) */
   --font-sans: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, sans-serif;
   --font-mono: 'Cascadia Mono', Consolas, ui-monospace, monospace;
+  /* Titres : Cambria est livrée avec Windows (aucun fichier à charger) */
+  --font-display: Cambria, 'Iowan Old Style', Georgia, serif;
   --font-size-base: 14px;
 
   /* Densité : 0.85 compact | 1 confortable. Multiplie l'échelle d'espacement Tailwind. */
@@ -28,8 +30,8 @@
   --muted-foreground: oklch(0.5 0.015 265);
   --secondary: oklch(0.95 0.006 85);
   --secondary-foreground: oklch(0.28 0.02 265);
-  --accent: oklch(0.945 0.012 270);
-  --accent-foreground: oklch(0.28 0.05 270);
+  --accent: oklch(0.945 0.014 285);
+  --accent-foreground: oklch(0.3 0.08 285);
   --border: oklch(0.9 0.006 85);
   --input: oklch(0.88 0.008 85);
   --destructive: oklch(0.55 0.2 27);
@@ -37,18 +39,18 @@
   --success: oklch(0.55 0.13 155);
   --warning: oklch(0.7 0.14 75);
 
-  /* Accent (par défaut : indigo) */
-  --primary: oklch(0.47 0.16 270);
-  --primary-foreground: oklch(0.985 0.005 270);
-  --ring: oklch(0.6 0.14 270);
+  /* Accent (par défaut : indigo-violet) */
+  --primary: oklch(0.46 0.17 285);
+  --primary-foreground: oklch(0.985 0.005 285);
+  --ring: oklch(0.6 0.15 285);
 
   /* Barre latérale : légèrement plus soutenue que le fond */
   --sidebar: oklch(0.965 0.005 85);
   --sidebar-foreground: oklch(0.3 0.02 265);
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: var(--primary-foreground);
-  --sidebar-accent: oklch(0.93 0.01 270);
-  --sidebar-accent-foreground: oklch(0.25 0.05 270);
+  --sidebar-accent: oklch(0.925 0.018 285);
+  --sidebar-accent-foreground: oklch(0.28 0.09 285);
   --sidebar-border: var(--border);
   --sidebar-ring: var(--ring);
 
@@ -74,28 +76,40 @@
   --muted-foreground: oklch(0.7 0.012 265);
   --secondary: oklch(0.27 0.014 265);
   --secondary-foreground: oklch(0.92 0.006 85);
-  --accent: oklch(0.29 0.03 270);
-  --accent-foreground: oklch(0.94 0.01 270);
+  --accent: oklch(0.29 0.035 285);
+  --accent-foreground: oklch(0.94 0.02 285);
   --border: oklch(0.3 0.012 265);
   --input: oklch(0.34 0.012 265);
   --destructive: oklch(0.65 0.19 25);
   --success: oklch(0.68 0.13 155);
   --warning: oklch(0.78 0.13 80);
 
-  --primary: oklch(0.72 0.13 270);
-  --primary-foreground: oklch(0.2 0.03 270);
-  --ring: oklch(0.65 0.12 270);
+  --primary: oklch(0.74 0.13 285);
+  --primary-foreground: oklch(0.2 0.04 285);
+  --ring: oklch(0.66 0.13 285);
 
   --sidebar: oklch(0.165 0.012 265);
   --sidebar-foreground: oklch(0.86 0.008 85);
-  --sidebar-accent: oklch(0.26 0.025 270);
-  --sidebar-accent-foreground: oklch(0.95 0.01 270);
+  --sidebar-accent: oklch(0.26 0.035 285);
+  --sidebar-accent-foreground: oklch(0.95 0.02 285);
 
   --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.3);
   color-scheme: dark;
 }
 
-/* Accents : ne changent que la teinte primaire (clair puis sombre) */
+/*
+ * Accents : ne changent que la teinte primaire. Valables sur <html> ET sur un élément
+ * descendant (ex. pastille de couleur dans les paramètres), en clair comme en sombre.
+ */
+[data-accent='indigo'] {
+  --primary: oklch(0.46 0.17 285);
+  --primary-foreground: oklch(0.985 0.005 285);
+  --ring: oklch(0.6 0.15 285);
+  --accent: oklch(0.945 0.014 285);
+  --accent-foreground: oklch(0.3 0.08 285);
+  --sidebar-accent: oklch(0.925 0.018 285);
+  --sidebar-accent-foreground: oklch(0.28 0.09 285);
+}
 [data-accent='green'] {
   --primary: oklch(0.5 0.12 160);
   --primary-foreground: oklch(0.985 0.01 160);
@@ -123,7 +137,18 @@
   --sidebar-accent: oklch(0.93 0.02 10);
   --sidebar-accent-foreground: oklch(0.3 0.08 10);
 }
-[data-theme='dark'][data-accent='green'] {
+[data-theme='dark'][data-accent='indigo'],
+[data-theme='dark'] [data-accent='indigo'] {
+  --primary: oklch(0.74 0.13 285);
+  --primary-foreground: oklch(0.2 0.04 285);
+  --ring: oklch(0.66 0.13 285);
+  --accent: oklch(0.29 0.035 285);
+  --accent-foreground: oklch(0.94 0.02 285);
+  --sidebar-accent: oklch(0.26 0.035 285);
+  --sidebar-accent-foreground: oklch(0.95 0.02 285);
+}
+[data-theme='dark'][data-accent='green'],
+[data-theme='dark'] [data-accent='green'] {
   --primary: oklch(0.72 0.12 160);
   --primary-foreground: oklch(0.2 0.03 160);
   --ring: oklch(0.64 0.11 160);
@@ -132,7 +157,8 @@
   --sidebar-accent: oklch(0.26 0.03 160);
   --sidebar-accent-foreground: oklch(0.95 0.02 160);
 }
-[data-theme='dark'][data-accent='amber'] {
+[data-theme='dark'][data-accent='amber'],
+[data-theme='dark'] [data-accent='amber'] {
   --primary: oklch(0.78 0.12 70);
   --primary-foreground: oklch(0.22 0.03 70);
   --ring: oklch(0.7 0.11 70);
@@ -141,7 +167,8 @@
   --sidebar-accent: oklch(0.27 0.03 70);
   --sidebar-accent-foreground: oklch(0.95 0.02 75);
 }
-[data-theme='dark'][data-accent='rose'] {
+[data-theme='dark'][data-accent='rose'],
+[data-theme='dark'] [data-accent='rose'] {
   --primary: oklch(0.72 0.14 10);
   --primary-foreground: oklch(0.2 0.03 10);
   --ring: oklch(0.65 0.12 10);

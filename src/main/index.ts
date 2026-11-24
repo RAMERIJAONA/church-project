@@ -7,6 +7,10 @@ import { createContainer, type Container } from '@main/container'
 import { registerIpc } from '@main/ipc/register'
 import { createElectronLogSink } from '@main/logging/electron-log.sink'
 import { createLogger } from '@main/logging/logger'
+import { WINDOW_BACKGROUND } from '@main/window-theme'
+import { settingsToQuery } from '@shared/domain/settings/settings.theme'
+import type { AppSettings } from '@shared/domain/settings/settings.types'
+import { DEFAULT_SETTINGS as DEFAULT_WINDOW_SETTINGS } from '@shared/domain/settings/settings.rules'
 
 const isDev = !app.isPackaged
 
@@ -25,13 +29,14 @@ const logger = createLogger(
 
 let container: Container | null = null
 
-function createWindow(): BrowserWindow {
+function createWindow(settings: AppSettings): BrowserWindow {
   const mainWindow = new BrowserWindow({
     width: 1200,
     height: 760,
     minWidth: 900,
     minHeight: 600,
     show: false,
+    backgroundColor: WINDOW_BACKGROUND[settings.theme],
     autoHideMenuBar: true,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -67,10 +72,13 @@ function createWindow(): BrowserWindow {
     return { action: 'deny' }
   })
 
+  const query = settingsToQuery(settings)
   if (isDev && process.env['ELECTRON_RENDERER_URL']) {
-    void mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
+    const url = new URL(process.env['ELECTRON_RENDERER_URL'])
+    for (const [k, v] of Object.entries(query)) url.searchParams.set(k, v)
+    void mainWindow.loadURL(url.toString())
   } else {
-    void mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+    void mainWindow.loadFile(join(__dirname, '../renderer/index.html'), { query })
   }
   return mainWindow
 }
@@ -99,10 +107,12 @@ async function start(): Promise<void> {
     settings: container.settings
   })
 
-  createWindow()
+  const openWindow = (): BrowserWindow =>
+    createWindow(container?.settings.get() ?? DEFAULT_WINDOW_SETTINGS)
+  openWindow()
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    if (BrowserWindow.getAllWindows().length === 0) openWindow()
   })
 }
 

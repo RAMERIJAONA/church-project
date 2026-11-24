@@ -233,7 +233,8 @@ export default defineConfig(
       'src/main/**/*.service.ts',
       'src/main/**/*.repository.ts',
       'src/main/container.ts',
-      'src/renderer/src/features/*/queries.ts',
+      'src/renderer/src/**/queries.ts',
+      'src/renderer/src/**/*.queries.ts',
       'tests/**',
       'src/**/*.test.{ts,tsx}'
     ],

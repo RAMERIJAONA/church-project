@@ -11,3 +11,4 @@ playwright-report
 *.db-wal
 *.db-shm
 .claude/settings.local.json
+__pycache__

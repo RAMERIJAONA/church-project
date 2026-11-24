@@ -8,7 +8,8 @@ test('@smoke démarrage à vide : migrations OK puis écran affiché', async () 
   const { window, userData, close } = await launchApp()
   try {
     await expect(window).toHaveTitle('Church Manager')
-    await expect(window.getByRole('heading', { level: 1 })).toBeVisible()
+    await expect(window.getByRole('heading', { level: 1, name: 'Accueil' })).toBeVisible()
+    await expect(window.getByRole('navigation', { name: 'Navigation principale' })).toBeVisible()
 
     const dbPath = join(userData, 'data.db')
     expect(existsSync(dbPath)).toBe(true)

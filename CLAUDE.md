@@ -373,6 +373,8 @@ export async function invoke<C extends Channel>(channel: C, input: IpcInput<C>):
 - Debounce des recherches (~200 ms), index SQL sur les colonnes filtrées / triées
 - `React.lazy` par feature, pas de micro-découpage (lecture disque lente)
 - Fenêtre : `show: false` + `ready-to-show` + `backgroundColor` du thème → pas de flash blanc
+  - Implémenté : main lit `settings` avant de créer la fenêtre, passe `backgroundColor` (hex de `main/window-theme.ts`, seule exception justifiée aux valeurs brutes hors `tokens.css`) et les préférences dans l'URL ; `main.tsx` les applique sur `<html>` avant le premier rendu React.
+- Typo : polices système uniquement (Segoe UI pour le texte, Cambria pour les titres, livrées avec Windows) → zéro fichier de police à charger.
 - Option de secours (paramètre) : `app.disableHardwareAcceleration()` si les vieux drivers GPU causent des glitches
 
 ---
@@ -437,12 +439,12 @@ export async function invoke<C extends Channel>(channel: C, input: IpcInput<C>):
 1. **Tout bug corrigé commence par un test qui le reproduit** et échoue, dans `tests/regression/<AAAA-MM-JJ>-<slug>.test.ts` (ou colocalisé si purement unitaire), avec un commentaire décrivant le bug. Ensuite seulement le correctif. Le test reste à vie.
 2. **Golden tests sur les calculs métier** : jeux d'entrées/sorties figés (totaux de facture, remises, arrondis, stock) dans `shared/domain/**/__golden__/`. Un changement de résultat doit être explicite et justifié dans la PR.
 3. **Parcours critiques en E2E smoke** (liste à maintenir ici) :
-   - [ ] Démarrage à vide → migrations OK → écran d'accueil
+   - [x] Démarrage à vide → migrations OK → écran d'accueil (`tests/e2e/startup.spec.ts`)
    - [ ] Créer un client → apparaît dans la liste → recherche le retrouve
    - [ ] Créer une vente → stock décrémenté → total correct
    - [ ] Imprimer / générer le PDF d'une facture
    - [ ] Sauvegarde manuelle → restauration → données identiques
-   - [ ] Changer le thème → persisté après redémarrage
+   - [x] Changer le thème → persisté après redémarrage (`tests/e2e/theme.spec.ts`)
 4. **Aucun test supprimé ou désactivé** (`.skip`) sans justification écrite dans la PR.
 5. Un test qui échoue de façon aléatoire (flaky) se corrige en priorité, il ne se relance pas en boucle.
 

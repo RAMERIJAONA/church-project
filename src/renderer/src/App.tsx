@@ -1,13 +1,15 @@
-import { QueryClientProvider } from '@tanstack/react-query'
 import { useState } from 'react'
-import { SettingsPage } from '@renderer/features/settings/pages/SettingsPage'
+import { RouterProvider } from 'react-router'
+import { AppProviders } from '@renderer/app/AppProviders'
+import { createAppRouter } from '@renderer/app/router'
 import { createQueryClient } from '@renderer/lib/query-client'
 
 export function App(): React.JSX.Element {
   const [queryClient] = useState(createQueryClient)
+  const [router] = useState(createAppRouter)
   return (
-    <QueryClientProvider client={queryClient}>
-      <SettingsPage />
-    </QueryClientProvider>
+    <AppProviders queryClient={queryClient}>
+      <RouterProvider router={router} />
+    </AppProviders>
   )
 }

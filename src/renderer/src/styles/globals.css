@@ -10,6 +10,7 @@
 @theme inline {
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
+  --font-display: var(--font-display);
 
   /* Densité : toute l'échelle d'espacement (p-*, gap-*, h-*…) suit --density */
   --spacing: calc(0.25rem * var(--density));

@@ -5,16 +5,11 @@ import { settingsApi } from './api'
 /** Query key factory : seule source des clés de cette feature. */
 export const settingsKeys = {
   all: ['settings'] as const,
-  current: () => [...settingsKeys.all, 'current'] as const,
-  appInfo: () => ['app', 'info'] as const
+  current: () => [...settingsKeys.all, 'current'] as const
 }
 
 export function useSettings() {
   return useQuery({ queryKey: settingsKeys.current(), queryFn: settingsApi.get })
-}
-
-export function useAppInfo() {
-  return useQuery({ queryKey: settingsKeys.appInfo(), queryFn: settingsApi.appInfo })
 }
 
 /** Mise à jour optimiste : le thème change instantanément, rollback si l'écriture échoue. */
