@@ -2,8 +2,8 @@ import { CornerDownRight } from 'lucide-react'
 import { useMemo } from 'react'
 import { rollUp } from '@shared/domain/accounting/accounting.totals'
 import type { AccountingItemDTO } from '@shared/domain/accounting/accounting.types'
-import { formatAriary } from '@shared/utils/money'
 import { flattenTree } from '../accounting.utils'
+import { Money } from './Money'
 import {
   codeCell,
   col,
@@ -74,7 +74,7 @@ export function PeriodSheet({ label, items, totals }: PeriodSheetProps): React.J
                   <td className={descriptionCell({ level: item.level })}>
                     <div className="flex items-center gap-1">
                       {item.level > 1 && <CornerDownRight aria-hidden className={treeConnector} />}
-                      <span className="block min-w-0 flex-1 truncate px-2 py-1">
+                      <span className="line-clamp-2 min-w-0 flex-1 px-2 py-1 break-words">
                         {item.description}
                       </span>
                     </div>
@@ -84,7 +84,7 @@ export function PeriodSheet({ label, items, totals }: PeriodSheetProps): React.J
                       item.amounts ? 'px-3 py-1 text-right font-medium tabular-nums' : totalCell
                     }
                   >
-                    {total === null ? '' : formatAriary(total)}
+                    {total === null ? '' : <Money amount={total} />}
                   </td>
                 </tr>
               )
@@ -95,7 +95,9 @@ export function PeriodSheet({ label, items, totals }: PeriodSheetProps): React.J
               <th scope="row" colSpan={2} className={codeCell({ kind: 'root' })}>
                 Total
               </th>
-              <td className={totalCell}>{sums.grand === null ? '' : formatAriary(sums.grand)}</td>
+              <td className={totalCell}>
+                {sums.grand === null ? '' : <Money amount={sums.grand} />}
+              </td>
             </tr>
           </tfoot>
         </table>

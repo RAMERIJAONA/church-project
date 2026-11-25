@@ -80,6 +80,8 @@
     white-space: normal !important;
     overflow: visible !important;
     text-overflow: clip !important;
+    /* Descriptions limitées à 2 lignes à l'écran (line-clamp) : texte complet à l'impression */
+    -webkit-line-clamp: none !important;
   }
   td:first-child,
   th:first-child,
@@ -104,9 +106,16 @@
   td input::placeholder {
     color: transparent !important;
   }
-  /* Date sous le montant : alignée sur « Ar » (le bouton de détail n'est pas imprimé) */
+  /* Date sous le montant et en-têtes de montant : alignés sur « Ar » (le bouton de détail
+     n'est pas imprimé). Ligne de date vide : pas de place perdue à l'impression. */
   td [data-amount-date] {
     padding-right: calc(var(--spacing) * 2) !important;
+  }
+  td [data-amount-date]:empty {
+    display: none !important;
+  }
+  th[data-amount-head] {
+    padding-right: calc(var(--spacing) * 3) !important;
   }
   /* Cadre arrondi de l'écran */
   .rounded-xl {

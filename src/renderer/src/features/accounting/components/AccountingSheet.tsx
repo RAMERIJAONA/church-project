@@ -1,11 +1,11 @@
 import { Fragment, useMemo } from 'react'
 import type { AccountingItemDTO } from '@shared/domain/accounting/accounting.types'
 import { nextChildCode } from '@shared/domain/accounting/accounting.tree'
-import { formatAriary } from '@shared/utils/money'
 import { AMOUNT_COLUMNS, columnLabel, flattenTree, sheetTotals } from '../accounting.utils'
 import { AddChildRow } from './AddChildRow'
 import { ItemRow } from './ItemRow'
-import { codeCell, col, headCell, totalCell, totalRow } from './accounting.styles'
+import { SubtotalCell } from './SubtotalCell'
+import { codeCell, col, headCell, totalRow } from './accounting.styles'
 
 export interface AccountingSheetProps {
   year: number
@@ -56,7 +56,7 @@ export function AccountingSheet({
               Description
             </th>
             {AMOUNT_COLUMNS.map((c) => (
-              <th key={c} scope="col" className={headCell({ align: 'right' })}>
+              <th key={c} scope="col" data-amount-head className={headCell({ align: 'amount' })}>
                 {columnLabel(year, c)}
               </th>
             ))}
@@ -89,14 +89,9 @@ export function AccountingSheet({
             <th scope="row" colSpan={2} className={codeCell({ kind: 'root' })}>
               Total général
             </th>
-            {AMOUNT_COLUMNS.map((c) => {
-              const value = totals.grand[c]
-              return (
-                <td key={c} className={totalCell}>
-                  {value === null ? '' : formatAriary(value)}
-                </td>
-              )
-            })}
+            {AMOUNT_COLUMNS.map((c) => (
+              <SubtotalCell key={c} value={totals.grand[c]} />
+            ))}
             <td data-print="hide" />
           </tr>
         </tfoot>

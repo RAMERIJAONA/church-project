@@ -44,7 +44,7 @@ export function EditableDescription({
     <button
       type="button"
       className={editableText({ kind })}
-      title="Cliquer pour modifier"
+      title={`${value} (cliquer pour modifier)`}
       onClick={() => onEditingChange(true)}
     >
       {value}

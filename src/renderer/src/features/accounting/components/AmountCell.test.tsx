@@ -46,7 +46,7 @@ describe('AmountCell', () => {
     })
     expect(screen.queryByRole('textbox')).toBeNull()
     // Testing Library normalise les espaces affichées (U+00A0 → espace) : même chose ici
-    expect(screen.getByText(formatAriary(3500).replace(/\s/g, ' '))).toBeDefined()
+    expect(screen.getByRole('cell').textContent).toContain(formatAriary(3500))
     await userEvent.click(screen.getByRole('button', { name: `Détail : ${LABEL}` }))
     expect(onOpenDetail).toHaveBeenCalledOnce()
   })
@@ -62,6 +62,12 @@ describe('AmountCell', () => {
     setup({ cell: makeCellDTO({ total: 150000, entryCount: 1, lastEntryAt: at }) })
     expect(screen.getByText('Ar')).toBeDefined()
     expect(screen.getByTitle(/Dernière saisie/).textContent).toBe(formatShortDateTime(new Date(at)))
+  })
+
+  it('garde la ligne de date même vide (rangées de même hauteur)', () => {
+    setup()
+    const date = screen.getByRole('cell').querySelector('[data-amount-date]')
+    expect(date?.textContent).toBe('')
   })
 
   it('saisie faite après la fin de l’année de la case : année seule', () => {

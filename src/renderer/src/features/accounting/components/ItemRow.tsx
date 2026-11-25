@@ -5,12 +5,18 @@ import {
   MAX_YEAR,
   type AccountingItemDTO
 } from '@shared/domain/accounting/accounting.types'
-import { formatAriary } from '@shared/utils/money'
 import { AMOUNT_COLUMNS, columnLabel, columnTarget, type ColumnTotals } from '../accounting.utils'
 import { AmountCell } from './AmountCell'
 import { EditableDescription } from './EditableDescription'
 import { RowActions } from './RowActions'
-import { codeCell, descriptionCell, sheetRow, totalCell, treeConnector } from './accounting.styles'
+import { SubtotalCell } from './SubtotalCell'
+import {
+  actionsCell,
+  codeCell,
+  descriptionCell,
+  sheetRow,
+  treeConnector
+} from './accounting.styles'
 import { useSheetActions } from './sheet-actions'
 
 export interface ItemRowProps {
@@ -40,12 +46,13 @@ export const ItemRow = memo(function ItemRow({
   const [editing, setEditing] = useState(false)
   const kind = item.level === 1 ? 'root' : item.amounts === null ? 'group' : 'leaf'
   const amounts = item.amounts
+  const hasAmounts = amounts !== null
   return (
-    <tr data-row={kind} className={sheetRow({ kind })}>
+    <tr data-row={kind} className={sheetRow({ kind, amounts: hasAmounts })}>
       <th scope="row" className={codeCell({ kind, level: item.level })}>
         {item.code}
       </th>
-      <td className={descriptionCell({ level: item.level })}>
+      <td className={descriptionCell({ level: item.level, amounts: hasAmounts })}>
         <div className="flex items-center gap-1">
           {item.level > 1 && <CornerDownRight aria-hidden className={treeConnector} />}
           <EditableDescription
@@ -59,14 +66,13 @@ export const ItemRow = memo(function ItemRow({
         </div>
       </td>
       {!amounts &&
-        AMOUNT_COLUMNS.map((col) => {
-          const value = subtotals?.[col] ?? null
-          return (
-            <td key={col} className={totalCell} title="Sous-total (somme des sous-rubriques)">
-              {value === null ? '' : formatAriary(value)}
-            </td>
-          )
-        })}
+        AMOUNT_COLUMNS.map((col) => (
+          <SubtotalCell
+            key={col}
+            value={subtotals?.[col] ?? null}
+            title="Sous-total (somme des sous-rubriques)"
+          />
+        ))}
       {amounts &&
         AMOUNT_COLUMNS.map((col) => (
           <AmountCell
@@ -79,7 +85,7 @@ export const ItemRow = memo(function ItemRow({
             onOpenDetail={() => actions.openDetail(item, col)}
           />
         ))}
-      <td data-print="hide" className="px-2">
+      <td data-print="hide" className={actionsCell({ amounts: hasAmounts })}>
         <RowActions
           code={item.code}
           addChildBlockedReason={addChildBlockedReason(item)}

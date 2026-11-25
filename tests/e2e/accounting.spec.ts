@@ -96,6 +96,40 @@ test('@smoke comptabilité : arborescence, 3 colonnes, détail, persistés aprè
     // Un groupe n'a pas de case de montant
     await expect(cell(w, `Réalisation ${Y} de A1-II-1`)).toHaveCount(0)
 
+    // Régression (2026-11-25, capture du porteur) : sous-totaux et en-têtes décalés par rapport
+    // aux montants ; numéro et description plus bas que le champ sur les rangées datées.
+    const geo = await w.evaluate(() => {
+      const rowOf = (code: string): Element | undefined =>
+        [...document.querySelectorAll('tbody tr')].find(
+          (r) => r.querySelector('th')?.textContent === code
+        )
+      const textBox = (el: Element | null | undefined): DOMRect => {
+        const range = document.createRange()
+        if (el) range.selectNodeContents(el)
+        return range.getBoundingClientRect()
+      }
+      const center = (r: DOMRect): number => r.top + r.height / 2
+      const leaf = rowOf('A1-I-1')
+      const input = leaf?.querySelector('input[data-amount]')
+      const inputBox = input?.getBoundingClientRect() ?? new DOMRect()
+      const subtotal = rowOf('A1')?.querySelector('td:nth-of-type(2) span')
+      const head = document.querySelector('th[data-amount-head]')
+      const headPad = head ? parseFloat(getComputedStyle(head).paddingRight) : 0
+      return {
+        subtotalVsInput: (subtotal?.getBoundingClientRect().right ?? 0) - inputBox.right,
+        // En-tête : fin du texte sur « Ar » (8 px avant le bord droit du champ)
+        headVsSuffix: (head?.getBoundingClientRect().right ?? 0) - headPad - (inputBox.right - 8),
+        codeVsInput: center(textBox(leaf?.querySelector('th'))) - center(inputBox),
+        descVsInput: center(textBox(leaf?.querySelector('td button'))) - center(inputBox),
+        dated: leaf?.querySelector('[data-amount-date]')?.textContent !== ''
+      }
+    })
+    expect(geo.dated).toBe(true)
+    expect(Math.abs(geo.subtotalVsInput)).toBeLessThanOrEqual(1)
+    expect(Math.abs(geo.headVsSuffix)).toBeLessThanOrEqual(1)
+    expect(Math.abs(geo.codeVsInput)).toBeLessThanOrEqual(2)
+    expect(Math.abs(geo.descVsInput)).toBeLessThanOrEqual(2)
+
     // Détail : saisies avec libellé, la case devient une somme en lecture seule
     await w.getByRole('button', { name: `Détail : Réalisation ${Y} de A1-II-1 A)` }).click()
     const dialog = w.getByRole('dialog', { name: `Réalisation ${Y} de A1-II-1 A)` })

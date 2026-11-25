@@ -1,10 +1,10 @@
 import { List } from 'lucide-react'
 import { Button } from '@renderer/components/ui/button'
 import type { CellDTO } from '@shared/domain/accounting/accounting.types'
-import { formatAriary } from '@shared/utils/money'
 import { entryDateLabel } from '../accounting.utils'
 import { AmountInput } from './AmountInput'
-import { amountCell, amountDate, amountReadonly } from './accounting.styles'
+import { Money } from './Money'
+import { amountCell, amountDate, amountReadonly, amountTd } from './accounting.styles'
 
 export interface AmountCellProps {
   cell: CellDTO
@@ -31,14 +31,14 @@ export function AmountCell({
   onOpenDetail
 }: AmountCellProps): React.JSX.Element {
   return (
-    <td className="px-1 py-1">
+    <td className={amountTd}>
       <div className={amountCell}>
         {cell.detailed ? (
           <span
             className={amountReadonly}
             title="Montant détaillé : ouvrir le détail pour modifier"
           >
-            {cell.total === null ? '' : formatAriary(cell.total)}
+            {cell.total === null ? '' : <Money amount={cell.total} />}
           </span>
         ) : (
           <AmountInput value={cell.total} label={label} disabled={disabled} onCommit={onCommit} />
@@ -60,15 +60,18 @@ export function AmountCell({
           <List aria-hidden />
         </Button>
       </div>
-      {cell.lastEntryAt && (
-        <p
-          data-amount-date
-          className={amountDate}
-          title="Dernière saisie (date et heure enregistrées automatiquement)"
-        >
-          {entryDateLabel(cell.lastEntryAt, year)}
-        </p>
-      )}
+      {/* Toujours présente (vide sans saisie) : même hauteur pour toutes les rangées */}
+      <p
+        data-amount-date
+        className={amountDate}
+        title={
+          cell.lastEntryAt
+            ? 'Dernière saisie (date et heure enregistrées automatiquement)'
+            : undefined
+        }
+      >
+        {cell.lastEntryAt ? entryDateLabel(cell.lastEntryAt, year) : ''}
+      </p>
     </td>
   )
 }
