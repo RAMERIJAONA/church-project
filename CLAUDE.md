@@ -489,6 +489,7 @@ Les utilisateurs mettent à jour une DB existante, pas une DB neuve. Donc :
 
 ### Local (Mac)
 - `npm run dev` → dev quotidien.
+- `npm run db:reset` → vide la base de dev (`scripts/db-reset.ts`, Node pur) : `data.db` (+ `-wal`, `-shm`) est **déplacé**, pas effacé, dans `<userData>/avant-vidage/<date>/` ; refusé si l'app est ouverte sur ce dossier. Le prochain `npm run dev` repart d'une base vide (réglages compris). `npm run db:reset:seed` : même chose sur `.dev-data/seed` ; `APP_USER_DATA` choisit un autre dossier. Testé par `tests/integration/db-reset.test.ts`.
 - better-sqlite3 est natif mais livré précompilé en N-API (indépendant de la version d'Electron) : **aucune recompilation**. Le `postinstall` se limite à `install-electron` (téléchargement du binaire Electron, script d'install bloqué par défaut par npm 11). `electron-builder install-app-deps` a été retiré : il lançait une compilation node-gyp inutile.
 - **Ne pas compter sur un build Windows depuis le Mac** (module natif + NSIS/Wine = fragile). Le `.exe` officiel sort de la CI.
 
