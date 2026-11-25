@@ -1,25 +1,18 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ChevronDown } from 'lucide-react'
-import { useForm, useWatch } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { Button } from '@renderer/components/ui/button'
 import { Input } from '@renderer/components/ui/input'
 import { Label } from '@renderer/components/ui/label'
-import { availableLetters, rootCode } from '@shared/domain/accounting/accounting.codes'
-import { normalizePrefix } from '@shared/domain/accounting/accounting.rules'
+import { nextLetter, rootCode } from '@shared/domain/accounting/accounting.codes'
 import {
   descriptionSchema,
-  sectionPrefixSchema,
   type AccountingItemDTO,
   type Ledger
 } from '@shared/domain/accounting/accounting.types'
-import { selectChevron, selectField } from './accounting.styles'
 
-/** Rubrique de niveau 1 : la description part en majuscules. */
-const newRootSchema = z.object({
-  prefix: sectionPrefixSchema,
-  description: descriptionSchema.toUpperCase()
-})
+/** Rubrique de niveau 1 : la description part en majuscules ; la lettre est attribuée. */
+const newRootSchema = z.object({ description: descriptionSchema.toUpperCase() })
 export type NewRootInput = z.output<typeof newRootSchema>
 type FormInput = z.input<typeof newRootSchema>
 
@@ -33,15 +26,9 @@ export interface NewSectionFormProps {
   onCancel: () => void
 }
 
-/** Numéro qu'aura la prochaine rubrique de cette lettre (aperçu avant création). */
-function nextRootCode(prefix: string, roots: NewSectionFormProps['roots'], ledger: Ledger): string {
-  const p = normalizePrefix(prefix)
-  return rootCode(p, roots.filter((r) => r.prefix === p).length + 1, ledger)
-}
-
 /**
- * La lettre n'est jamais tapée : on choisit une lettre déjà utilisée (A2, A3…) ou la lettre
- * suivante de l'alphabet malgache (B, puis D…). Le numéro est affiché en direct.
+ * La lettre n'est jamais choisie : une lettre par rubrique principale, toujours la suivante de
+ * l'alphabet malgache (A, B, D…), chiffre fixe par comptabilité (sorties A1, entrées A2).
  * La description est mise en majuscules (affichage pendant la saisie, et à l'enregistrement).
  */
 export function NewSectionForm({
@@ -51,17 +38,12 @@ export function NewSectionForm({
   onSubmit,
   onCancel
 }: NewSectionFormProps): React.JSX.Element {
-  const letters = availableLetters(roots.map((r) => r.prefix ?? ''))
-  const newLetter = letters[letters.length - 1]
-  // Par défaut : on continue la dernière lettre utilisée (ou A sur un tableau vide)
-  const defaultLetter = letters.length > 1 ? letters[letters.length - 2] : newLetter
+  const preview = rootCode(nextLetter(roots.map((r) => r.prefix ?? '')), ledger)
   const form = useForm<FormInput, unknown, NewRootInput>({
     resolver: zodResolver(newRootSchema),
-    defaultValues: { prefix: defaultLetter, description: '' }
+    defaultValues: { description: '' }
   })
   const { errors } = form.formState
-  const prefix = useWatch({ control: form.control, name: 'prefix' })
-  const preview = nextRootCode(prefix, roots, ledger)
 
   return (
     <form
@@ -75,26 +57,11 @@ export function NewSectionForm({
           Nouvelle rubrique
         </h2>
         <p className="text-sm text-muted-foreground">
-          Gardez la lettre en cours ou passez à la suivante ; le numéro est automatique.
+          Le numéro est automatique : la lettre suivante de l’alphabet malgache.
         </p>
       </div>
 
       <div className="flex flex-wrap items-start gap-4">
-        <div className="flex w-56 flex-col gap-1.5">
-          <Label htmlFor="section-prefix">Lettre</Label>
-          <div className="relative">
-            <select id="section-prefix" className={selectField} {...form.register('prefix')}>
-              {letters.map((letter) => (
-                <option key={letter} value={letter}>
-                  {letter === newLetter
-                    ? `${letter} : nouvelle lettre`
-                    : `${letter} : continuer (${nextRootCode(letter, roots, ledger)})`}
-                </option>
-              ))}
-            </select>
-            <ChevronDown aria-hidden className={selectChevron} />
-          </div>
-        </div>
         <div className="flex min-w-64 flex-1 flex-col gap-1.5">
           <Label htmlFor="section-description">Description</Label>
           <Input
@@ -119,9 +86,9 @@ export function NewSectionForm({
         </div>
       </div>
 
-      {(errors.prefix || errors.description) && (
+      {errors.description && (
         <p role="alert" className="text-sm text-destructive">
-          {errors.description?.message ?? `Lettre : ${errors.prefix?.message ?? ''}`}
+          {errors.description.message}
         </p>
       )}
 

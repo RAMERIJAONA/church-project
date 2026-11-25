@@ -14,6 +14,7 @@ import {
   integer,
   sqliteTable,
   text,
+  uniqueIndex,
   type AnySQLiteColumn
 } from 'drizzle-orm/sqlite-core'
 
@@ -59,6 +60,13 @@ export const accountingItems = sqliteTable(
   (t) => [
     index('accounting_items_parent_position_idx').on(t.parentId, t.position),
     index('accounting_items_ledger_idx').on(t.ledger),
+    /**
+     * Une lettre par rubrique principale active et par comptabilité (A1, B1… ; A2, B2…, règle
+     * du porteur du 2026-11-25). Migration 0005 : lettres existantes décalées avant création.
+     */
+    uniqueIndex('accounting_items_root_letter_idx')
+      .on(t.ledger, t.prefix)
+      .where(sql`${t.parentId} IS NULL AND ${t.deletedAt} IS NULL`),
     check(
       'accounting_items_prefix_check',
       sql`(${t.parentId} IS NULL AND ${t.prefix} IS NOT NULL AND ${t.prefix} NOT GLOB '*[^ABD-PR-TVYZ]*' AND length(${t.prefix}) BETWEEN 1 AND 3) OR (${t.parentId} IS NOT NULL AND ${t.prefix} IS NULL)`

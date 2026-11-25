@@ -153,14 +153,18 @@ describe('buildSheet : arborescence', () => {
     const rows = [
       item({ id: 1, prefix: 'B' }),
       item({ id: 2, prefix: 'AA' }),
-      item({ id: 3, prefix: 'A' }),
-      item({ id: 4, prefix: 'B' })
+      item({ id: 3, prefix: 'A' })
     ]
     expect(buildSheet(2026, rows, [], new Set()).items.map((i) => i.code)).toEqual([
       'A1',
       'B1',
-      'B2',
       'AA1'
+    ])
+    // Entrées : toujours 2 après la lettre
+    expect(buildSheet(2026, rows, [], new Set(), 'income').items.map((i) => i.code)).toEqual([
+      'A2',
+      'B2',
+      'AA2'
     ])
   })
 
@@ -183,7 +187,10 @@ describe('buildSheet : arborescence', () => {
     expect(countDescendants(findItem(sheet, 7)!)).toBe(0)
   })
 
-  it('au niveau 2, numérote les groupes et les rubriques à montant séparément', () => {
+  // Régression du 2026-11-25 : groupes et rubriques à montant étaient numérotés sur deux suites
+  // séparées (A2-I, A2-1, A2-II, A2-III) ; A2-I et A2-1 se lisent pareil. Règle du porteur :
+  // une seule suite entre sœurs, en chiffres romains dès qu'une d'elles est un groupe.
+  it('au niveau 2, numérote toutes les sœurs sur une seule suite, en romains s’il y a un groupe', () => {
     const rows = [
       item({ id: 1, prefix: 'F' }),
       item({ id: 2, parentId: 1 }), // groupe (a un enfant)
@@ -194,8 +201,28 @@ describe('buildSheet : arborescence', () => {
       item({ id: 7, parentId: 4 })
     ]
     const sheet = buildSheet(2026, rows, [], new Set())
-    expect(sheet.items[0]?.children.map((c) => c.code)).toEqual(['F1-I', 'F1-1', 'F1-II', 'F1-2'])
-    expect(findItem(sheet, 7)?.code).toBe('F1-II-1')
+    expect(sheet.items[0]?.children.map((c) => c.code)).toEqual([
+      'F1-I',
+      'F1-II',
+      'F1-III',
+      'F1-IV'
+    ])
+    expect(findItem(sheet, 7)?.code).toBe('F1-III-1')
+  })
+
+  it('au niveau 2, garde les chiffres arabes quand aucune sœur n’est un groupe', () => {
+    const rows = [
+      item({ id: 1, prefix: 'A' }),
+      item({ id: 2, parentId: 1 }),
+      item({ id: 3, parentId: 1 }),
+      // Un autre parent qui a un groupe ne change rien ici
+      item({ id: 4, prefix: 'B' }),
+      item({ id: 5, parentId: 4 }),
+      item({ id: 6, parentId: 5 })
+    ]
+    const sheet = buildSheet(2026, rows, [], new Set())
+    expect(sheet.items[0]?.children.map((c) => c.code)).toEqual(['A1-1', 'A1-2'])
+    expect(sheet.items[1]?.children.map((c) => c.code)).toEqual(['B1-I'])
   })
 
   it('propose le numéro d’un nouvel enfant, parent renuméroté compris', () => {
@@ -206,10 +233,9 @@ describe('buildSheet : arborescence', () => {
       item({ id: 4, parentId: 3 })
     ]
     const sheet = buildSheet(2026, rows, [], new Set())
-    expect(sheet.items[0]?.children.map((c) => c.code)).toEqual(['A1-1', 'A1-I'])
-    expect(nextChildCode(sheet, 1)).toBe('A1-2')
-    expect(nextChildCode(sheet, 3)).toBe('A1-I-2')
-    // A1-1 deviendrait un groupe placé avant A1-I : il prendrait A1-I (l'actuel passerait A1-II)
+    expect(sheet.items[0]?.children.map((c) => c.code)).toEqual(['A1-I', 'A1-II'])
+    expect(nextChildCode(sheet, 1)).toBe('A1-III')
+    expect(nextChildCode(sheet, 3)).toBe('A1-II-2')
     expect(nextChildCode(sheet, 2)).toBe('A1-I-1')
     expect(nextChildCode(sheet, 999)).toBeNull()
   })

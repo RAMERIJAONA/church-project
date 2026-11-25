@@ -9,6 +9,7 @@ import {
   col,
   descriptionCell,
   headCell,
+  readOnlyDescription,
   sheetRow,
   totalCell,
   totalRow,
@@ -68,7 +69,7 @@ export function PeriodSheet({ label, items, totals }: PeriodSheetProps): React.J
               const total = sums.byItem.get(item.id) ?? null
               return (
                 <tr key={item.id} data-row={kind} className={sheetRow({ kind })}>
-                  <th scope="row" className={codeCell({ kind, level: item.level })}>
+                  <th scope="row" className={codeCell({ level: item.level })}>
                     {item.code}
                   </th>
                   <td className={descriptionCell({ level: item.level })}>
@@ -76,7 +77,7 @@ export function PeriodSheet({ label, items, totals }: PeriodSheetProps): React.J
                       {item.level > 1 && (
                         <CornerDownRight aria-hidden data-print="hide" className={treeConnector} />
                       )}
-                      <span className="min-w-0 flex-1 px-2 py-1 break-words">
+                      <span className={readOnlyDescription({ level: item.level })}>
                         {item.description}
                       </span>
                     </div>
@@ -96,7 +97,7 @@ export function PeriodSheet({ label, items, totals }: PeriodSheetProps): React.J
           </tbody>
           <tfoot>
             <tr className={totalRow}>
-              <th scope="row" colSpan={2} className={codeCell({ kind: 'root' })}>
+              <th scope="row" colSpan={2} className={codeCell()}>
                 Total
               </th>
               <td className={totalCell}>

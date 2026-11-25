@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import golden from './__golden__/codes.json'
 import {
-  availableLetters,
   childCode,
   comparePrefixes,
   letterAt,
   letterIndex,
+  level2Numeral,
+  type Level2Numeral,
   nextLetter,
+  reletterRoots,
   rootCode,
   toRoman
 } from './accounting.codes'
@@ -33,9 +35,34 @@ describe('lettres automatiques (alphabet malgache)', () => {
     expect(nextLetter(['Z'])).toBe('AA')
   })
 
-  it('propose les lettres utilisées puis la suivante, sans doublon', () => {
-    expect(availableLetters([])).toEqual(['A'])
-    expect(availableLetters(['B', 'A', 'A'])).toEqual(['A', 'B', 'D'])
+  // Règle du porteur (2026-11-25) : une lettre par rubrique principale, lettres sans trou
+  it('après une suppression, décale les lettres suivantes pour combler le trou', () => {
+    const roots = [
+      { id: 4, prefix: 'E', position: 1 },
+      { id: 1, prefix: 'A', position: 1 },
+      { id: 3, prefix: 'D', position: 1 }
+    ]
+    expect(reletterRoots(roots)).toEqual([
+      { id: 3, prefix: 'B' },
+      { id: 4, prefix: 'D' }
+    ])
+    expect(reletterRoots([{ id: 1, prefix: 'A', position: 1 }])).toEqual([])
+    expect(reletterRoots([])).toEqual([])
+  })
+
+  it('sépare des lettres en double (anciennes données D1, D2) dans l’ordre des positions', () => {
+    const roots = [
+      { id: 1, prefix: 'A', position: 1 },
+      { id: 7, prefix: 'D', position: 2 },
+      { id: 5, prefix: 'D', position: 1 },
+      { id: 9, prefix: 'AA', position: 1 },
+      { id: 8, prefix: 'Z', position: 1 }
+    ]
+    expect(reletterRoots(roots)).toEqual([
+      { id: 5, prefix: 'B' }, // l'ancien D1 ; l'ancien D2 (id 7) garde D
+      { id: 8, prefix: 'E' },
+      { id: 9, prefix: 'F' }
+    ])
   })
 
   it('trie les lettres comme un tableur', () => {
@@ -57,38 +84,39 @@ describe('chiffres romains (niveau 2)', () => {
 
 describe('numéros par niveau', () => {
   it('numérote le niveau 4 en alphabet malgache', () => {
-    expect(childCode('F1-II-1', 4, 1, 'leaf')).toBe('F1-II-1 A)')
-    expect(childCode('F1-II-1', 4, 3, 'leaf')).toBe('F1-II-1 D)')
-    expect(childCode('F1-II-1', 4, 22, 'leaf')).toBe('F1-II-1 AA)')
+    expect(childCode('F1-II-1', 4, 1)).toBe('F1-II-1 A)')
+    expect(childCode('F1-II-1', 4, 3)).toBe('F1-II-1 D)')
+    expect(childCode('F1-II-1', 4, 22)).toBe('F1-II-1 AA)')
   })
 
-  it('niveau 2 : chiffres romains pour un groupe, chiffres arabes pour une rubrique à montant', () => {
-    expect(childCode('F1', 2, 2, 'group')).toBe('F1-II')
-    expect(childCode('A1', 2, 2, 'leaf')).toBe('A1-2')
-    // Aux niveaux 3 et 4, la nature ne change rien
-    expect(childCode('F1-II', 3, 4, 'group')).toBe('F1-II-4')
-    expect(childCode('F1-II', 3, 4, 'leaf')).toBe('F1-II-4')
+  it('niveau 2 : chiffres romains si une sœur est un groupe, chiffres arabes sinon', () => {
+    expect(level2Numeral(true)).toBe('roman')
+    expect(level2Numeral(false)).toBe('arabic')
+    expect(childCode('F1', 2, 2, 'roman')).toBe('F1-II')
+    expect(childCode('A1', 2, 2, 'arabic')).toBe('A1-2')
+    // Aux niveaux 3 et 4, le style ne change rien
+    expect(childCode('F1-II', 3, 4, 'roman')).toBe('F1-II-4')
+    expect(childCode('F1-II', 3, 4, 'arabic')).toBe('F1-II-4')
   })
 
-  it('niveau 1 : sorties à partir de 1, entrées à partir de 2 (2026-11-25)', () => {
-    expect(rootCode('A', 1)).toBe('A1')
-    expect(rootCode('A', 1, 'expense')).toBe('A1')
-    expect(rootCode('A', 2, 'expense')).toBe('A2')
-    expect(rootCode('A', 1, 'income')).toBe('A2')
-    expect(rootCode('A', 2, 'income')).toBe('A3')
-    expect(rootCode('AB', 1, 'income')).toBe('AB2')
+  it('niveau 1 : toujours 1 pour les sorties, toujours 2 pour les entrées (2026-11-25)', () => {
+    expect(rootCode('A')).toBe('A1')
+    expect(rootCode('D', 'expense')).toBe('D1')
+    expect(rootCode('A', 'income')).toBe('A2')
+    expect(rootCode('D', 'income')).toBe('D2')
+    expect(rootCode('AB', 'income')).toBe('AB2')
     // Les sous-rubriques suivent le numéro du parent, comme dans les sorties
-    expect(childCode(rootCode('A', 1, 'income'), 2, 1, 'leaf')).toBe('A2-1')
-    expect(childCode('A2', 2, 1, 'group')).toBe('A2-I')
-    expect(childCode('A2-I', 3, 1, 'leaf')).toBe('A2-I-1')
+    expect(childCode(rootCode('A', 'income'), 2, 1, 'arabic')).toBe('A2-1')
+    expect(childCode('A2', 2, 1, 'roman')).toBe('A2-I')
+    expect(childCode('A2-I', 3, 1)).toBe('A2-I-1')
   })
 
   it('reproduit le plan de l’église (golden)', () => {
     for (const g of golden) {
       const code =
         g.parent === null
-          ? rootCode(g.prefix ?? '', g.rank)
-          : childCode(g.parent, g.level as 2 | 3 | 4, g.rank, g.kind as 'group' | 'leaf')
+          ? rootCode(g.prefix ?? '')
+          : childCode(g.parent, g.level as 2 | 3 | 4, g.rank, g.numeral as Level2Numeral)
       expect(code, JSON.stringify(g)).toBe(g.code)
     }
   })

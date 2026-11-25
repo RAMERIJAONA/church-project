@@ -161,7 +161,7 @@ export function createAccountingRepository() {
     updateItem(
       db: DbOrTx,
       id: number,
-      values: { description?: string; position?: number },
+      values: { description?: string; position?: number; prefix?: string },
       at: string
     ): void {
       db.update(t)

@@ -71,10 +71,11 @@ test('@smoke comptabilité : arborescence, 3 colonnes, détail, persistés aprè
     await w.keyboard.press('Escape')
     await expect(w.getByRole('button', { name: 'ASA IOMBONANA', exact: true })).toBeVisible()
 
-    // Niveau 2 : chiffres arabes tant qu'elle porte des montants, romains dès qu'elle a un enfant
+    // Niveau 2 : chiffres arabes tant qu'aucune sœur n'a d'enfant, puis une seule suite en
+    // chiffres romains pour toutes les sœurs (règle du porteur, 2026-11-25)
     await addChildren(w, 'A1-1', [['A1-I-1', 'Karama']])
-    await expect(row(w, 'A1-1')).toContainText('Trano Fiangonana') // A1-2 devient A1-1
-    await addChildren(w, 'A1-1', [['A1-II-1', 'Fanatsarana']])
+    await expect(row(w, 'A1-II')).toContainText('Trano Fiangonana') // A1-2 devient A1-II
+    await addChildren(w, 'A1-II', [['A1-II-1', 'Fanatsarana']])
     await expect(row(w, 'A1-II')).toContainText('Trano Fiangonana')
     await addChildren(w, 'A1-II-1', [
       ['A1-II-1 A)', 'Trano Fiangonana (Kojakoja)'],

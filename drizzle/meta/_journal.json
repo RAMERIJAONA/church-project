@@ -36,6 +36,13 @@
       "when": 1795589468465,
       "tag": "0004_accounting_ledger",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1795610349567,
+      "tag": "0005_accounting_root_letter",
+      "breakpoints": true
     }
   ]
 }

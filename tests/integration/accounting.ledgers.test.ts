@@ -4,7 +4,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import { ipcInputs } from '@shared/ipc/contract'
-import { D, cell, setupAccounting } from '@tests/helpers/accounting-context'
+import { D, cell, expectAppError, setupAccounting } from '@tests/helpers/accounting-context'
 
 const codesOf = (items: Array<{ code: string; children: unknown[] }>): string[] =>
   items.flatMap((i) => [i.code, ...codesOf(i.children as typeof items)])
@@ -21,16 +21,19 @@ describe('AccountingService : comptabilités des sorties et des entrées', () =>
     const leaf = service.createItem({ parentId: a2.id, description: 'Rakitra' })
     const group = service.createItem({ parentId: a2.id, description: 'Fanomezana' })
     service.createItem({ parentId: group.id, description: 'Fianakaviana' })
-    service.createItem({ parentId: null, ledger: 'income', prefix: 'A', description: 'y' })
-    service.createItem({ parentId: null, ledger: 'income', prefix: 'B', description: 'z' })
+    // Une lettre par rubrique principale, toujours 2 dans les entrées (jamais A3)
+    service.createItem({ parentId: null, ledger: 'income', description: 'y' })
+    expectAppError(
+      () => service.createItem({ parentId: null, ledger: 'income', prefix: 'A', description: 'z' }),
+      'BUSINESS_RULE'
+    )
     expect(a2.code).toBe('A2')
     expect(leaf.code).toBe('A2-1')
     expect(codesOf(service.getSheet(2026, 'income').items)).toEqual([
       'A2',
-      'A2-1',
-      'A2-I',
-      'A2-I-1',
-      'A3',
+      'A2-I', // une sœur est un groupe : une seule suite en chiffres romains
+      'A2-II',
+      'A2-II-1',
       'B2'
     ])
   })
@@ -93,6 +96,10 @@ describe('AccountingService : comptabilités des sorties et des entrées', () =>
     expect(
       input.safeParse({ parentId: null, prefix: 'A', ledger: 'income', description: 'x' }).success
     ).toBe(true)
+    // La lettre est facultative : le service attribue la suivante
+    expect(input.safeParse({ parentId: null, ledger: 'income', description: 'x' }).success).toBe(
+      true
+    )
     expect(input.safeParse({ parentId: 1, ledger: 'income', description: 'x' }).success).toBe(false)
     expect(ipcInputs['accounting.sheet'].safeParse({ year: 2026 }).success).toBe(false)
   })

@@ -5,7 +5,7 @@
  * - déplacer un élément renumérote ses frères ;
  * - les montants suivent l'élément (liés à son identifiant, pas à son numéro).
  */
-import { childCode, comparePrefixes, rootCode } from './accounting.codes'
+import { childCode, comparePrefixes, level2Numeral, rootCode } from './accounting.codes'
 import { cellOf } from './accounting.rules'
 import {
   MAX_DEPTH,
@@ -88,18 +88,12 @@ export function buildSheet(
 
   const toDTO = (row: ItemRow, level: ItemLevel, code: string): AccountingItemDTO => {
     const childLevel = level + 1
-    // Rangs : au niveau 2, groupes et rubriques à montant sont comptés séparément
-    const ranks = { group: 0, leaf: 0 }
-    const children =
-      childLevel > MAX_DEPTH
-        ? []
-        : [...(childrenOf.get(row.id) ?? [])].sort(byPosition).map((c) => {
-            const lvl = childLevel as 2 | 3 | 4
-            const kind = isGroup(c, lvl) ? 'group' : 'leaf'
-            const counter = lvl === 2 ? kind : 'leaf'
-            ranks[counter] += 1
-            return toDTO(c, lvl, childCode(code, lvl, ranks[counter], kind))
-          })
+    const siblings =
+      childLevel > MAX_DEPTH ? [] : [...(childrenOf.get(row.id) ?? [])].sort(byPosition)
+    // Une seule suite entre sœurs ; au niveau 2, en romains dès qu'une sœur est un groupe
+    const numeral = level2Numeral(childLevel === 2 && siblings.some((c) => isGroup(c, 2)))
+    const lvl = childLevel as 2 | 3 | 4
+    const children = siblings.map((c, i) => toDTO(c, lvl, childCode(code, lvl, i + 1, numeral)))
     return {
       id: row.id,
       code,
@@ -112,19 +106,15 @@ export function buildSheet(
     }
   }
 
-  const rankByPrefix = new Map<string, number>()
+  // Une lettre par rubrique principale (index unique en base) : le chiffre ne dépend que de la
+  // comptabilité, jamais du rang
   const sortedRoots = [...roots].sort(
     (a, b) => comparePrefixes(a.prefix ?? '', b.prefix ?? '') || byPosition(a, b)
   )
   return {
     year,
     ledger,
-    items: sortedRoots.map((r) => {
-      const prefix = r.prefix ?? ''
-      const rank = (rankByPrefix.get(prefix) ?? 0) + 1
-      rankByPrefix.set(prefix, rank)
-      return toDTO(r, 1, rootCode(prefix, rank, ledger))
-    })
+    items: sortedRoots.map((r) => toDTO(r, 1, rootCode(r.prefix ?? '', ledger)))
   }
 }
 

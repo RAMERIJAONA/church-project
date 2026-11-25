@@ -42,17 +42,26 @@ describe('seed de démonstration', () => {
     expect(summary.entries).toBeGreaterThan(2000)
   })
 
-  it('numérote chaque comptabilité (entrées à partir de 2), renumérote après suppression', () => {
+  it('numérote chaque comptabilité (une lettre par rubrique), décale après suppression', () => {
     const income = service.getSheet(2026, 'income').items
     expect(income.map((r) => [r.code, r.description])).toEqual([
       ['A2', 'OFFRANDES ET DONS'],
-      ['A3', 'RECETTES DIVERSES'],
-      ['B2', 'SUBVENTIONS ET PARTENARIATS'],
-      ['D2', 'ACTIVITÉS GÉNÉRATRICES DE REVENUS']
+      ['B2', 'RECETTES DIVERSES'],
+      ['D2', 'SUBVENTIONS ET PARTENARIATS'],
+      ['E2', 'ACTIVITÉS GÉNÉRATRICES DE REVENUS']
+    ])
+    // Niveau 2 mélangé : une seule suite en chiffres romains (Dîmes = A2-II)
+    expect(income[0]?.children.map((c) => [c.code, c.description])).toEqual([
+      ['A2-I', 'Offrandes du culte du dimanche'],
+      ['A2-II', 'Dîmes'],
+      ['A2-III', 'Dons exceptionnels'],
+      ['A2-IV', 'Collectes spéciales']
     ])
     const expense = service.getSheet(2026, 'expense').items
-    expect(expense.map((r) => r.code).slice(0, 4)).toEqual(['A1', 'B1', 'D1', 'D2'])
-    expect(expense.find((r) => r.code === 'J1')?.amounts).not.toBeNull()
+    expect(expense.map((r) => r.code)).toEqual(
+      ['A', 'B', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'].map((l) => `${l}1`)
+    )
+    expect(expense.find((r) => r.code === 'K1')?.amounts).not.toBeNull()
   })
 
   it('couvre 6 années : estimations partout, réalisations jusqu’à cette année', () => {
@@ -98,7 +107,7 @@ describe('seed de démonstration', () => {
   })
 
   it('a de très grands montants (11 à 12 chiffres) sans dépasser le plafond', () => {
-    const big = sheet(2026).find((i) => i.code === 'K1')?.amounts?.estimate.total ?? 0
+    const big = sheet(2026).find((i) => i.code === 'L1')?.amounts?.estimate.total ?? 0
     expect(String(big).length).toBeGreaterThanOrEqual(11)
     for (const col of ['estimate', 'actual', 'nextEstimate'] as const) {
       expect(total(2026, col, 'expense') ?? 0).toBeLessThanOrEqual(MAX_AMOUNT)

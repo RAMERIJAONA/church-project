@@ -51,7 +51,7 @@ export function AddChildRow({ parent, code }: AddChildRowProps): React.JSX.Eleme
 
   return (
     <tr data-print="hide" className={sheetRow({ kind: 'add' })}>
-      <td className={codeCell({ kind: 'leaf', level })}>{code}</td>
+      <td className={codeCell({ level })}>{code}</td>
       <td className={descriptionCell({ level })} colSpan={4}>
         <Input
           ref={inputRef}

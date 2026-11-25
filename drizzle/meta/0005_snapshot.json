@@ -1,0 +1,290 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "36fb2340-e771-48af-804b-5aa2f573c6c1",
+  "prevId": "94043d46-8444-4daa-afe9-f08918c9e376",
+  "tables": {
+    "accounting_entries": {
+      "name": "accounting_entries",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "item_id": {
+          "name": "item_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "year": {
+          "name": "year",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "amount": {
+          "name": "amount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "label": {
+          "name": "label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "operated_on": {
+          "name": "operated_on",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "accounting_entries_year_item_idx": {
+          "name": "accounting_entries_year_item_idx",
+          "columns": [
+            "year",
+            "item_id"
+          ],
+          "isUnique": false
+        },
+        "accounting_entries_operated_on_idx": {
+          "name": "accounting_entries_operated_on_idx",
+          "columns": [
+            "operated_on"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "accounting_entries_item_id_accounting_items_id_fk": {
+          "name": "accounting_entries_item_id_accounting_items_id_fk",
+          "tableFrom": "accounting_entries",
+          "tableTo": "accounting_items",
+          "columnsFrom": [
+            "item_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "accounting_entries_type_check": {
+          "name": "accounting_entries_type_check",
+          "value": "\"accounting_entries\".\"type\" IN ('estimate', 'actual')"
+        },
+        "accounting_entries_amount_check": {
+          "name": "accounting_entries_amount_check",
+          "value": "\"accounting_entries\".\"amount\" >= 0"
+        },
+        "accounting_entries_operated_on_check": {
+          "name": "accounting_entries_operated_on_check",
+          "value": "(\"accounting_entries\".\"type\" = 'estimate' AND \"accounting_entries\".\"operated_on\" IS NULL) OR (\"accounting_entries\".\"type\" = 'actual' AND \"accounting_entries\".\"operated_on\" IS NOT NULL AND CAST(substr(\"accounting_entries\".\"operated_on\", 1, 4) AS INTEGER) = \"accounting_entries\".\"year\")"
+        }
+      }
+    },
+    "accounting_items": {
+      "name": "accounting_items",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "parent_id": {
+          "name": "parent_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "prefix": {
+          "name": "prefix",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ledger": {
+          "name": "ledger",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'expense'"
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "accounting_items_parent_position_idx": {
+          "name": "accounting_items_parent_position_idx",
+          "columns": [
+            "parent_id",
+            "position"
+          ],
+          "isUnique": false
+        },
+        "accounting_items_ledger_idx": {
+          "name": "accounting_items_ledger_idx",
+          "columns": [
+            "ledger"
+          ],
+          "isUnique": false
+        },
+        "accounting_items_root_letter_idx": {
+          "name": "accounting_items_root_letter_idx",
+          "columns": [
+            "ledger",
+            "prefix"
+          ],
+          "isUnique": true,
+          "where": "\"accounting_items\".\"parent_id\" IS NULL AND \"accounting_items\".\"deleted_at\" IS NULL"
+        }
+      },
+      "foreignKeys": {
+        "accounting_items_parent_id_accounting_items_id_fk": {
+          "name": "accounting_items_parent_id_accounting_items_id_fk",
+          "tableFrom": "accounting_items",
+          "tableTo": "accounting_items",
+          "columnsFrom": [
+            "parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "accounting_items_prefix_check": {
+          "name": "accounting_items_prefix_check",
+          "value": "(\"accounting_items\".\"parent_id\" IS NULL AND \"accounting_items\".\"prefix\" IS NOT NULL AND \"accounting_items\".\"prefix\" NOT GLOB '*[^ABD-PR-TVYZ]*' AND length(\"accounting_items\".\"prefix\") BETWEEN 1 AND 3) OR (\"accounting_items\".\"parent_id\" IS NOT NULL AND \"accounting_items\".\"prefix\" IS NULL)"
+        }
+      }
+    },
+    "settings": {
+      "name": "settings",
+      "columns": {
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "indexes": {}
+  }
+}

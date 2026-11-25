@@ -99,7 +99,10 @@ export const createItemInputSchema = z
   .object({
     /** `null` : élément de niveau 1 */
     parentId: idSchema.nullable(),
-    /** Niveau 1 uniquement : lettre existante ou suivante (cf. `availableLetters`) */
+    /**
+     * Niveau 1 uniquement, facultatif : la lettre est toujours la suivante (`nextLetter`, une
+     * lettre par rubrique principale) ; si elle est donnée, le service refuse toute autre.
+     */
     prefix: sectionPrefixSchema.optional(),
     /** Niveau 1 uniquement : comptabilité (les sous-rubriques héritent de leur parent) */
     ledger: ledgerSchema.optional(),
@@ -107,9 +110,6 @@ export const createItemInputSchema = z
   })
   .strict()
   .superRefine((v, ctx) => {
-    if (v.parentId === null && v.prefix === undefined) {
-      ctx.addIssue({ code: 'custom', path: ['prefix'], message: 'Lettre obligatoire au niveau 1' })
-    }
     if (v.parentId !== null && v.prefix !== undefined) {
       ctx.addIssue({ code: 'custom', path: ['prefix'], message: 'Lettre réservée au niveau 1' })
     }

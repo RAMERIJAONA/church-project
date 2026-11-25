@@ -5,9 +5,12 @@ import type {
   EntryDTO
 } from '@shared/domain/accounting/accounting.types'
 
-/** Utilisables côté renderer comme côté main (aucune dépendance DB). Données fictives. */
+/**
+ * Utilisables côté renderer comme côté main (aucune dépendance DB). Données fictives.
+ * Niveau 1 : sans `prefix`, la lettre suivante est attribuée (une lettre par rubrique).
+ */
 export function makeRootInput(overrides: Partial<CreateItemInput> = {}): CreateItemInput {
-  return { parentId: null, prefix: 'A', description: 'Rubrique', ...overrides }
+  return { parentId: null, description: 'Rubrique', ...overrides }
 }
 
 export function makeChildInput(

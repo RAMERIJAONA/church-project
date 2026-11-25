@@ -34,7 +34,7 @@ export const ItemRow = memo(function ItemRow({ item, subtotals }: ItemRowProps):
   const amounts = item.amounts
   return (
     <tr data-row={kind} className={sheetRow({ kind })}>
-      <th scope="row" className={codeCell({ kind, level: item.level })}>
+      <th scope="row" className={codeCell({ level: item.level })}>
         {item.code}
       </th>
       <td className={descriptionCell({ level: item.level })}>
@@ -43,7 +43,7 @@ export const ItemRow = memo(function ItemRow({ item, subtotals }: ItemRowProps):
             <CornerDownRight aria-hidden data-print="hide" className={treeConnector} />
           )}
           <EditableDescription
-            kind={kind === 'root' ? 'section' : kind === 'group' ? 'group' : 'line'}
+            level={item.level}
             value={item.description}
             label={`Description de ${item.code}`}
             editing={editing}

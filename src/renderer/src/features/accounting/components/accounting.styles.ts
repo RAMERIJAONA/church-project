@@ -45,17 +45,28 @@ export const sheetRow = cva('group border-b last:border-b-0', {
 })
 
 /**
- * Numéro : décalé selon le niveau (l'arbre se lit aussi dans cette colonne). Sans niveau :
- * ligne de total.
+ * Graisse du texte selon le NIVEAU seulement (règle du porteur, 2026-11-25) : un groupe et une
+ * rubrique à montant de même niveau s'écrivent pareil (A2-I et A2-II).
+ */
+const LEVEL_WEIGHT = { 1: 'font-semibold', 2: 'font-medium', 3: '', 4: '' } as const
+
+/** Description en lecture seule (vues par période), même typographie que `editableText`. */
+export const readOnlyDescription = cva('min-w-0 flex-1 px-2 py-1 break-words', {
+  variants: { level: LEVEL_WEIGHT }
+})
+
+/**
+ * Numéro : décalé selon le niveau (l'arbre se lit aussi dans cette colonne) ; police et couleur
+ * selon le niveau seulement. Sans niveau : ligne de total (comme le niveau 1).
  */
 export const codeCell = cva('pr-2 align-middle whitespace-nowrap tabular-nums', {
   variants: {
-    kind: {
-      root: 'py-2.5 font-display text-base font-semibold',
-      group: 'py-1.5 font-medium',
-      leaf: 'py-1.5 text-muted-foreground'
-    },
-    level: { 1: 'pl-3', 2: 'pl-6', 3: 'pl-9', 4: 'pl-12 text-xs' }
+    level: {
+      1: 'py-2.5 pl-3 font-display text-base font-semibold',
+      2: 'py-1.5 pl-6 font-medium',
+      3: 'py-1.5 pl-9 text-muted-foreground',
+      4: 'py-1.5 pl-12 text-xs text-muted-foreground'
+    }
   },
   defaultVariants: { level: 1 }
 })
@@ -74,8 +85,7 @@ export const treeConnector = 'size-3.5 shrink-0 text-muted-foreground/70'
 export const editableText = cva(
   'min-w-0 flex-1 cursor-text rounded-md px-2 py-1 text-left break-words outline-none hover:bg-background focus-visible:ring-2 focus-visible:ring-ring',
   {
-    variants: { kind: { section: 'font-semibold', group: 'font-medium', line: '' } },
-    defaultVariants: { kind: 'line' }
+    variants: { level: LEVEL_WEIGHT }
   }
 )
 
@@ -133,17 +143,6 @@ export const amountSuffix =
 /** Actions de ligne : « + » et menu « ⋯ », pleinement visibles au survol ou au clavier. */
 export const rowActions =
   'flex items-center justify-end gap-0.5 opacity-40 transition-opacity duration-100 group-hover:opacity-100 group-focus-within:opacity-100'
-
-/**
- * Liste déroulante native, alignée visuellement sur <Input>. Chevron du navigateur masqué
- * (`appearance-none`) et remplacé par `selectChevron`, qui peut recevoir une marge.
- */
-export const selectField =
-  'h-8 w-full appearance-none rounded-lg border border-input bg-transparent pr-9 pl-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30'
-
-/** Chevron du select : 4px de marge (mr-1) en plus du retrait du champ. */
-export const selectChevron =
-  'pointer-events-none absolute top-1/2 right-2 mr-1 size-4 -translate-y-1/2 text-muted-foreground'
 
 /** En-tête de colonne de la synthèse (cliquable : ouvre la vue de la période). */
 export const summaryHead = cva(

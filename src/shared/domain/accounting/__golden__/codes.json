@@ -2,7 +2,6 @@
   {
     "parent": null,
     "prefix": "F",
-    "rank": 1,
     "code": "F1"
   },
   {
@@ -10,69 +9,64 @@
     "level": 2,
     "rank": 1,
     "code": "F1-I",
-    "kind": "group"
+    "numeral": "roman"
   },
   {
     "parent": "F1-I",
     "level": 3,
     "rank": 1,
-    "code": "F1-I-1",
-    "kind": "leaf"
+    "code": "F1-I-1"
   },
   {
     "parent": "F1",
     "level": 2,
     "rank": 2,
     "code": "F1-II",
-    "kind": "group"
+    "numeral": "roman"
   },
   {
     "parent": "F1-II",
     "level": 3,
     "rank": 1,
-    "code": "F1-II-1",
-    "kind": "group"
+    "code": "F1-II-1"
   },
   {
     "parent": "F1-II-1",
     "level": 4,
     "rank": 1,
-    "code": "F1-II-1 A)",
-    "kind": "leaf"
+    "code": "F1-II-1 A)"
   },
   {
     "parent": "F1-II-1",
     "level": 4,
     "rank": 2,
-    "code": "F1-II-1 B)",
-    "kind": "leaf"
+    "code": "F1-II-1 B)"
   },
   {
     "parent": "A1",
     "level": 2,
     "rank": 1,
-    "kind": "leaf",
-    "code": "A1-1"
+    "code": "A1-1",
+    "numeral": "arabic"
   },
   {
     "parent": "A1",
     "level": 2,
     "rank": 8,
-    "kind": "leaf",
-    "code": "A1-8"
+    "code": "A1-8",
+    "numeral": "arabic"
   },
   {
     "parent": "F1",
     "level": 2,
     "rank": 4,
-    "kind": "group",
-    "code": "F1-IV"
+    "code": "F1-IV",
+    "numeral": "roman"
   },
   {
     "parent": "F1-II",
     "level": 3,
     "rank": 4,
-    "kind": "leaf",
     "code": "F1-II-4"
   }
 ]

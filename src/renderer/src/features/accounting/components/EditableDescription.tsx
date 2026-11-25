@@ -1,4 +1,4 @@
-import { descriptionSchema } from '@shared/domain/accounting/accounting.types'
+import { descriptionSchema, type ItemLevel } from '@shared/domain/accounting/accounting.types'
 import { DescriptionField } from './DescriptionField'
 import { editableText } from './accounting.styles'
 
@@ -9,8 +9,8 @@ export interface EditableDescriptionProps {
   editing: boolean
   onEditingChange: (editing: boolean) => void
   onSave: (description: string) => void
-  /** section = niveau 1 (majuscules), group = sous-rubrique qui a des enfants */
-  kind?: 'section' | 'group' | 'line'
+  /** Niveau de l'élément : typographie (la même pour tout un niveau) ; 1 = majuscules */
+  level: ItemLevel
 }
 
 /** Niveau 1 : majuscules à l'affichage pendant la saisie et à l'envoi (le service le garantit aussi). */
@@ -23,7 +23,7 @@ export function EditableDescription({
   editing,
   onEditingChange,
   onSave,
-  kind = 'line'
+  level
 }: EditableDescriptionProps): React.JSX.Element {
   if (editing) {
     return (
@@ -31,8 +31,8 @@ export function EditableDescription({
         initialValue={value}
         label={label}
         // Rubrique : toujours en majuscules (enregistrement ET affichage pendant la saisie)
-        schema={kind === 'section' ? upperDescriptionSchema : undefined}
-        className={kind === 'section' ? 'uppercase' : undefined}
+        schema={level === 1 ? upperDescriptionSchema : undefined}
+        className={level === 1 ? 'uppercase' : undefined}
         onDone={(description) => {
           if (description !== null) onSave(description)
           onEditingChange(false)
@@ -43,7 +43,7 @@ export function EditableDescription({
   return (
     <button
       type="button"
-      className={editableText({ kind })}
+      className={editableText({ level })}
       title={`${value} (cliquer pour modifier)`}
       onClick={() => onEditingChange(true)}
     >

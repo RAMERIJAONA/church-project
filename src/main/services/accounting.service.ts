@@ -2,7 +2,7 @@ import type { Clock } from '@main/adapters/clock.adapter'
 import type { Db, DbOrTx } from '@main/db/client'
 import type { Logger } from '@main/logging/logger'
 import type { AccountingRepository } from '@main/repositories/accounting.repository'
-import { availableLetters } from '@shared/domain/accounting/accounting.codes'
+import { nextLetter, reletterRoots } from '@shared/domain/accounting/accounting.codes'
 import {
   isDetailed,
   newEntryOperationDate,
@@ -63,20 +63,23 @@ export function createAccountingService(deps: {
 
   const sum = (entries: readonly EntryDTO[]): number => entries.reduce((n, x) => n + x.amount, 0)
 
+  /**
+   * Niveau 1 : la lettre est toujours la suivante (une lettre par rubrique principale, règle du
+   * porteur du 2026-11-25). `prefixInput` facultatif (seed, tests) : refusé s'il diffère.
+   */
   function createRoot(
     tx: DbOrTx,
     ledger: Ledger,
-    prefixInput: string,
+    prefixInput: string | undefined,
     description: string
   ): CreatedItemDTO {
-    const prefix = normalizePrefix(prefixInput)
     const roots = structure(tx, ledger).items
-    const allowed = availableLetters(roots.map((r) => r.prefix ?? ''))
-    if (!allowed.includes(prefix)) {
+    const prefix = nextLetter(roots.map((r) => r.prefix ?? ''))
+    if (prefixInput !== undefined && normalizePrefix(prefixInput) !== prefix) {
       throw new AppError(
         'BUSINESS_RULE',
-        `La lettre ${prefix} n’est pas disponible : choisissez ${allowed.join(', ')}.`,
-        { prefix, allowed }
+        `La lettre ${normalizePrefix(prefixInput)} n’est pas disponible : la prochaine rubrique prend la lettre ${prefix}.`,
+        { prefix: normalizePrefix(prefixInput), next: prefix }
       )
     }
     const id = repo.insertItem(tx, {
@@ -138,7 +141,7 @@ export function createAccountingService(deps: {
       return deps.db.transaction((tx) => {
         const created =
           input.parentId === null
-            ? createRoot(tx, input.ledger ?? 'expense', input.prefix ?? '', input.description)
+            ? createRoot(tx, input.ledger ?? 'expense', input.prefix, input.description)
             : createChild(tx, input.parentId, input.description)
         deps.logger.info({ itemId: created.id, code: created.code }, 'rubrique créée')
         return created
@@ -160,9 +163,22 @@ export function createAccountingService(deps: {
     deleteItem(id: number): void {
       deps.db.transaction((tx) => {
         const item = requireItem(tx, id)
-        const deleted = repo.softDeleteSubtree(tx, id, now())
+        const ledger = item.level === 1 ? repo.findItemRow(tx, id)?.ledger : undefined
+        const at = now()
+        const deleted = repo.softDeleteSubtree(tx, id, at)
+        // Niveau 1 : les lettres suivantes se décalent (B1 supprimée → D1 devient B1)
+        const relettered = ledger
+          ? reletterRoots(repo.listItems(tx, ledger).filter((r) => r.parentId === null))
+          : []
+        for (const r of relettered) repo.updateItem(tx, r.id, { prefix: r.prefix }, at)
         deps.logger.info(
-          { itemId: id, code: item.code, descendants: countDescendants(item), deleted },
+          {
+            itemId: id,
+            code: item.code,
+            descendants: countDescendants(item),
+            deleted,
+            relettered: relettered.length
+          },
           'rubrique supprimée'
         )
       })

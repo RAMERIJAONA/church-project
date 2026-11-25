@@ -19,13 +19,13 @@ describe('AccountingService : arborescence', () => {
   it('construit le plan de l’église sur 4 niveaux', () => {
     const { church, codes, item } = setup()
     const c = church()
-    // Numéro au moment de la création : une sous-rubrique de niveau 2 démarre en chiffres arabes
-    // (rubrique à montant) et passe en chiffres romains quand elle reçoit un enfant
+    // Numéro au moment de la création : au niveau 2, chiffres arabes tant qu'aucune sœur n'est un
+    // groupe, puis chiffres romains pour toutes les sœurs (une seule suite)
     expect([c.f1, c.i, c.i1, c.ii, c.ii1, c.a, c.b].map((x) => x.code)).toEqual([
       'F1',
       'F1-1',
       'F1-I-1',
-      'F1-1',
+      'F1-II',
       'F1-II-1',
       'F1-II-1 A)',
       'F1-II-1 B)'
@@ -43,12 +43,33 @@ describe('AccountingService : arborescence', () => {
     expect(item(c.i.id)?.description).toBe('Mpitandrina')
   })
 
-  it('n’accepte au niveau 1 qu’une lettre utilisée ou la suivante', () => {
+  // Règle du porteur (2026-11-25) : une lettre par rubrique principale, toujours A1, B1, D1…
+  it('attribue au niveau 1 la lettre suivante, jamais une lettre déjà utilisée (pas de A2)', () => {
     const { service } = setup()
-    service.createItem(makeRootInput({ prefix: 'A' }))
+    expect(service.createItem(makeRootInput()).code).toBe('A1')
+    expectAppError(() => service.createItem(makeRootInput({ prefix: 'A' })), 'BUSINESS_RULE')
     expectAppError(() => service.createItem(makeRootInput({ prefix: 'D' })), 'BUSINESS_RULE')
-    expect(service.createItem(makeRootInput({ prefix: 'A' })).code).toBe('A2')
-    expect(service.createItem(makeRootInput({ prefix: 'B' })).code).toBe('B1')
+    expect(service.createItem(makeRootInput({ prefix: 'b' })).code).toBe('B1')
+    expect(service.createItem(makeRootInput()).code).toBe('D1')
+  })
+
+  it('après la suppression d’une rubrique principale, décale les lettres suivantes', () => {
+    const { service, codes } = setup()
+    const a = service.createItem(makeRootInput({ description: 'un' }))
+    const b = service.createItem(makeRootInput({ description: 'deux' }))
+    const d = service.createItem(makeRootInput({ description: 'trois' }))
+    const sub = service.createItem(makeChildInput({ parentId: d.id }))
+    service.setTotal({ itemId: sub.id, year: YEAR, type: 'estimate', amount: 5000 })
+    service.deleteItem(b.id)
+    expect(codes()).toEqual(['A1', 'B1', 'B1-1'])
+    // Les montants suivent la rubrique (ex-D1, devenue B1)
+    const sheet = service.getSheet(YEAR)
+    expect(sheet.items[1]?.description).toBe('TROIS')
+    expect(sheet.items[1]?.children[0]?.amounts?.estimate.total).toBe(5000)
+    // La lettre libérée en fin de liste est reprise par la rubrique suivante
+    expect(service.createItem(makeRootInput()).code).toBe('D1')
+    service.deleteItem(a.id)
+    expect(codes()).toEqual(['A1', 'A1-1', 'B1'])
   })
 
   it('refuse un 5e niveau', () => {

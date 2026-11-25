@@ -86,7 +86,7 @@ export function AccountingSheet({
         </tbody>
         <tfoot>
           <tr className={totalRow}>
-            <th scope="row" colSpan={2} className={codeCell({ kind: 'root' })}>
+            <th scope="row" colSpan={2} className={codeCell()}>
               Total général
             </th>
             {AMOUNT_COLUMNS.map((c) => (

@@ -1,13 +1,10 @@
-import { render, screen } from '@testing-library/react'
+import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import type { Ledger } from '@shared/domain/accounting/accounting.types'
 import { NewSectionForm } from './NewSectionForm'
 
-function setup(
-  sections = [{ prefix: 'A' }, { prefix: 'A' }, { prefix: 'B' }],
-  ledger: Ledger = 'expense'
-) {
+function setup(sections = [{ prefix: 'A' }, { prefix: 'B' }], ledger: Ledger = 'expense') {
   const onSubmit = vi.fn().mockResolvedValue(undefined)
   render(
     <NewSectionForm
@@ -20,46 +17,26 @@ function setup(
   )
   return {
     onSubmit,
-    letter: screen.getByLabelText<HTMLSelectElement>('Lettre'),
     preview: () => screen.getByRole('status', { name: 'Numéro attribué' }).textContent
   }
 }
 
 describe('NewSectionForm', () => {
-  it('entrées : numéros à partir de 2 (A2, A3… ; nouvelle lettre D2)', async () => {
-    const { letter, preview } = setup([{ prefix: 'A' }, { prefix: 'B' }], 'income')
-    expect(letter.value).toBe('B')
-    expect(preview()).toBe('B3')
-    await userEvent.selectOptions(letter, 'A')
-    expect(preview()).toBe('A3')
-    await userEvent.selectOptions(letter, 'D')
-    expect(preview()).toBe('D2')
-  })
-
-  it('entrées : la première rubrique est A2', () => {
-    expect(setup([], 'income').preview()).toBe('A2')
-  })
-
-  it('ne propose que les lettres utilisées et la suivante en malgache (pas de C)', () => {
-    const { letter } = setup()
-    expect(Array.from(letter.options).map((o) => o.value)).toEqual(['A', 'B', 'D'])
-    expect(letter.options[2]?.textContent).toContain('nouvelle lettre')
-  })
-
-  it('continue la dernière lettre par défaut et montre le numéro attribué', async () => {
-    const { letter, preview } = setup()
-    expect(letter.value).toBe('B')
-    expect(preview()).toBe('B2')
-    await userEvent.selectOptions(letter, 'A')
-    expect(preview()).toBe('A3')
-    await userEvent.selectOptions(letter, 'D')
+  // Règle du porteur (2026-11-25) : une lettre par rubrique principale, chiffre fixe
+  it('sorties : toujours la lettre suivante avec 1 (D1, jamais B2), sans choix de lettre', () => {
+    const { preview } = setup()
     expect(preview()).toBe('D1')
+    expect(screen.queryByLabelText('Lettre')).toBeNull()
   })
 
-  it('commence à A sur un tableau vide', () => {
-    const { letter, preview } = setup([])
-    expect(Array.from(letter.options).map((o) => o.value)).toEqual(['A'])
-    expect(preview()).toBe('A1')
+  it('entrées : toujours la lettre suivante avec 2 (D2, jamais B3)', () => {
+    expect(setup([{ prefix: 'A' }, { prefix: 'B' }], 'income').preview()).toBe('D2')
+  })
+
+  it('commence à A1 (sorties) ou A2 (entrées) sur un tableau vide', () => {
+    expect(setup([]).preview()).toBe('A1')
+    cleanup()
+    expect(setup([], 'income').preview()).toBe('A2')
   })
 
   it('envoie la description en majuscules', async () => {
@@ -67,7 +44,7 @@ describe('NewSectionForm', () => {
     await userEvent.type(screen.getByLabelText('Description'), '  asa iombonana ')
     await userEvent.click(screen.getByRole('button', { name: 'Créer la rubrique' }))
     expect(onSubmit).toHaveBeenCalledTimes(1)
-    expect(onSubmit.mock.calls[0]?.[0]).toEqual({ prefix: 'B', description: 'ASA IOMBONANA' })
+    expect(onSubmit.mock.calls[0]?.[0]).toEqual({ description: 'ASA IOMBONANA' })
   })
 
   it('refuse une description vide', async () => {

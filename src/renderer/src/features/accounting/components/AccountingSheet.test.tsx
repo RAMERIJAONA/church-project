@@ -131,12 +131,29 @@ describe('AccountingSheet', () => {
   it('ouvre l’ajout sous le dernier descendant et crée la sous-rubrique', async () => {
     const actions = renderSheet({ addingChildTo: 1 })
     const input = screen.getByRole('textbox', {
-      name: 'Description de la nouvelle sous-rubrique F1-1'
+      name: 'Description de la nouvelle sous-rubrique F1-III'
     })
     const rows = screen.getAllByRole('row')
     expect(rows.at(-2)?.contains(input)).toBe(true) // après F1-II-1 B), avant le total
     await userEvent.type(input, 'Fanampiana{Enter}')
     expect(actions.addChild).toHaveBeenCalledWith(1, 'Fanampiana')
+  })
+
+  // Régression du 2026-11-25 : la typographie dépendait de la nature de la rangée (groupe en
+  // gras, rubrique à montant plus fine, numéro grisé) ; A2-II paraissait plus fin que A2-I.
+  // Règle du porteur : même police et même graisse pour un même niveau.
+  it('donne la même typographie aux rangées d’un même niveau, groupe ou rubrique à montant', () => {
+    renderSheet()
+    const styleOf = (code: string): { code: string; description: string | undefined } => {
+      const header = screen.getByRole('rowheader', { name: code })
+      const description = header.closest('tr')?.querySelector('button[title$="pour modifier)"]')
+      return { code: header.className, description: description?.className }
+    }
+    // Niveau 3 : F1-I-1 (rubrique à montant) et F1-II-1 (groupe)
+    expect(styleOf('F1-I-1').description).toBeDefined()
+    expect(styleOf('F1-I-1')).toEqual(styleOf('F1-II-1'))
+    // Les niveaux restent distincts entre eux
+    expect(styleOf('F1-I').description).not.toBe(styleOf('F1-I-1').description)
   })
 
   it('demande la suppression de l’élément depuis le menu « ⋯ »', async () => {

@@ -11,9 +11,9 @@
  * - cases simples (une saisie sans libellé) et détaillées (2 à 7 saisies avec libellé) ;
  * - saisies modifiées (« modifié le »), supprimées, et saisies tardives faites après la fin de
  *   leur année (affichées « Saisi après 2025 ») ;
- * - deux comptabilités : entrées (A2, A3, B2…) et sorties (A1, B1…) ;
- * - rubriques vides, rubrique principale à montants (J1 des sorties), très grands montants
- *   (K1), description longue (retour à la ligne), section supprimée (renumérotation) ;
+ * - deux comptabilités : entrées (A2, B2…) et sorties (A1, B1…), une lettre par rubrique ;
+ * - rubriques vides, rubrique principale à montants (K1 des sorties), très grands montants
+ *   (L1), description longue (retour à la ligne), section supprimée (lettres décalées) ;
  * - impression sur plusieurs pages.
  */
 import type { AccountingService } from '@main/services/accounting.service'
@@ -159,7 +159,7 @@ export function seedDemo(
     }
   }
 
-  /** `always` : aucune année laissée vide (J1, K1 : cas à tester à coup sûr) */
+  /** `always` : aucune année laissée vide (K1, L1 : cas à tester à coup sûr) */
   const amounts = (itemId: number, scale: number, always = false): void => {
     const rank = leafRank++
     for (let year = firstYear; year <= lastYear; year++) {
@@ -216,7 +216,7 @@ export function seedDemo(
     const id = createRoot(root)
     if (root.deleted) toDelete.push(id)
   }
-  // Supprimées à la fin, une fois les suivantes créées : elles sont renumérotées (A3 → A2)
+  // Supprimées à la fin, une fois les suivantes créées : leurs lettres se décalent (D2 → B2)
   for (const id of toDelete) service.deleteItem(id)
   summary.items =
     countItems(service.getSheet(currentYear, 'expense').items) +
