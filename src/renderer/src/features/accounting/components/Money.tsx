@@ -3,7 +3,7 @@ import { currencyMark } from './accounting.styles'
 
 export interface MoneyProps {
   amount: number
-  /** Total général : « Ar » en gras comme le chiffre */
+  /** Montant en gras (sous-totaux, totaux) : « Ar » exactement comme le chiffre */
   strong?: boolean
 }
 

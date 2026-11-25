@@ -88,7 +88,7 @@ export function AccountingSheet({
               Total général
             </th>
             {AMOUNT_COLUMNS.map((c) => (
-              <SubtotalCell key={c} value={totals.grand[c]} strong />
+              <SubtotalCell key={c} value={totals.grand[c]} />
             ))}
             <td data-print="hide" />
           </tr>

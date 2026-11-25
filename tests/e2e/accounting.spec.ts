@@ -220,12 +220,18 @@ test('@smoke comptabilité : arborescence, 3 colonnes, détail, persistés aprè
         (el) => getComputedStyle(el).display !== 'none'
       )
       const mark = document.querySelector('tfoot td span span')
-      // « Ar » de chaque montant affiché : même graisse que son chiffre
-      const lighter = [...document.querySelectorAll<HTMLElement>('td span > span')].filter(
-        (m) =>
-          m.parentElement !== null &&
-          getComputedStyle(m).fontWeight !== getComputedStyle(m.parentElement).fontWeight
-      )
+      // « Ar » de chaque montant affiché : même graisse que son chiffre ; montant en gras
+      // (sous-totaux, totaux) : même taille et couleur aussi
+      const lighter = [...document.querySelectorAll<HTMLElement>('td span > span')].filter((m) => {
+        if (!m.parentElement) return false
+        const mark = getComputedStyle(m)
+        const figure = getComputedStyle(m.parentElement)
+        const bold = Number(figure.fontWeight) >= 600
+        return (
+          mark.fontWeight !== figure.fontWeight ||
+          (bold && (mark.fontSize !== figure.fontSize || mark.color !== figure.color))
+        )
+      })
       return {
         lighterMarks: lighter.length,
         colored: colored.slice(0, 3).map((el) => el.tagName + '.' + el.className),
