@@ -85,8 +85,9 @@ test('impression : liste des imprimantes et PDF de la page de comptabilité', as
  * de l'app fixe la hauteur à l'écran et fait défiler <main>) et la colonne de droite était
  * coupée (descriptions sur une seule ligne : tableau plus large que la page A4).
  * Demande du porteur : marges de 64 px et total une seule fois, à la fin du tableau.
+ * Jeu utilisé depuis le 2026-11-25 : le grand seed de démonstration (plus de 160 rubriques).
  */
-test('impression : tout le plan comptable, sur plusieurs pages et dans la largeur A4', async () => {
+test('impression : grand plan comptable, sur plusieurs pages et dans la largeur A4', async () => {
   const userData = mkdtempSync(join(tmpdir(), 'church-print-'))
   execFileSync('npm', ['run', 'seed:accounting'], {
     env: { ...process.env, SEED_DIR: userData },
@@ -96,9 +97,10 @@ test('impression : tout le plan comptable, sur plusieurs pages et dans la largeu
   try {
     const w = running.window
     await navLink(w, 'Comptabilité').click()
-    await w.getByRole('button', { name: 'Année précédente' }).click()
-    await expect(w.getByRole('columnheader', { name: 'Réalisation 2025' })).toBeVisible()
-    await expect(w.getByRole('rowheader', { name: 'G1', exact: true })).toBeAttached()
+    // Grand jeu de démonstration (seed:accounting), année en cours : 160 rubriques et plus
+    const year = new Date().getFullYear()
+    await expect(w.getByRole('columnheader', { name: `Réalisation ${year}` })).toBeVisible()
+    await expect(w.getByRole('rowheader', { name: 'M1', exact: true })).toBeAttached()
 
     expect((await pdfOf(running)).pages).toBeGreaterThanOrEqual(2)
 
