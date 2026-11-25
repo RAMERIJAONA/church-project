@@ -1,7 +1,8 @@
 /* Impression (tableaux de comptabilité, reçus, listes). Chargé avec media="print". */
 @page {
   size: A4;
-  margin: 12mm;
+  /* Marges demandées par le porteur, identiques sur les 4 côtés (imprimante et PDF) */
+  margin: 32px;
 }
 
 @media print {
@@ -38,7 +39,8 @@
     display: block !important;
   }
 
-  /* Tableaux : largeurs calculées sur le contenu, en-tête et total répétés à chaque page */
+  /* Tableaux : largeurs calculées sur le contenu, en-tête de colonnes répété à chaque page,
+     total une seule fois, à la fin du tableau (pas en bas de chaque page) */
   table {
     border-collapse: collapse;
     width: 100%;
@@ -51,7 +53,7 @@
     display: table-header-group;
   }
   tfoot {
-    display: table-footer-group;
+    display: table-row-group;
   }
   th,
   td {
@@ -69,6 +71,19 @@
   tr[data-row='leaf'],
   tr[data-row='group'] {
     background: transparent !important;
+  }
+  /* Textes longs : retour à la ligne plutôt que troncature (sinon le tableau déborde de la page) */
+  td,
+  td * {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+  td:first-child,
+  th:first-child,
+  td:has(input),
+  td.tabular-nums {
+    white-space: nowrap !important;
   }
   /* Champs et boutons du tableau : seulement leur texte */
   td input,

@@ -1,8 +1,7 @@
 import { useMemo } from 'react'
 import { Button } from '@renderer/components/ui/button'
-import { toast } from 'sonner'
 import { getErrorMessage } from '@renderer/lib/error-messages'
-import { printPage } from '@renderer/lib/print'
+import { printWithFeedback } from '@renderer/lib/print'
 import type { DateRange } from '@shared/domain/accounting/accounting.periods'
 import type { AccountingView } from '../accounting.utils'
 import { AccountingToolbar } from '../components/AccountingToolbar'
@@ -47,7 +46,7 @@ export function PeriodView({
         view={view}
         onViewChange={onViewChange}
         navigation={navigation}
-        onPrint={() => void printPage().catch((err: unknown) => toast.error(getErrorMessage(err)))}
+        onPrint={() => void printWithFeedback()}
       />
       <PrintHeader title={`Réalisations : ${label}`} printedAt={new Date()} />
       <p data-print="hide" className="text-sm text-muted-foreground">

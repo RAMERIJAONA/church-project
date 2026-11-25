@@ -150,13 +150,13 @@ async function start(): Promise<void> {
         : join(app.getAppPath(), 'drizzle')
     },
     logger,
-    { dialog: electronDialog, system: electronSystem }
+    { dialog: electronDialog, system: electronSystem, print: electronPrint }
   )
   const services = container
 
   registerIpc(ipcMain, logger, {
     appInfo: { name: app.getName(), version: app.getVersion(), isDebug },
-    print: () => electronPrint.printWindow(),
+    print: () => services.print.print(),
     settings: services.settings,
     maintenance: services.maintenance,
     accounting: services.accounting

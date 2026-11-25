@@ -61,10 +61,12 @@ export interface BackupDTO {
   createdAt: string
 }
 
-/** `cancelled` : l'utilisateur a fermé la boîte de dialogue d'impression. */
-export interface PrintResultDTO {
-  status: 'printed' | 'cancelled'
-}
+/**
+ * `cancelled` : boîte de dialogue fermée. `saved` : aucune imprimante installée, la page a été
+ * enregistrée en PDF à `path`.
+ */
+export type PrintResultDTO =
+  { status: 'printed' } | { status: 'cancelled' } | { status: 'saved'; path: string }
 
 export type ExportResultDTO = { status: 'saved'; path: string } | { status: 'cancelled' }
 export type RestoreResultDTO = { status: 'restarting' } | { status: 'cancelled' }

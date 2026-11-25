@@ -3,8 +3,12 @@ import { APP_NAME } from '@shared/domain/identity'
 
 /** Boîtes de dialogue natives, remplaçables par un fake en test. */
 export interface DialogAdapter {
-  /** Chemin choisi, ou null si annulé. */
-  chooseSavePath(options: { title: string; defaultPath: string }): Promise<string | null>
+  /** Chemin choisi, ou null si annulé. Filtres par défaut : sauvegarde `.db`. */
+  chooseSavePath(options: {
+    title: string
+    defaultPath: string
+    filters?: FileFilter[]
+  }): Promise<string | null>
   chooseOpenFile(options: { title: string; defaultPath?: string }): Promise<string | null>
   /** Vrai si l'utilisateur confirme. */
   confirm(options: {
@@ -15,16 +19,21 @@ export interface DialogAdapter {
   }): Promise<boolean>
 }
 
-const DB_FILTERS = [{ name: `Sauvegarde ${APP_NAME}`, extensions: ['db'] }]
+export interface FileFilter {
+  name: string
+  extensions: string[]
+}
+
+const DB_FILTERS: FileFilter[] = [{ name: `Sauvegarde ${APP_NAME}`, extensions: ['db'] }]
 
 function parent(): BrowserWindow | undefined {
   return BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
 }
 
 export const electronDialog: DialogAdapter = {
-  async chooseSavePath({ title, defaultPath }) {
+  async chooseSavePath({ title, defaultPath, filters = DB_FILTERS }) {
     const win = parent()
-    const opts = { title, defaultPath, filters: DB_FILTERS }
+    const opts = { title, defaultPath, filters }
     const res = win ? await dialog.showSaveDialog(win, opts) : await dialog.showSaveDialog(opts)
     return res.canceled || !res.filePath ? null : res.filePath
   },

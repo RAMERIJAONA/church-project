@@ -18,7 +18,8 @@ import { createAccountingService } from '@main/services/accounting.service'
 import { seedChurchPlan } from '@tests/factories/accounting.seed'
 import { MIGRATIONS_FOLDER } from '@tests/helpers/test-db'
 
-const SEED_DIR = resolve(__dirname, '../.dev-data/seed')
+// `SEED_DIR` : autre dossier (tests E2E) ; par défaut .dev-data/seed
+const SEED_DIR = resolve(process.env['SEED_DIR'] ?? resolve(__dirname, '../.dev-data/seed'))
 
 it('crée la base de démonstration du plan comptable 2025', () => {
   mkdirSync(SEED_DIR, { recursive: true })

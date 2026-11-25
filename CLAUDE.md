@@ -449,6 +449,7 @@ export async function invoke<C extends Channel>(channel: C, input: IpcInput<C>):
    - [ ] Créer un client → apparaît dans la liste → recherche le retrouve
    - [ ] Créer une vente → stock décrémenté → total correct
    - [ ] Imprimer / générer le PDF d'une facture
+   - [x] Impression : liste des imprimantes + PDF de la page de comptabilité (`tests/e2e/print.spec.ts`)
    - [x] Sauvegarde manuelle → restauration → données identiques (`tests/e2e/backup.spec.ts`)
    - [x] Changer le thème → persisté après redémarrage (`tests/e2e/theme.spec.ts`)
    - [x] Comptabilité : arborescence 4 niveaux → 3 colonnes de montants → détail des saisies → totaux → vues mois/semaine/jour/personnalisée (calendrier) → rendu imprimé → suppression/renumérotation → persisté (`tests/e2e/accounting.spec.ts`)
@@ -480,7 +481,7 @@ Les utilisateurs mettent à jour une DB existante, pas une DB neuve. Donc :
 - `webPreferences` : `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`. CSP stricte dans `index.html`.
 - Menu natif minimal (aucun sous Windows, Édition sur macOS), DevTools désactivés en prod (sauf `--debug`, F12). Navigation hors de l'app bloquée (`will-navigate`), liens externes ouverts dans le navigateur.
 - `process.on('uncaughtException')` côté main → log + dialog ; Error Boundaries côté renderer.
-- Impression / PDF : `webContents.print()` via `adapters/print.adapter.ts` (canal `app.print`, boîte de dialogue système : imprimante ou « Microsoft Print to PDF »). Mise en page dans `styles/print.css` : `data-print="hide"` (ne s'imprime pas), `data-print="only"` (imprimé seulement), tokens remappés en noir sur blanc quel que soit le thème, en-tête et total de tableau répétés à chaque page.
+- Impression / PDF : `services/print.service.ts` + `adapters/print.adapter.ts` (canal `app.print`). Avec une imprimante : `webContents.print()` (boîte de dialogue système, « Microsoft Print to PDF » compris). **Sans aucune imprimante installée**, Chromium refuse d'imprimer (« No printers available ») : le service propose alors d'enregistrer la page en PDF (`printToPDF`, `preferCSSPageSize`, boîte « Enregistrer » dans Documents) et l'UI l'annonce (régression `tests/regression/2026-11-24-print-without-printer.test.ts`, E2E `tests/e2e/print.spec.ts`). **Pièges de mise en page** (régression du 2026-11-24, E2E `print.spec.ts` sur le plan 2025 complet) : la coque (`AppLayout`) fixe la hauteur à l'écran et fait défiler `<main>`, d'où `print:h-auto print:overflow-visible` sinon une seule page sort ; et les textes tronqués (`truncate`) repassent à la ligne dans `print.css`, sinon le tableau déborde de la largeur A4 et la colonne de droite est coupée. Mise en page dans `styles/print.css` : `data-print="hide"` (ne s'imprime pas), `data-print="only"` (imprimé seulement), tokens remappés en noir sur blanc quel que soit le thème, marges de 32 px sur les 4 côtés (`@page`), en-tête de colonnes répété à chaque page, total une seule fois à la fin du tableau.
 
 ## 11. Build & distribution
 

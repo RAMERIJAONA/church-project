@@ -12,8 +12,8 @@ import { registerSettingsIpc } from './settings.ipc'
 
 export interface IpcServices {
   appInfo: AppInfoDTO
-  /** Imprime la fenêtre (adapter Electron injecté par main/index.ts) */
-  print: () => Promise<PrintResultDTO['status']>
+  /** Imprime la fenêtre, ou l'enregistre en PDF sans imprimante (print.service) */
+  print: () => Promise<PrintResultDTO>
   settings: SettingsService
   maintenance: MaintenanceService
   accounting: AccountingService

@@ -5,6 +5,7 @@
 import { join } from 'node:path'
 import { systemClock } from '@main/adapters/clock.adapter'
 import type { DialogAdapter } from '@main/adapters/dialog.adapter'
+import type { PrintAdapter } from '@main/adapters/print.adapter'
 import { nodeFs } from '@main/adapters/fs.adapter'
 import type { SystemAdapter } from '@main/adapters/system.adapter'
 import { createBackupService } from '@main/backup/backup.service'
@@ -16,6 +17,7 @@ import { createAccountingRepository } from '@main/repositories/accounting.reposi
 import { createSettingsRepository } from '@main/repositories/settings.repository'
 import { createAccountingService } from '@main/services/accounting.service'
 import { createMaintenanceService } from '@main/services/maintenance.service'
+import { createPrintService } from '@main/services/print.service'
 import { createSettingsService } from '@main/services/settings.service'
 
 export interface AppPaths {
@@ -32,6 +34,7 @@ export interface AppPaths {
 export interface PlatformAdapters {
   dialog: DialogAdapter
   system: SystemAdapter
+  print: PrintAdapter
 }
 
 export async function createContainer(paths: AppPaths, logger: Logger, platform: PlatformAdapters) {
@@ -97,7 +100,15 @@ export async function createContainer(paths: AppPaths, logger: Logger, platform:
     logger: logger.child({ module: 'accounting' })
   })
 
-  return { handle, backup, settings, maintenance, accounting, dispose: closeDatabase }
+  const print = createPrintService({
+    printer: platform.print,
+    dialog: platform.dialog,
+    documentsDir: paths.documentsDir,
+    clock: systemClock,
+    logger: logger.child({ module: 'print' })
+  })
+
+  return { handle, backup, settings, maintenance, accounting, print, dispose: closeDatabase }
 }
 
 export type Container = Awaited<ReturnType<typeof createContainer>>

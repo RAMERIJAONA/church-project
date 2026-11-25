@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@renderer/components/ui/button'
 import { getErrorMessage } from '@renderer/lib/error-messages'
-import { printPage } from '@renderer/lib/print'
+import { printWithFeedback } from '@renderer/lib/print'
 import { countDescendants } from '@shared/domain/accounting/accounting.tree'
 import { defaultOperationDate } from '@shared/domain/accounting/accounting.periods'
 import { MAX_YEAR } from '@shared/domain/accounting/accounting.types'
@@ -153,7 +153,7 @@ export function YearView({
         view="year"
         onViewChange={onViewChange}
         navigation={<YearStepper year={year} currentYear={currentYear} onChange={onYearChange} />}
-        onPrint={() => void printPage().catch(onError)}
+        onPrint={() => void printWithFeedback()}
         onNewSection={() => setCreating(true)}
         creating={creating}
       />
