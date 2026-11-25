@@ -4,7 +4,7 @@ import { Button } from '@renderer/components/ui/button'
 import { getErrorMessage } from '@renderer/lib/error-messages'
 import { printWithFeedback } from '@renderer/lib/print'
 import { countDescendants } from '@shared/domain/accounting/accounting.tree'
-import { MAX_YEAR } from '@shared/domain/accounting/accounting.types'
+import { MAX_YEAR, type Ledger } from '@shared/domain/accounting/accounting.types'
 import { AccountingEmptyState } from '../components/AccountingEmptyState'
 import { AccountingSheet } from '../components/AccountingSheet'
 import { AccountingToolbar } from '../components/AccountingToolbar'
@@ -46,6 +46,7 @@ interface DetailTarget {
 }
 
 export interface YearViewProps {
+  ledger: Ledger
   year: number
   currentYear: number
   onYearChange: (year: number) => void
@@ -54,6 +55,7 @@ export interface YearViewProps {
 
 /** Container de la vue Année : 3 colonnes modifiables, détail des saisies, création, suppression. */
 export function YearView({
+  ledger,
   year,
   currentYear,
   onYearChange,
@@ -64,7 +66,7 @@ export function YearView({
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null)
   const [detail, setDetail] = useState<DetailTarget | null>(null)
 
-  const sheet = useAccountingSheet(year)
+  const sheet = useAccountingSheet(year, ledger)
   // Année des données affichées (pendant un changement d'année, l'ancien tableau reste visible :
   // une saisie faite à ce moment doit aller dans l'année qu'on voit)
   const shownYear = sheet.data?.year ?? year
@@ -95,7 +97,7 @@ export function YearView({
           descendantCount: countDescendants(item)
         }),
       setTotal: (itemId, col, amount) =>
-        setTotal({ year: shownYear, itemId, col, amount }, { onError }),
+        setTotal({ ledger, year: shownYear, itemId, col, amount }, { onError }),
       openDetail: (item, col) =>
         setDetail({ itemId: item.id, code: item.code, description: item.description, col }),
       openAddChild: setAddingChildTo,
@@ -108,7 +110,7 @@ export function YearView({
         }
       }
     }),
-    [shownYear, updateItem, setTotal, createItemAsync]
+    [ledger, shownYear, updateItem, setTotal, createItemAsync]
   )
 
   /** Écriture depuis le détail : toast en cas d'erreur, rejet pour garder la saisie. */
@@ -123,7 +125,7 @@ export function YearView({
 
   const submitRoot = async (input: NewRootInput): Promise<void> => {
     try {
-      const created = await createItem.mutateAsync({ parentId: null, ...input })
+      const created = await createItem.mutateAsync({ parentId: null, ledger, ...input })
       setCreating(false)
       setAddingChildTo(created.id) // on enchaîne directement sur les sous-rubriques
     } catch (err) {
@@ -154,11 +156,12 @@ export function YearView({
         onNewSection={() => setCreating(true)}
         creating={creating}
       />
-      <PrintHeader title={`Année ${shownYear}`} printedAt={new Date()} />
+      <PrintHeader ledger={ledger} title={`Année ${shownYear}`} printedAt={new Date()} />
 
       {creating && (
         <div data-print="hide">
           <NewSectionForm
+            ledger={ledger}
             roots={items}
             busy={createItem.isPending}
             onSubmit={submitRoot}
@@ -182,7 +185,12 @@ export function YearView({
       {items.length > 0 && <SheetHelp />}
       {items.length > 0 && (
         <SheetActionsProvider value={actions}>
-          <AccountingSheet year={shownYear} items={items} addingChildTo={addingChildTo} />
+          <AccountingSheet
+            ledger={ledger}
+            year={shownYear}
+            items={items}
+            addingChildTo={addingChildTo}
+          />
         </SheetActionsProvider>
       )}
 

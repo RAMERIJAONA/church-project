@@ -10,11 +10,9 @@ import {
   normalizePrefix,
   operationDateError
 } from '@shared/domain/accounting/accounting.rules'
-import { buildSheet, countDescendants, findItem } from '@shared/domain/accounting/accounting.tree'
+import { buildSheet, countDescendants } from '@shared/domain/accounting/accounting.tree'
 import {
   MAX_DEPTH,
-  MIN_YEAR,
-  type AccountingItemDTO,
   type AccountingSheetDTO,
   type AddEntryInput,
   type CreateItemInput,
@@ -22,6 +20,7 @@ import {
   type CreatedItemDTO,
   type EntryDTO,
   type EntryType,
+  type Ledger,
   type PeriodTotalDTO,
   type PeriodTotalsInput,
   type ListEntriesInput,
@@ -32,6 +31,7 @@ import {
 } from '@shared/domain/accounting/accounting.types'
 import { AppError } from '@shared/domain/errors'
 import { formatAmount, MAX_AMOUNT } from '@shared/utils/money'
+import { createAccountingLookup } from './accounting.lookup'
 
 /** Cas d'usage de la comptabilité. Une méthode = une transaction. */
 export function createAccountingService(deps: {
@@ -43,37 +43,8 @@ export function createAccountingService(deps: {
   const repo = deps.accounting
   const now = (): string => deps.clock().toISOString()
 
-  /** Arbre sans montants : niveaux, numéros, enfants (un plan comptable reste petit). */
-  function structure(tx: DbOrTx): AccountingSheetDTO {
-    return buildSheet(MIN_YEAR, repo.listItems(tx), [], repo.itemIdsWithEntries(tx))
-  }
-
-  const codeOf = (tx: DbOrTx, id: number): string => findItem(structure(tx), id)?.code ?? '?'
-
-  function requireItem(tx: DbOrTx, id: number): AccountingItemDTO {
-    const item = findItem(structure(tx), id)
-    if (!item) throw new AppError('NOT_FOUND', 'Rubrique introuvable', { itemId: id })
-    return item
-  }
-
-  /** Élément qui peut porter des montants : sans enfant (à tous les niveaux). */
-  function requireAmountHolder(tx: DbOrTx, id: number): AccountingItemDTO {
-    const item = requireItem(tx, id)
-    if (item.children.length > 0) {
-      throw new AppError(
-        'BUSINESS_RULE',
-        `${item.code} regroupe d’autres rubriques : saisissez les montants sur ses sous-rubriques.`,
-        { itemId: id, code: item.code }
-      )
-    }
-    return item
-  }
-
-  function requireEntry(tx: DbOrTx, id: number) {
-    const entry = repo.findEntry(tx, id)
-    if (!entry) throw new AppError('NOT_FOUND', 'Saisie introuvable', { entryId: id })
-    return entry
-  }
+  const { structure, codeOf, requireItem, requireAmountHolder, requireEntry } =
+    createAccountingLookup(repo)
 
   function checkTotal(code: string, total: number): void {
     if (total > MAX_AMOUNT) {
@@ -92,9 +63,14 @@ export function createAccountingService(deps: {
 
   const sum = (entries: readonly EntryDTO[]): number => entries.reduce((n, x) => n + x.amount, 0)
 
-  function createRoot(tx: DbOrTx, prefixInput: string, description: string): CreatedItemDTO {
+  function createRoot(
+    tx: DbOrTx,
+    ledger: Ledger,
+    prefixInput: string,
+    description: string
+  ): CreatedItemDTO {
     const prefix = normalizePrefix(prefixInput)
-    const roots = structure(tx).items
+    const roots = structure(tx, ledger).items
     const allowed = availableLetters(roots.map((r) => r.prefix ?? ''))
     if (!allowed.includes(prefix)) {
       throw new AppError(
@@ -106,7 +82,8 @@ export function createAccountingService(deps: {
     const id = repo.insertItem(tx, {
       parentId: null,
       prefix,
-      position: repo.nextPosition(tx, { parentId: null, prefix }),
+      ledger,
+      position: repo.nextPosition(tx, { parentId: null, prefix, ledger }),
       description: normalizeDescription(1, description),
       at: now()
     })
@@ -129,10 +106,13 @@ export function createAccountingService(deps: {
       )
     }
     const level = (parent.level + 1) as 2 | 3 | 4
+    // La sous-rubrique hérite de la comptabilité de son parent
+    const ledger = repo.findItemRow(tx, parentId)?.ledger ?? 'expense'
     const id = repo.insertItem(tx, {
       parentId,
       prefix: null,
-      position: repo.nextPosition(tx, { parentId, prefix: null }),
+      ledger,
+      position: repo.nextPosition(tx, { parentId, prefix: null, ledger }),
       description: normalizeDescription(level, description),
       at: now()
     })
@@ -141,13 +121,15 @@ export function createAccountingService(deps: {
   }
 
   return {
-    getSheet(year: number): AccountingSheetDTO {
+    /** Tableau d'une comptabilité (sorties par défaut : tests et anciens appels). */
+    getSheet(year: number, ledger: Ledger = 'expense'): AccountingSheetDTO {
       return deps.db.transaction((tx) =>
         buildSheet(
           year,
-          repo.listItems(tx),
+          repo.listItems(tx, ledger),
           repo.listEntriesForYears(tx, [year, year + 1]),
-          repo.itemIdsWithEntries(tx)
+          repo.itemIdsWithEntries(tx),
+          ledger
         )
       )
     },
@@ -156,7 +138,7 @@ export function createAccountingService(deps: {
       return deps.db.transaction((tx) => {
         const created =
           input.parentId === null
-            ? createRoot(tx, input.prefix ?? '', input.description)
+            ? createRoot(tx, input.ledger ?? 'expense', input.prefix ?? '', input.description)
             : createChild(tx, input.parentId, input.description)
         deps.logger.info({ itemId: created.id, code: created.code }, 'rubrique créée')
         return created
@@ -263,7 +245,9 @@ export function createAccountingService(deps: {
 
     /** Réalisations par élément sur une période (date d'opération, bornes incluses). */
     getPeriodTotals(range: PeriodTotalsInput): PeriodTotalDTO[] {
-      return deps.db.transaction((tx) => repo.sumActualBetween(tx, range.from, range.to))
+      return deps.db.transaction((tx) =>
+        repo.sumActualBetween(tx, range.ledger, range.from, range.to)
+      )
     },
 
     deleteEntry(id: number): void {

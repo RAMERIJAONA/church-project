@@ -452,6 +452,7 @@ export async function invoke<C extends Channel>(channel: C, input: IpcInput<C>):
    - [x] Impression : liste des imprimantes + PDF de la page de comptabilité (`tests/e2e/print.spec.ts`)
    - [x] Sauvegarde manuelle → restauration → données identiques (`tests/e2e/backup.spec.ts`)
    - [x] Changer le thème → persisté après redémarrage (`tests/e2e/theme.spec.ts`)
+   - [x] Comptabilité des entrées : numéros A2…, données séparées des sorties (`tests/e2e/accounting-income.spec.ts`)
    - [x] Comptabilité : arborescence 4 niveaux → 3 colonnes de montants → détail des saisies → Ar et date automatique → synthèse jour/semaine/mois/année → totaux → vues mois/semaine/jour/personnalisée (calendrier) → rendu imprimé → suppression/renumérotation → persisté (`tests/e2e/accounting.spec.ts`)
 4. **Aucun test supprimé ou désactivé** (`.skip`) sans justification écrite dans la PR.
 5. Un test qui échoue de façon aléatoire (flaky) se corrige en priorité, il ne se relance pas en boucle.
@@ -611,6 +612,8 @@ nsis:
 ## 16. Règles métier reçues
 
 ### 16.1 Comptabilité (`features/accounting`, reçue le 2026-11-24 ; arborescence, montants, dates d'opération et vues par période ajoutées le même jour)
+
+- **Deux comptabilités** (demandé le 2026-11-25) : **sorties** (dépenses, `ledger = 'expense'`, tout ce qui existait avant) et **entrées** (recettes, `ledger = 'income'`). Menus « Comptabilité des entrées » (`/comptabilite/entrees`) et « Comptabilité des sorties » (`/comptabilite/sorties`, `/comptabilite` y redirige). **Mêmes règles, mêmes écrans** ; seule différence : le numéro du niveau 1 commence à **1 pour les sorties** (A1, A2, B1…) et à **2 pour les entrées** (A2, A3, B2…, `LEDGER_FIRST_NUMBER`, `rootCode`), les sous-rubriques suivent le parent (A2-1, A2-I, A2-I-1, A2-I-1 A)). Lettres, numéros, montants, totaux, synthèse et impression propres à chaque comptabilité. Colonne `accounting_items.ledger` sur chaque élément (une sous-rubrique hérite de son parent) ; migration `0004` (ajout de colonne, CHECK de colonne écrit à la main : une contrainte de table ferait recréer la table, ce que ses clés étrangères interdisent) ; données existantes → sorties. Contrat IPC : `ledger` obligatoire au niveau 1 (`accounting.createItem`), et pour `accounting.sheet` et `accounting.periodTotals`.
 
 UI en français d'abord ; les termes malgaches sont gardés en glossaire (traduction prévue plus tard).
 

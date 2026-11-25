@@ -1,11 +1,23 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
+import type { Ledger } from '@shared/domain/accounting/accounting.types'
 import { NewSectionForm } from './NewSectionForm'
 
-function setup(sections = [{ prefix: 'A' }, { prefix: 'A' }, { prefix: 'B' }]) {
+function setup(
+  sections = [{ prefix: 'A' }, { prefix: 'A' }, { prefix: 'B' }],
+  ledger: Ledger = 'expense'
+) {
   const onSubmit = vi.fn().mockResolvedValue(undefined)
-  render(<NewSectionForm roots={sections} busy={false} onSubmit={onSubmit} onCancel={vi.fn()} />)
+  render(
+    <NewSectionForm
+      ledger={ledger}
+      roots={sections}
+      busy={false}
+      onSubmit={onSubmit}
+      onCancel={vi.fn()}
+    />
+  )
   return {
     onSubmit,
     letter: screen.getByLabelText<HTMLSelectElement>('Lettre'),
@@ -14,6 +26,20 @@ function setup(sections = [{ prefix: 'A' }, { prefix: 'A' }, { prefix: 'B' }]) {
 }
 
 describe('NewSectionForm', () => {
+  it('entrées : numéros à partir de 2 (A2, A3… ; nouvelle lettre D2)', async () => {
+    const { letter, preview } = setup([{ prefix: 'A' }, { prefix: 'B' }], 'income')
+    expect(letter.value).toBe('B')
+    expect(preview()).toBe('B3')
+    await userEvent.selectOptions(letter, 'A')
+    expect(preview()).toBe('A3')
+    await userEvent.selectOptions(letter, 'D')
+    expect(preview()).toBe('D2')
+  })
+
+  it('entrées : la première rubrique est A2', () => {
+    expect(setup([], 'income').preview()).toBe('A2')
+  })
+
   it('ne propose que les lettres utilisées et la suivante en malgache (pas de C)', () => {
     const { letter } = setup()
     expect(Array.from(letter.options).map((o) => o.value)).toEqual(['A', 'B', 'D'])

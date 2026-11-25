@@ -14,6 +14,7 @@ import {
   MAX_YEAR,
   MIN_YEAR,
   operationDateSchema,
+  type Ledger,
   yearSchema
 } from '@shared/domain/accounting/accounting.types'
 import type { AccountingView, SummaryPeriod } from '../accounting.utils'
@@ -56,7 +57,17 @@ const yearOf = (date: string): number => Number(date.slice(0, 4))
  * Container : lit la vue, l'année, la date ou la période dans l'URL (conservées en changeant de
  * page) et affiche la vue Année ou une vue par période.
  */
-export function AccountingPage(): React.JSX.Element {
+/** Comptabilité des sorties (dépenses) : A1, B1… */
+export function ExpensesPage(): React.JSX.Element {
+  return <AccountingPage ledger="expense" />
+}
+
+/** Comptabilité des entrées (recettes) : A2, B2… ; mêmes règles et même affichage. */
+export function IncomePage(): React.JSX.Element {
+  return <AccountingPage ledger="income" />
+}
+
+export function AccountingPage({ ledger }: { ledger: Ledger }): React.JSX.Element {
   const today = useMemo(() => localDateOf(new Date()), [])
   const currentYear = yearOf(today)
   const [params, setParams] = useSearchParams()
@@ -82,6 +93,7 @@ export function AccountingPage(): React.JSX.Element {
       : view === p.kind && shown?.from === p.range.from && shown.to === p.range.to
   const summaryBlock = (
     <SummarySection
+      ledger={ledger}
       today={today}
       isShown={isShown}
       onSelect={(kind) =>
@@ -102,7 +114,7 @@ export function AccountingPage(): React.JSX.Element {
 
   return (
     <div className="flex flex-col gap-6">
-      {view === null && <YearTotalsSection year={year} />}
+      {view === null && <YearTotalsSection ledger={ledger} year={year} />}
       {summaryBlock}
       {content()}
     </div>
@@ -112,6 +124,7 @@ export function AccountingPage(): React.JSX.Element {
     if (view === 'custom') {
       return (
         <PeriodView
+          ledger={ledger}
           view="custom"
           range={custom}
           label={rangeLabel(custom)}
@@ -138,6 +151,7 @@ export function AccountingPage(): React.JSX.Element {
       }
       return (
         <PeriodView
+          ledger={ledger}
           view={kind}
           range={range}
           label={label}
@@ -156,6 +170,7 @@ export function AccountingPage(): React.JSX.Element {
 
     return (
       <YearView
+        ledger={ledger}
         year={year}
         currentYear={currentYear}
         onYearChange={(y) => replace({ annee: String(y) })}

@@ -53,8 +53,8 @@ test('@smoke comptabilité : arborescence, 3 colonnes, détail, persistés aprè
   const { userData } = running
   try {
     const w = running.window
-    await navLink(w, 'Comptabilité').click()
-    await expect(w.getByRole('heading', { level: 1, name: 'Comptabilité' })).toBeVisible()
+    await navLink(w, 'Comptabilité des sorties').click()
+    await expect(w.getByRole('heading', { level: 1 })).toHaveText('Comptabilité des sorties')
 
     // Niveau 1 : lettre et numéro automatiques, majuscules ; on enchaîne sur les sous-rubriques
     await w.getByRole('button', { name: 'Créer la première rubrique' }).click()
@@ -214,7 +214,7 @@ test('@smoke comptabilité : arborescence, 3 colonnes, détail, persistés aprè
     await expect(w.getByRole('button', { name: 'Imprimer' })).toBeVisible()
     await w.emulateMedia({ media: 'print' })
     await expect(w.getByRole('button', { name: 'Imprimer' })).toBeHidden()
-    await expect(w.getByRole('heading', { name: /: comptabilité$/ })).toBeVisible()
+    await expect(w.getByRole('heading', { name: /des sorties$/ })).toBeVisible()
     await expect(w.getByRole('button', { name: 'Actions de A1', exact: true })).toBeHidden()
     await expect(row(w, 'Total général')).toContainText(/770\s000/)
     // Demandes du porteur (2026-11-25) : tout fond en blanc, pas d'icône « ↳ », « Ar » du total
@@ -279,7 +279,7 @@ test('@smoke comptabilité : arborescence, 3 colonnes, détail, persistés aprè
 
     running = await launchApp({ userData })
     const w2 = running.window
-    await navLink(w2, 'Comptabilité').click()
+    await navLink(w2, 'Comptabilité des sorties').click()
     await expect(row(w2, 'A1-I-1 A)')).toContainText(/350\s000/)
     await w2.getByRole('button', { name: `Détail : Réalisation ${Y} de A1-I-1 A)` }).click()
     const detail = w2.getByRole('dialog', { name: `Réalisation ${Y} de A1-I-1 A)` })

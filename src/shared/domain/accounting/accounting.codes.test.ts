@@ -70,6 +70,19 @@ describe('numéros par niveau', () => {
     expect(childCode('F1-II', 3, 4, 'leaf')).toBe('F1-II-4')
   })
 
+  it('niveau 1 : sorties à partir de 1, entrées à partir de 2 (2026-11-25)', () => {
+    expect(rootCode('A', 1)).toBe('A1')
+    expect(rootCode('A', 1, 'expense')).toBe('A1')
+    expect(rootCode('A', 2, 'expense')).toBe('A2')
+    expect(rootCode('A', 1, 'income')).toBe('A2')
+    expect(rootCode('A', 2, 'income')).toBe('A3')
+    expect(rootCode('AB', 1, 'income')).toBe('AB2')
+    // Les sous-rubriques suivent le numéro du parent, comme dans les sorties
+    expect(childCode(rootCode('A', 1, 'income'), 2, 1, 'leaf')).toBe('A2-1')
+    expect(childCode('A2', 2, 1, 'group')).toBe('A2-I')
+    expect(childCode('A2-I', 3, 1, 'leaf')).toBe('A2-I-1')
+  })
+
   it('reproduit le plan de l’église (golden)', () => {
     for (const g of golden) {
       const code =

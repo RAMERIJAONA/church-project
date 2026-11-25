@@ -13,7 +13,7 @@ import {
 
 describe('AccountingService : arborescence', () => {
   it('renvoie un tableau vide sur une base neuve', () => {
-    expect(setup().service.getSheet(YEAR)).toEqual({ year: YEAR, items: [] })
+    expect(setup().service.getSheet(YEAR)).toEqual({ year: YEAR, ledger: 'expense', items: [] })
   })
 
   it('construit le plan de l’église sur 4 niveaux', () => {

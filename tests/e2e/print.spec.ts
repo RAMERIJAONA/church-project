@@ -65,7 +65,7 @@ const pdfOf = (running: Awaited<ReturnType<typeof launchApp>>) =>
 test('impression : liste des imprimantes et PDF de la page de comptabilité', async () => {
   const running = await launchApp()
   try {
-    await navLink(running.window, 'Comptabilité').click()
+    await navLink(running.window, 'Comptabilité des sorties').click()
     await expect(running.window.getByRole('button', { name: 'Imprimer' })).toBeVisible()
     const pdf = await pdfOf(running)
     expect(pdf.printers).toBe(true)
@@ -96,11 +96,11 @@ test('impression : grand plan comptable, sur plusieurs pages et dans la largeur 
   const running = await launchApp({ userData })
   try {
     const w = running.window
-    await navLink(w, 'Comptabilité').click()
+    await navLink(w, 'Comptabilité des sorties').click()
     // Grand jeu de démonstration (seed:accounting), année en cours : 160 rubriques et plus
     const year = new Date().getFullYear()
     await expect(w.getByRole('columnheader', { name: `Réalisation ${year}` })).toBeVisible()
-    await expect(w.getByRole('rowheader', { name: 'M1', exact: true })).toBeAttached()
+    await expect(w.getByRole('rowheader', { name: 'L1', exact: true })).toBeAttached()
 
     expect((await pdfOf(running)).pages).toBeGreaterThanOrEqual(2)
 

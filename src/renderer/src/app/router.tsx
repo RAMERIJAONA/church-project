@@ -1,4 +1,4 @@
-import { createHashRouter, type RouteObject } from 'react-router'
+import { createHashRouter, Navigate, type RouteObject } from 'react-router'
 import { RouteErrorBoundary } from './errors/RouteErrorBoundary'
 import { AppLayout } from './layout/AppLayout'
 import type { RouteHandle } from './layout/route-handle'
@@ -20,18 +20,32 @@ export const routes: RouteObject[] = [
           Component: (await import('@renderer/features/home/pages/HomePage')).HomePage
         })
       },
+      // Deux comptabilités, mêmes règles et même affichage (numéros : sorties A1, entrées A2)
       {
-        path: 'comptabilite',
+        path: 'comptabilite/entrees',
         handle: {
-          title: 'Comptabilité',
-          description: 'Rubriques, lignes et montants par année'
+          title: 'Comptabilité des entrées',
+          description: 'Recettes : rubriques, estimations et réalisations par année'
+        } satisfies RouteHandle,
+        errorElement: <RouteErrorBoundary />,
+        lazy: async () => ({
+          Component: (await import('@renderer/features/accounting/pages/AccountingPage')).IncomePage
+        })
+      },
+      {
+        path: 'comptabilite/sorties',
+        handle: {
+          title: 'Comptabilité des sorties',
+          description: 'Dépenses : rubriques, estimations et réalisations par année'
         } satisfies RouteHandle,
         errorElement: <RouteErrorBoundary />,
         lazy: async () => ({
           Component: (await import('@renderer/features/accounting/pages/AccountingPage'))
-            .AccountingPage
+            .ExpensesPage
         })
       },
+      // Ancienne adresse (avant la comptabilité des entrées) : les sorties
+      { path: 'comptabilite', element: <Navigate to="/comptabilite/sorties" replace /> },
       {
         path: 'parametres',
         handle: {

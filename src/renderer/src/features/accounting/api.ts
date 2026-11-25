@@ -2,6 +2,7 @@ import { invoke } from '@renderer/lib/ipc-client'
 import type {
   AddEntryInput,
   CreateItemInput,
+  Ledger,
   ListEntriesInput,
   PeriodTotalsInput,
   SetTotalInput,
@@ -9,7 +10,7 @@ import type {
 } from '@shared/domain/accounting/accounting.types'
 
 export const accountingApi = {
-  sheet: (year: number) => invoke('accounting.sheet', { year }),
+  sheet: (year: number, ledger: Ledger) => invoke('accounting.sheet', { year, ledger }),
   createItem: (input: CreateItemInput) => invoke('accounting.createItem', input),
   updateItem: (id: number, description: string) =>
     invoke('accounting.updateItem', { id, description }),

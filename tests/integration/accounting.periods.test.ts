@@ -75,7 +75,11 @@ describe('AccountingService : date d’opération et périodes', () => {
     service.setTotal({ itemId: a.id, year: 2026, type: 'estimate', amount: 9999 })
     service.deleteItem(i.id) // ses réalisations ne comptent plus
 
-    const totals = service.getPeriodTotals({ from: '2026-11-23', to: '2026-11-29' })
+    const totals = service.getPeriodTotals({
+      from: '2026-11-23',
+      to: '2026-11-29',
+      ledger: 'expense'
+    })
     expect([...totals].sort((x, y) => x.itemId - y.itemId)).toEqual([
       { itemId: a.id, total: 300, entryCount: 2 },
       { itemId: b.id, total: 50, entryCount: 1 }

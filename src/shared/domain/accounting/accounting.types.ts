@@ -48,6 +48,15 @@ export const MALAGASY_LETTERS = [
   'Z'
 ] as const
 
+/**
+ * Comptabilité : sorties (dépenses, `expense`) ou entrées (recettes, `income`). Mêmes règles et
+ * même affichage ; seule la numérotation du niveau 1 diffère (sorties A1, B1… ; entrées A2, B2…,
+ * demande du porteur du 2026-11-25). Chaque comptabilité a ses propres lettres.
+ */
+export const LEDGERS = ['expense', 'income'] as const
+export type Ledger = (typeof LEDGERS)[number]
+export const ledgerSchema = z.enum(LEDGERS)
+
 /** Estimation ou réalisation. « Estimation année prochaine » = `estimate` de l'année N+1. */
 export const ENTRY_TYPES = ['estimate', 'actual'] as const
 export type EntryType = (typeof ENTRY_TYPES)[number]
@@ -85,13 +94,15 @@ export const entryTypeSchema = z.enum(ENTRY_TYPES)
 const idSchema = z.number().int().positive()
 const directionSchema = z.enum(['up', 'down'])
 
-export const listSheetInputSchema = z.object({ year: yearSchema }).strict()
+export const listSheetInputSchema = z.object({ year: yearSchema, ledger: ledgerSchema }).strict()
 export const createItemInputSchema = z
   .object({
     /** `null` : élément de niveau 1 */
     parentId: idSchema.nullable(),
     /** Niveau 1 uniquement : lettre existante ou suivante (cf. `availableLetters`) */
     prefix: sectionPrefixSchema.optional(),
+    /** Niveau 1 uniquement : comptabilité (les sous-rubriques héritent de leur parent) */
+    ledger: ledgerSchema.optional(),
     description: descriptionSchema
   })
   .strict()
@@ -101,6 +112,16 @@ export const createItemInputSchema = z
     }
     if (v.parentId !== null && v.prefix !== undefined) {
       ctx.addIssue({ code: 'custom', path: ['prefix'], message: 'Lettre réservée au niveau 1' })
+    }
+    if (v.parentId === null && v.ledger === undefined) {
+      ctx.addIssue({ code: 'custom', path: ['ledger'], message: 'Comptabilité obligatoire' })
+    }
+    if (v.parentId !== null && v.ledger !== undefined) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['ledger'],
+        message: 'Une sous-rubrique hérite de la comptabilité de son parent'
+      })
     }
   })
 export const updateItemInputSchema = z
@@ -137,7 +158,7 @@ export const updateEntryInputSchema = z
   .strict()
 /** Période d'affichage des réalisations (bornes incluses, de n'importe quelle durée). */
 export const periodTotalsInputSchema = z
-  .object({ from: operationDateSchema, to: operationDateSchema })
+  .object({ from: operationDateSchema, to: operationDateSchema, ledger: ledgerSchema })
   .strict()
   .refine((r) => r.from <= r.to, 'Période invalide : la date de début suit la date de fin')
 
@@ -185,6 +206,7 @@ export interface AccountingItemDTO {
 
 export interface AccountingSheetDTO {
   year: number
+  ledger: Ledger
   /** Éléments de niveau 1 */
   items: AccountingItemDTO[]
 }

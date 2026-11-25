@@ -9,14 +9,25 @@ import { PrintHeader } from './PrintHeader'
 describe('impression', () => {
   it('l’en-tête imprimé donne l’église, la vue et la date d’impression', () => {
     const now = new Date('2026-11-24T09:00:00.000Z')
-    const { container } = render(<PrintHeader title="Année 2026" printedAt={now} />)
+    const { container } = render(
+      <PrintHeader ledger="expense" title="Année 2026" printedAt={now} />
+    )
     const header = container.firstElementChild
     expect(header?.getAttribute('data-print')).toBe('only')
-    expect(screen.getByRole('heading', { name: `${CHURCH_NAME} : comptabilité` })).toBeDefined()
+    expect(
+      screen.getByRole('heading', { name: `${CHURCH_NAME} : comptabilité des sorties` })
+    ).toBeDefined()
     expect(header?.textContent).toContain('Année 2026')
     expect(header?.textContent?.replace(/\s/g, ' ')).toContain(
       `Imprimé le ${formatDateTime(now)}`.replace(/\s/g, ' ')
     )
+  })
+
+  it('l’en-tête imprimé nomme la comptabilité des entrées', () => {
+    render(<PrintHeader ledger="income" title="Année 2026" printedAt={new Date()} />)
+    expect(
+      screen.getByRole('heading', { name: `${CHURCH_NAME} : comptabilité des entrées` })
+    ).toBeDefined()
   })
 
   it('la barre d’outils propose « Imprimer » et ne s’imprime pas elle-même', async () => {

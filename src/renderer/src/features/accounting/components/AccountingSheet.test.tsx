@@ -60,7 +60,7 @@ function renderSheet(
 ) {
   render(
     <SheetActionsProvider value={actions}>
-      <AccountingSheet year={year} items={items} addingChildTo={addingChildTo} />
+      <AccountingSheet ledger="expense" year={year} items={items} addingChildTo={addingChildTo} />
     </SheetActionsProvider>
   )
   return actions

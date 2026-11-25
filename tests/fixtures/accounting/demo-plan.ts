@@ -1,15 +1,20 @@
+/* eslint-disable max-lines -- données du plan de démonstration, pas de la logique */
 /**
  * Plan comptable de DÉMONSTRATION (fictif, en français), pour tester l'application à la main :
  * `npm run seed:accounting` puis `npm run dev:seed`. Montants générés par
  * `tests/factories/accounting.demo-seed.ts`. Aucune donnée personnelle.
  *
- * Couvre exprès : les 4 niveaux, plusieurs rubriques sur une même lettre (A1, A2, E1, E2),
- * groupes et rubriques à montants à chaque niveau, une rubrique principale sans
- * sous-rubrique (K1), de très grands montants (L1), des descriptions longues, une section
- * supprimée (renumérotation) et des rubriques laissées vides.
+ * Deux comptabilités : ENTRÉES (numéros à partir de 2 : A2, A3, B2…) et SORTIES (A1, B1…),
+ * chacune avec ses propres lettres.
+ * Couvre exprès : les 4 niveaux, plusieurs rubriques sur une même lettre (entrées A2, A3 ;
+ * sorties D1, D2), groupes et rubriques à montants à chaque niveau, une rubrique principale
+ * sans sous-rubrique (J1), de très grands montants (K1), des descriptions longues, une
+ * section supprimée (renumérotation des entrées) et des rubriques laissées vides.
  *
  * Une feuille est une chaîne ; un groupe est `{ d, c }`.
  */
+
+import type { Ledger } from '@shared/domain/accounting/accounting.types'
 
 export type DemoNode =
   | string
@@ -23,6 +28,8 @@ export type DemoNode =
     }
 
 export interface DemoRoot {
+  /** Comptabilité : entrées (A2, B2…) ou sorties (A1, B1…) ; lettres propres à chacune */
+  ledger: Ledger
   prefix: string
   d: string
   c?: DemoNode[]
@@ -43,6 +50,7 @@ const parish = (name: string): DemoNode => ({
 
 export const DEMO_PLAN: DemoRoot[] = [
   {
+    ledger: 'income',
     prefix: 'A',
     d: 'Offrandes et dons',
     c: [
@@ -73,12 +81,14 @@ export const DEMO_PLAN: DemoRoot[] = [
     ]
   },
   {
+    ledger: 'income',
     prefix: 'A',
     d: 'Ancienne rubrique à supprimer',
     deleted: true,
     c: ['Ligne supprimée avec sa rubrique']
   },
   {
+    ledger: 'income',
     prefix: 'A',
     d: 'Recettes diverses',
     c: [
@@ -89,7 +99,31 @@ export const DEMO_PLAN: DemoRoot[] = [
     ]
   },
   {
+    ledger: 'income',
     prefix: 'B',
+    d: 'Subventions et partenariats',
+    c: [
+      'Subvention de la FJKM nationale',
+      { d: 'Partenaires étrangers', c: ['Église sœur en France', 'Église sœur en Suisse'] },
+      'Aide de la commune'
+    ]
+  },
+  {
+    ledger: 'income',
+    prefix: 'D',
+    d: 'Activités génératrices de revenus',
+    c: [
+      {
+        d: 'Rizière de l’église',
+        c: [{ d: 'Récoltes', c: ['Première saison', 'Deuxième saison'] }, 'Location de parcelles']
+      },
+      'Atelier de couture',
+      'Vente de produits artisanaux'
+    ]
+  },
+  {
+    ledger: 'expense',
+    prefix: 'A',
     d: 'Personnel et ministère',
     c: [
       {
@@ -123,7 +157,8 @@ export const DEMO_PLAN: DemoRoot[] = [
     ]
   },
   {
-    prefix: 'D',
+    ledger: 'expense',
+    prefix: 'B',
     d: 'Bâtiments et entretien',
     c: [
       {
@@ -149,7 +184,8 @@ export const DEMO_PLAN: DemoRoot[] = [
     ]
   },
   {
-    prefix: 'E',
+    ledger: 'expense',
+    prefix: 'D',
     d: 'École du dimanche',
     c: [
       'Matériel pédagogique',
@@ -159,7 +195,8 @@ export const DEMO_PLAN: DemoRoot[] = [
     ]
   },
   {
-    prefix: 'E',
+    ledger: 'expense',
+    prefix: 'D',
     d: 'Jeunesse',
     c: [
       { d: 'Camp de jeunes', c: ['Transport', 'Hébergement', 'Repas'] },
@@ -168,7 +205,8 @@ export const DEMO_PLAN: DemoRoot[] = [
     ]
   },
   {
-    prefix: 'F',
+    ledger: 'expense',
+    prefix: 'E',
     d: 'Musique et chorales',
     c: [
       {
@@ -183,7 +221,8 @@ export const DEMO_PLAN: DemoRoot[] = [
     ]
   },
   {
-    prefix: 'G',
+    ledger: 'expense',
+    prefix: 'F',
     d: 'Œuvres sociales',
     c: [
       'Aide aux familles en difficulté',
@@ -193,7 +232,8 @@ export const DEMO_PLAN: DemoRoot[] = [
     ]
   },
   {
-    prefix: 'H',
+    ledger: 'expense',
+    prefix: 'G',
     d: 'Missions et évangélisation',
     c: [
       {
@@ -205,7 +245,8 @@ export const DEMO_PLAN: DemoRoot[] = [
     ]
   },
   {
-    prefix: 'I',
+    ledger: 'expense',
+    prefix: 'H',
     d: 'Administration',
     c: [
       'Fournitures de bureau',
@@ -217,7 +258,8 @@ export const DEMO_PLAN: DemoRoot[] = [
     ]
   },
   {
-    prefix: 'J',
+    ledger: 'expense',
+    prefix: 'I',
     d: 'Cérémonies et fêtes',
     c: [
       'Fête de Pâques',
@@ -227,11 +269,17 @@ export const DEMO_PLAN: DemoRoot[] = [
     ]
   },
   // Rubrique principale sans sous-rubrique : porte directement ses montants
-  { prefix: 'K', d: 'Réserve de trésorerie', scale: 15_000_000 },
+  { ledger: 'expense', prefix: 'J', d: 'Réserve de trésorerie', scale: 15_000_000 },
   // Très grands montants (11 à 12 chiffres) : aucun montant ne doit être tronqué
-  { prefix: 'L', d: 'Fonds de construction à long terme', scale: 98_765_432_100 },
   {
-    prefix: 'M',
+    ledger: 'expense',
+    prefix: 'K',
+    d: 'Fonds de construction à long terme',
+    scale: 98_765_432_100
+  },
+  {
+    ledger: 'expense',
+    prefix: 'L',
     d: 'Paroisses annexes',
     c: [
       parish('d’Ambatondrazaka centre'),

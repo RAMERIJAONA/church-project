@@ -4,6 +4,7 @@ import type {
   AddEntryInput,
   CreateItemInput,
   EntryType,
+  Ledger,
   PeriodTotalsInput,
   UpdateEntryInput
 } from '@shared/domain/accounting/accounting.types'
@@ -13,17 +14,17 @@ import { columnTarget, withTotal, type AmountColumn } from './accounting.utils'
 /** Query key factory : seule source des clés de cette feature. */
 export const accountingKeys = {
   all: ['accounting'] as const,
-  sheet: (year: number) => [...accountingKeys.all, 'sheet', year] as const,
+  sheet: (ledger: Ledger, year: number) => [...accountingKeys.all, 'sheet', ledger, year] as const,
   entries: (itemId: number, year: number, type: EntryType) =>
     [...accountingKeys.all, 'entries', itemId, year, type] as const,
   periodTotals: (range: PeriodTotalsInput) =>
-    [...accountingKeys.all, 'period', range.from, range.to] as const
+    [...accountingKeys.all, 'period', range.ledger, range.from, range.to] as const
 }
 
-export function useAccountingSheet(year: number) {
+export function useAccountingSheet(year: number, ledger: Ledger) {
   return useQuery({
-    queryKey: accountingKeys.sheet(year),
-    queryFn: () => accountingApi.sheet(year),
+    queryKey: accountingKeys.sheet(ledger, year),
+    queryFn: () => accountingApi.sheet(year, ledger),
     // Changement d'année : l'ancien tableau reste affiché le temps du chargement (pas de saut)
     placeholderData: (previous) => previous
   })
@@ -82,7 +83,8 @@ export const useDeleteEntry = () =>
   useAccountingMutation((id: number) => accountingApi.deleteEntry(id))
 
 export interface SetTotalVars {
-  /** Année affichée (clé du tableau à mettre à jour) */
+  /** Comptabilité et année affichées (clé du tableau à mettre à jour) */
+  ledger: Ledger
   year: number
   itemId: number
   col: AmountColumn
@@ -100,14 +102,16 @@ export function useSetTotal() {
         ...columnTarget(v.year, v.col)
       }),
     onMutate: async (v) => {
-      const key = accountingKeys.sheet(v.year)
+      const key = accountingKeys.sheet(v.ledger, v.year)
       await qc.cancelQueries({ queryKey: key })
       const previous = qc.getQueryData<AccountingSheetDTO>(key)
       if (previous) qc.setQueryData(key, withTotal(previous, v.itemId, v.col, v.amount))
       return { previous }
     },
     onError: (_err, v, context) => {
-      if (context?.previous) qc.setQueryData(accountingKeys.sheet(v.year), context.previous)
+      if (context?.previous) {
+        qc.setQueryData(accountingKeys.sheet(v.ledger, v.year), context.previous)
+      }
     },
     onSettled: () => qc.invalidateQueries({ queryKey: accountingKeys.all })
   })

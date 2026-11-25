@@ -12,6 +12,7 @@ import type {
   AccountingSheetDTO,
   EntryType,
   ItemAmountsDTO,
+  Ledger,
   PeriodTotalDTO
 } from '@shared/domain/accounting/accounting.types'
 
@@ -157,4 +158,10 @@ export function summaryPeriods(today: string): SummaryPeriod[] {
 /** Total des réalisations d'une période (toutes rubriques), `null` si aucune saisie. */
 export function sumPeriodTotals(totals: readonly PeriodTotalDTO[]): number | null {
   return totals.length === 0 ? null : totals.reduce((sum, t) => sum + t.total, 0)
+}
+
+/** « Comptabilité des sorties » / « des entrées » : titres d'écran et d'impression. */
+export const LEDGER_TITLES: Record<Ledger, string> = {
+  expense: 'Comptabilité des sorties',
+  income: 'Comptabilité des entrées'
 }

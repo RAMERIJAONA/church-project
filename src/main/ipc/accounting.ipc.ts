@@ -2,7 +2,7 @@ import type { AccountingService } from '@main/services/accounting.service'
 import type { Handle } from './handle'
 
 export function registerAccountingIpc(handle: Handle, accounting: AccountingService): void {
-  handle('accounting.sheet', ({ year }) => accounting.getSheet(year))
+  handle('accounting.sheet', ({ year, ledger }) => accounting.getSheet(year, ledger))
   handle('accounting.createItem', (input) => accounting.createItem(input))
   handle('accounting.updateItem', ({ id, description }) => {
     accounting.updateItem(id, description)

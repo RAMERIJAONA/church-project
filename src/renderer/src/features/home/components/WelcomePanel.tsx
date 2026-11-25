@@ -1,4 +1,4 @@
-import { BookOpenText, ChevronRight, DatabaseZap, Settings } from 'lucide-react'
+import { ArrowDownToLine, ArrowUpFromLine, ChevronRight, DatabaseZap, Settings } from 'lucide-react'
 import { Link } from 'react-router'
 import { buttonVariants } from '@renderer/components/ui/button'
 import {
@@ -9,6 +9,22 @@ import {
   CardTitle
 } from '@renderer/components/ui/card'
 import { APP_NAME } from '@shared/domain/identity'
+
+/** Les deux comptabilités, mêmes règles (numéros : entrées A2, sorties A1). */
+const LEDGER_LINKS = [
+  {
+    to: '/comptabilite/entrees',
+    title: 'Comptabilité des entrées',
+    text: 'Recettes de l’église : estimations et réalisations, année par année.',
+    icon: ArrowDownToLine
+  },
+  {
+    to: '/comptabilite/sorties',
+    title: 'Comptabilité des sorties',
+    text: 'Dépenses de l’église : estimations et réalisations, année par année.',
+    icon: ArrowUpFromLine
+  }
+] as const
 
 export interface WelcomePanelProps {
   version?: string
@@ -25,20 +41,21 @@ export function WelcomePanel({ version }: WelcomePanelProps): React.JSX.Element 
             données restent ici et sont sauvegardées automatiquement chaque jour.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <Link
-            to="/comptabilite"
-            className="flex items-center gap-3 rounded-lg border p-4 outline-none hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <BookOpenText className="size-5 shrink-0 text-primary" aria-hidden />
-            <span className="flex-1 space-y-1 text-sm">
-              <span className="block font-medium">Comptabilité</span>
-              <span className="block text-muted-foreground">
-                Rubriques, estimations et réalisations de l’église, année par année.
+        <CardContent className="flex flex-col gap-3">
+          {LEDGER_LINKS.map(({ to, title, text, icon: Icon }) => (
+            <Link
+              key={to}
+              to={to}
+              className="flex items-center gap-3 rounded-lg border p-4 outline-none hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Icon className="size-5 shrink-0 text-primary" aria-hidden />
+              <span className="flex-1 space-y-1 text-sm">
+                <span className="block font-medium">{title}</span>
+                <span className="block text-muted-foreground">{text}</span>
               </span>
-            </span>
-            <ChevronRight className="size-4 text-muted-foreground" aria-hidden />
-          </Link>
+              <ChevronRight className="size-4 text-muted-foreground" aria-hidden />
+            </Link>
+          ))}
         </CardContent>
       </Card>
 

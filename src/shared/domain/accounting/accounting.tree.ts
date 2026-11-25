@@ -13,7 +13,8 @@ import {
   type AccountingSheetDTO,
   type EntryType,
   type ItemAmountsDTO,
-  type ItemLevel
+  type ItemLevel,
+  type Ledger
 } from './accounting.types'
 
 export interface ItemRow {
@@ -41,13 +42,16 @@ const byPosition = (a: ItemRow, b: ItemRow): number => a.position - b.position |
  * @param itemsWithEntries éléments ayant au moins une saisie active, toutes années confondues
  *   (un tel élément ne peut pas recevoir d'enfant)
  *
+ * @param ledger comptabilité des éléments `items` (déjà filtrés) : premier numéro du niveau 1
+ *
  * Éléments ignorés : parent absent (supprimé) et profondeur > 4.
  */
 export function buildSheet(
   year: number,
   items: readonly ItemRow[],
   entries: readonly EntryRow[],
-  itemsWithEntries: ReadonlySet<number>
+  itemsWithEntries: ReadonlySet<number>,
+  ledger: Ledger = 'expense'
 ): AccountingSheetDTO {
   const childrenOf = new Map<number, ItemRow[]>()
   const roots: ItemRow[] = []
@@ -114,11 +118,12 @@ export function buildSheet(
   )
   return {
     year,
+    ledger,
     items: sortedRoots.map((r) => {
       const prefix = r.prefix ?? ''
       const rank = (rankByPrefix.get(prefix) ?? 0) + 1
       rankByPrefix.set(prefix, rank)
-      return toDTO(r, 1, rootCode(prefix, rank))
+      return toDTO(r, 1, rootCode(prefix, rank, ledger))
     })
   }
 }
@@ -167,5 +172,5 @@ export function nextChildCode(sheet: AccountingSheetDTO, parentId: number): stri
     position: Number.MAX_SAFE_INTEGER,
     description: ''
   })
-  return findItem(buildSheet(sheet.year, rows, [], new Set()), probe)?.code ?? null
+  return findItem(buildSheet(sheet.year, rows, [], new Set(), sheet.ledger), probe)?.code ?? null
 }

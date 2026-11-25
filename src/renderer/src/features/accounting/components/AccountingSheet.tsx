@@ -1,5 +1,5 @@
 import { Fragment, useMemo } from 'react'
-import type { AccountingItemDTO } from '@shared/domain/accounting/accounting.types'
+import type { AccountingItemDTO, Ledger } from '@shared/domain/accounting/accounting.types'
 import { nextChildCode } from '@shared/domain/accounting/accounting.tree'
 import { AMOUNT_COLUMNS, columnLabel, flattenTree, sheetTotals } from '../accounting.utils'
 import { AddChildRow } from './AddChildRow'
@@ -8,6 +8,7 @@ import { SubtotalCell } from './SubtotalCell'
 import { codeCell, col, headCell, sheetFrame, totalRow } from './accounting.styles'
 
 export interface AccountingSheetProps {
+  ledger: Ledger
   year: number
   /** Éléments de niveau 1 */
   items: AccountingItemDTO[]
@@ -21,6 +22,7 @@ export interface AccountingSheetProps {
  * un plan comptable reste bien en dessous de 200 lignes (CLAUDE.md par. 2) ; à revoir s'il dépasse.
  */
 export function AccountingSheet({
+  ledger,
   year,
   items,
   addingChildTo
@@ -76,7 +78,7 @@ export function AccountingSheet({
                 <AddChildRow
                   key="add"
                   parent={parent}
-                  code={nextChildCode({ year, items }, parent.id) ?? ''}
+                  code={nextChildCode({ year, ledger, items }, parent.id) ?? ''}
                 />
               )}
             </Fragment>

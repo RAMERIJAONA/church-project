@@ -70,8 +70,13 @@ describe('saisie (schémas)', () => {
       false
     )
     expect(
-      createItemInputSchema.parse({ parentId: null, prefix: 'a', description: ' X ' })
-    ).toEqual({ parentId: null, prefix: 'A', description: 'X' })
+      createItemInputSchema.parse({
+        parentId: null,
+        prefix: 'a',
+        ledger: 'expense',
+        description: ' X '
+      })
+    ).toEqual({ parentId: null, prefix: 'A', ledger: 'expense', description: 'X' })
     expect(
       createItemInputSchema.safeParse({ parentId: 1, prefix: 'A', description: 'X' }).success
     ).toBe(false)
@@ -81,7 +86,12 @@ describe('saisie (schémas)', () => {
   it('refuse une lettre hors alphabet malgache ou une description vide', () => {
     for (const prefix of ['', '1', 'A1', 'ABCD', 'C', 'Q', 'U', 'W', 'X', 'AC']) {
       expect(
-        createItemInputSchema.safeParse({ parentId: null, prefix, description: 'X' }).success
+        createItemInputSchema.safeParse({
+          parentId: null,
+          prefix,
+          ledger: 'expense',
+          description: 'X'
+        }).success
       ).toBe(false)
     }
     expect(createItemInputSchema.safeParse({ parentId: 1, description: '  ' }).success).toBe(false)
@@ -107,7 +117,7 @@ describe('saisie (schémas)', () => {
 
   it('accepte une période de n’importe quelle durée, dans l’ordre', () => {
     const ok = (from: string, to: string): boolean =>
-      periodTotalsInputSchema.safeParse({ from, to }).success
+      periodTotalsInputSchema.safeParse({ from, to, ledger: 'expense' }).success
     expect(ok('2026-11-23', '2026-11-29')).toBe(true)
     expect(ok('2024-01-01', '2026-12-31')).toBe(true) // plusieurs années
     expect(ok('2026-11-24', '2026-11-24')).toBe(true)

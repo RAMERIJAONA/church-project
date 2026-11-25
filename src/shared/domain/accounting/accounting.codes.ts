@@ -10,7 +10,7 @@
  * | 3      | parent + `-` + chiffre         | `F1-II-1`     |
  * | 4      | parent + ` ` + lettre + `)`    | `F1-II-1 A)`  |
  */
-import { MALAGASY_LETTERS } from './accounting.types'
+import { MALAGASY_LETTERS, type Ledger } from './accounting.types'
 
 const BASE = MALAGASY_LETTERS.length
 
@@ -89,9 +89,15 @@ export function toRoman(n: number): string {
   return out
 }
 
-/** Niveau 1 : « F » + 1 → « F1 ». */
-export function rootCode(prefix: string, rank: number): string {
-  return `${prefix}${rank}`
+/**
+ * Premier numéro du niveau 1 de chaque comptabilité : sorties A1, A2… ; entrées A2, A3…
+ * (demande du porteur, 2026-11-25 : les entrées commencent toujours à 2).
+ */
+export const LEDGER_FIRST_NUMBER: Record<Ledger, number> = { expense: 1, income: 2 }
+
+/** Niveau 1 : « F » + rang 1 → « F1 » (sorties), « F2 » (entrées). */
+export function rootCode(prefix: string, rank: number, ledger: Ledger = 'expense'): string {
+  return `${prefix}${rank + LEDGER_FIRST_NUMBER[ledger] - 1}`
 }
 
 /**

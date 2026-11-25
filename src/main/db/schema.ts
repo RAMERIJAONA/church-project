@@ -40,6 +40,15 @@ export const accountingItems = sqliteTable(
     parentId: integer('parent_id').references((): AnySQLiteColumn => accountingItems.id),
     /** Niveau 1 : lettre(s) de l'alphabet malgache (« A », « B », « D »…) ; NULL ailleurs */
     prefix: text('prefix'),
+    /**
+     * Comptabilité : `expense` (sorties, A1, B1…) ou `income` (entrées, A2, B2…). Stockée sur
+     * chaque élément (les enfants héritent de leur parent) pour filtrer sans remonter l'arbre.
+     * CHECK écrit à la main dans la migration 0004 (contrainte de colonne : pas de recréation
+     * de la table, référencée par les saisies et par elle-même).
+     */
+    ledger: text('ledger', { enum: ['expense', 'income'] })
+      .notNull()
+      .default('expense'),
     /** Ordre parmi les frères (croissant, avec des trous possibles) */
     position: integer('position').notNull(),
     description: text('description').notNull(),
@@ -49,6 +58,7 @@ export const accountingItems = sqliteTable(
   },
   (t) => [
     index('accounting_items_parent_position_idx').on(t.parentId, t.position),
+    index('accounting_items_ledger_idx').on(t.ledger),
     check(
       'accounting_items_prefix_check',
       sql`(${t.parentId} IS NULL AND ${t.prefix} IS NOT NULL AND ${t.prefix} NOT GLOB '*[^ABD-PR-TVYZ]*' AND length(${t.prefix}) BETWEEN 1 AND 3) OR (${t.parentId} IS NOT NULL AND ${t.prefix} IS NULL)`

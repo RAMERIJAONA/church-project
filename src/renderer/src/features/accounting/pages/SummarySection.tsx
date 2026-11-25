@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { dayCount, prorateEstimate } from '@shared/domain/accounting/accounting.periods'
+import type { Ledger } from '@shared/domain/accounting/accounting.types'
 import {
   sheetTotals,
   summaryPeriods,
@@ -10,6 +11,7 @@ import { SummaryTable, type SummaryRow } from '../components/SummaryTable'
 import { useAccountingSheet, usePeriodTotalsMany } from '../queries'
 
 export interface SummarySectionProps {
+  ledger: Ledger
   /** Date locale du jour, « AAAA-MM-JJ » */
   today: string
   /** Vrai si la vue affichée correspond à cette colonne */
@@ -23,18 +25,22 @@ export interface SummarySectionProps {
  * l'année (pas encore son année pour un jour, une semaine, un mois de N).
  */
 export function SummarySection({
+  ledger,
   today,
   isShown,
   onSelect
 }: SummarySectionProps): React.JSX.Element {
   const year = Number(today.slice(0, 4))
   const periods = useMemo(() => summaryPeriods(today), [today])
-  const actual = usePeriodTotalsMany(periods.map((p) => p.range))
-  const sheet = useAccountingSheet(year)
+  const actual = usePeriodTotalsMany(periods.map((p) => ({ ...p.range, ledger })))
+  const sheet = useAccountingSheet(year, ledger)
   // Les données affichées doivent être celles de l'année en cours (pas l'année d'avant en cache)
   const grand = useMemo(
-    () => (sheet.data?.year === year ? sheetTotals(sheet.data.items).grand : undefined),
-    [sheet.data, year]
+    () =>
+      sheet.data?.year === year && sheet.data.ledger === ledger
+        ? sheetTotals(sheet.data.items).grand
+        : undefined,
+    [sheet.data, year, ledger]
   )
   const yearDays = dayCount({ from: `${year}-01-01`, to: `${year}-12-31` })
 

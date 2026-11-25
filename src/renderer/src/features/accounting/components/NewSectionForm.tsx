@@ -10,7 +10,8 @@ import { normalizePrefix } from '@shared/domain/accounting/accounting.rules'
 import {
   descriptionSchema,
   sectionPrefixSchema,
-  type AccountingItemDTO
+  type AccountingItemDTO,
+  type Ledger
 } from '@shared/domain/accounting/accounting.types'
 import { selectChevron, selectField } from './accounting.styles'
 
@@ -23,6 +24,8 @@ export type NewRootInput = z.output<typeof newRootSchema>
 type FormInput = z.input<typeof newRootSchema>
 
 export interface NewSectionFormProps {
+  /** Comptabilité : premier numéro du niveau 1 (sorties A1, entrées A2) */
+  ledger: Ledger
   /** Rubriques de niveau 1 existantes : aperçu du numéro qui sera attribué */
   roots: ReadonlyArray<Pick<AccountingItemDTO, 'prefix'>>
   busy: boolean
@@ -31,9 +34,9 @@ export interface NewSectionFormProps {
 }
 
 /** Numéro qu'aura la prochaine rubrique de cette lettre (aperçu avant création). */
-function nextRootCode(prefix: string, roots: NewSectionFormProps['roots']): string {
+function nextRootCode(prefix: string, roots: NewSectionFormProps['roots'], ledger: Ledger): string {
   const p = normalizePrefix(prefix)
-  return rootCode(p, roots.filter((r) => r.prefix === p).length + 1)
+  return rootCode(p, roots.filter((r) => r.prefix === p).length + 1, ledger)
 }
 
 /**
@@ -42,6 +45,7 @@ function nextRootCode(prefix: string, roots: NewSectionFormProps['roots']): stri
  * La description est mise en majuscules (affichage pendant la saisie, et à l'enregistrement).
  */
 export function NewSectionForm({
+  ledger,
   roots,
   busy,
   onSubmit,
@@ -57,7 +61,7 @@ export function NewSectionForm({
   })
   const { errors } = form.formState
   const prefix = useWatch({ control: form.control, name: 'prefix' })
-  const preview = nextRootCode(prefix, roots)
+  const preview = nextRootCode(prefix, roots, ledger)
 
   return (
     <form
@@ -84,7 +88,7 @@ export function NewSectionForm({
                 <option key={letter} value={letter}>
                   {letter === newLetter
                     ? `${letter} : nouvelle lettre`
-                    : `${letter} : continuer (${nextRootCode(letter, roots)})`}
+                    : `${letter} : continuer (${nextRootCode(letter, roots, ledger)})`}
                 </option>
               ))}
             </select>

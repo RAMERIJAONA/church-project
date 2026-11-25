@@ -51,7 +51,7 @@ describe('flattenTree', () => {
   })
 
   it('remplace le total d’une case sans toucher au reste (mise à jour optimiste)', () => {
-    const sheet = { year: 2026, items: [f1] }
+    const sheet = { year: 2026, ledger: 'expense' as const, items: [f1] }
     const next = withTotal(sheet, 6, 'nextEstimate', 600000)
     const updated = next.items[0]?.children[1]?.children[0]?.children[0]
     expect(updated?.amounts?.nextEstimate).toEqual({

@@ -18,6 +18,7 @@ import type { EntryRow, ItemRow } from '@shared/domain/accounting/accounting.tre
 import type {
   EntryDTO,
   EntryType,
+  Ledger,
   MoveDirection,
   PeriodTotalDTO
 } from '@shared/domain/accounting/accounting.types'
@@ -27,7 +28,13 @@ const itemCols = {
   parentId: accountingItems.parentId,
   prefix: accountingItems.prefix,
   position: accountingItems.position,
-  description: accountingItems.description
+  description: accountingItems.description,
+  ledger: accountingItems.ledger
+}
+
+/** Élément tel que stocké : la comptabilité en plus (pour les frères du niveau 1). */
+export interface ItemRecord extends ItemRow {
+  ledger: Ledger
 }
 const entryCols = {
   id: accountingEntries.id,
@@ -44,11 +51,11 @@ export interface EntryRef extends EntryDTO {
   type: EntryType
 }
 
-/** Frères d'un élément : même parent ; au niveau 1, même lettre. */
-function siblingsOf(row: Pick<ItemRow, 'parentId' | 'prefix'>): SQL {
+/** Frères d'un élément : même parent ; au niveau 1, même comptabilité et même lettre. */
+function siblingsOf(row: Pick<ItemRecord, 'parentId' | 'prefix' | 'ledger'>): SQL {
   const t = accountingItems
   return row.parentId === null
-    ? sql`${t.parentId} IS NULL AND ${t.prefix} = ${row.prefix ?? ''}`
+    ? sql`${t.parentId} IS NULL AND ${t.ledger} = ${row.ledger} AND ${t.prefix} = ${row.prefix ?? ''}`
     : eq(t.parentId, row.parentId)
 }
 
@@ -57,12 +64,16 @@ export function createAccountingRepository() {
   const t = accountingItems
   const e = accountingEntries
   return {
-    /** Tous les éléments actifs (un plan comptable reste sous 200 lignes). */
-    listItems(db: DbOrTx): ItemRow[] {
-      return db.select(itemCols).from(t).where(isNull(t.deletedAt)).all()
+    /** Éléments actifs d'une comptabilité (un plan comptable reste sous 200 lignes). */
+    listItems(db: DbOrTx, ledger: Ledger): ItemRecord[] {
+      return db
+        .select(itemCols)
+        .from(t)
+        .where(and(eq(t.ledger, ledger), isNull(t.deletedAt)))
+        .all()
     },
 
-    findItemRow(db: DbOrTx, id: number): ItemRow | undefined {
+    findItemRow(db: DbOrTx, id: number): ItemRecord | undefined {
       return db
         .select(itemCols)
         .from(t)
@@ -119,7 +130,7 @@ export function createAccountingRepository() {
     },
 
     /** Prochaine position parmi les frères (supprimés compris : jamais réutilisée). */
-    nextPosition(db: DbOrTx, parent: Pick<ItemRow, 'parentId' | 'prefix'>): number {
+    nextPosition(db: DbOrTx, parent: Pick<ItemRecord, 'parentId' | 'prefix' | 'ledger'>): number {
       const row = db
         .select({ m: max(t.position) })
         .from(t)
@@ -133,6 +144,7 @@ export function createAccountingRepository() {
       values: {
         parentId: number | null
         prefix: string | null
+        ledger: Ledger
         position: number
         description: string
         at: string
@@ -174,7 +186,11 @@ export function createAccountingRepository() {
     },
 
     /** Frère actif voisin dans la direction donnée. */
-    findAdjacentSibling(db: DbOrTx, row: ItemRow, direction: MoveDirection): ItemRow | undefined {
+    findAdjacentSibling(
+      db: DbOrTx,
+      row: ItemRecord,
+      direction: MoveDirection
+    ): ItemRecord | undefined {
       return db
         .select(itemCols)
         .from(t)
@@ -222,8 +238,8 @@ export function createAccountingRepository() {
         .run()
     },
 
-    /** Somme des réalisations actives par élément actif, date d'opération dans [from, to]. */
-    sumActualBetween(db: DbOrTx, from: string, to: string): PeriodTotalDTO[] {
+    /** Somme des réalisations actives par élément actif d'une comptabilité, date dans [from, to]. */
+    sumActualBetween(db: DbOrTx, ledger: Ledger, from: string, to: string): PeriodTotalDTO[] {
       return db
         .select({
           itemId: e.itemId,
@@ -237,6 +253,7 @@ export function createAccountingRepository() {
             eq(e.type, 'actual'),
             isNull(e.deletedAt),
             isNull(t.deletedAt),
+            eq(t.ledger, ledger),
             between(e.operatedOn, from, to)
           )
         )
