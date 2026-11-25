@@ -1,7 +1,7 @@
 /**
  * Bootstrap du process main : chemins, logger, container, fenêtre. Aucune logique métier.
  */
-import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, Menu, screen, shell } from 'electron'
 import { join, resolve } from 'node:path'
 import { electronDialog } from '@main/adapters/dialog.adapter'
 import { electronSystem } from '@main/adapters/system.adapter'
@@ -11,6 +11,7 @@ import { registerIpc } from '@main/ipc/register'
 import { createElectronLogSink } from '@main/logging/electron-log.sink'
 import { createLogger } from '@main/logging/logger'
 import { WINDOW_BACKGROUND } from '@main/window-theme'
+import { windowSize } from '@main/window-size'
 import { settingsToQuery } from '@shared/domain/settings/settings.theme'
 import type { AppSettings } from '@shared/domain/settings/settings.types'
 import { APP_NAME } from '@shared/domain/identity'
@@ -48,11 +49,13 @@ let container: Container | null = null
 let mainWindow: BrowserWindow | null = null
 
 function createWindow(settings: AppSettings): BrowserWindow {
+  // Taille adaptée à l'écran : minimum qui ne casse pas l'affichage, sans dépasser l'écran
+  const { min, initial } = windowSize(screen.getPrimaryDisplay().workAreaSize)
   const win = new BrowserWindow({
-    width: 1200,
-    height: 760,
-    minWidth: 900,
-    minHeight: 600,
+    width: initial.width,
+    height: initial.height,
+    minWidth: min.width,
+    minHeight: min.height,
     show: false,
     backgroundColor: WINDOW_BACKGROUND[settings.theme],
     autoHideMenuBar: true,

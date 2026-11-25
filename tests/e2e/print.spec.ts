@@ -102,6 +102,26 @@ test('impression : grand plan comptable, sur plusieurs pages et dans la largeur 
     await expect(w.getByRole('columnheader', { name: `Réalisation ${year}` })).toBeVisible()
     await expect(w.getByRole('rowheader', { name: 'L1', exact: true })).toBeAttached()
 
+    // Régression (2026-11-25) : fenêtre réduite à sa taille minimale (bornée par l'écran) ;
+    // si l'écran le permet, rien ne déborde en largeur
+    const min = await running.app.evaluate(({ BrowserWindow, screen }) => {
+      const win = BrowserWindow.getAllWindows()[0]
+      if (!win) throw new Error('aucune fenêtre')
+      const [width = 0, height = 0] = win.getMinimumSize()
+      win.setSize(width, height)
+      return { width, height, screen: screen.getPrimaryDisplay().workAreaSize }
+    })
+    expect(min.width).toBe(Math.min(1160, min.screen.width))
+    expect(min.height).toBe(Math.min(640, min.screen.height))
+    if (min.width === 1160) {
+      const overflow = (): Promise<number> =>
+        w.evaluate(() => {
+          const main = document.querySelector('main')
+          return main ? main.scrollWidth - main.clientWidth : -1
+        })
+      await expect.poll(overflow).toBeLessThanOrEqual(0)
+    }
+
     expect((await pdfOf(running)).pages).toBeGreaterThanOrEqual(2)
 
     // Régression (2026-11-25) : « 999 999… » au lieu de « 999 999 999 999 Ar ». Le plus grand

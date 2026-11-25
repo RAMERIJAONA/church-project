@@ -478,6 +478,7 @@ Les utilisateurs mettent à jour une DB existante, pas une DB neuve. Donc :
 
 ## 10. Comportement app
 
+- **Taille de la fenêtre** (`main/window-size.ts`, pur et testé) : minimum **1160 × 640** (en texte normal, menu + marges + tableau de comptabilité de 60rem tiennent sans défilement horizontal, cadre Windows et barre de défilement compris), ouverture en 1280 × 800 ; les deux sont ramenés à la zone utile de l'écran (un écran 1024 × 768 ne doit jamais avoir une fenêtre plus grande que lui ; le tableau défile alors horizontalement, de même en texte « grand »). Vérifié par l'E2E `print.spec.ts` à la taille minimale.
 - `app.requestSingleInstanceLock()` : une seule instance (deux process sur la même DB = corruption possible). 2e lancement → focus de la fenêtre existante.
 - `webPreferences` : `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`. CSP stricte dans `index.html`.
 - Menu natif minimal (aucun sous Windows, Édition sur macOS), DevTools désactivés en prod (sauf `--debug`, F12). Navigation hors de l'app bloquée (`will-navigate`), liens externes ouverts dans le navigateur.
