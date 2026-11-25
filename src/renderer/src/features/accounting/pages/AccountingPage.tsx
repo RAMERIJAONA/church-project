@@ -27,6 +27,7 @@ import { PeriodStepper } from '../components/PeriodStepper'
 import { RealisationSummary } from '../components/RealisationSummary'
 import { usePeriodTotalsMany } from '../queries'
 import { PeriodView } from './PeriodView'
+import { YearTotalsSection } from './YearTotalsSection'
 import { YearView } from './YearView'
 
 type PeriodViewKind = Exclude<AccountingView, 'year'>
@@ -112,6 +113,7 @@ export function AccountingPage(): React.JSX.Element {
 
   return (
     <div className="flex flex-col gap-6">
+      {view === null && <YearTotalsSection year={year} />}
       {summaryBlock}
       {content()}
     </div>

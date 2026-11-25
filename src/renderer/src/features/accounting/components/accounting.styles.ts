@@ -156,3 +156,6 @@ export const summaryCard = cva(
 
 /** Entrée du menu « ⋯ » d'une rangée (Modifier, Supprimer). */
 export const menuItem = 'w-full justify-start'
+
+/** Carte d'un total de l'année (lecture seule, pas cliquable). */
+export const statCard = 'flex min-w-0 flex-col gap-1 rounded-xl border bg-card px-4 py-3'

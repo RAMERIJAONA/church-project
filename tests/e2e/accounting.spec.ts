@@ -158,6 +158,10 @@ test('@smoke comptabilité : arborescence, 3 colonnes, détail, persistés aprè
       await expect(row(w, code)).toContainText(/770\s000/)
       await expect(row(w, code)).toContainText(/600\s000/)
     }
+    // Totaux de l'année en haut : somme de chaque colonne, dans l'ordre (2026-11-25)
+    await expect(w.getByRole('region', { name: `Totaux de l’année ${Y}` })).toContainText(
+      /estimations \d+500\s000\sAr.*réalisations \d+770\s000\sAr.*estimations \d+600\s000\sAr/
+    )
 
     // Montants en Ariary ; date et heure de saisie : dans le détail (pas dans le tableau)
     await expect(row(w, 'A1-II-1 A)')).toContainText(/350\s000\sAr/)
