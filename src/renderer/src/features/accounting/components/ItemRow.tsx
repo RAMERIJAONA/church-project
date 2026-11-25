@@ -15,9 +15,6 @@ import { useSheetActions } from './sheet-actions'
 
 export interface ItemRowProps {
   item: AccountingItemDTO
-  /** Premier / dernier parmi ses frères (déplacement impossible au-delà) */
-  isFirst: boolean
-  isLast: boolean
   /** Groupe : somme de sa descendance, par colonne (lecture seule) */
   subtotals?: ColumnTotals
 }
@@ -30,12 +27,7 @@ function addChildBlockedReason(item: AccountingItemDTO): string | null {
 }
 
 /** Une rangée du tableau : numéro, description indentée selon le niveau, 3 montants, actions. */
-export const ItemRow = memo(function ItemRow({
-  item,
-  isFirst,
-  isLast,
-  subtotals
-}: ItemRowProps): React.JSX.Element {
+export const ItemRow = memo(function ItemRow({ item, subtotals }: ItemRowProps): React.JSX.Element {
   const actions = useSheetActions()
   const [editing, setEditing] = useState(false)
   const kind = item.level === 1 ? 'root' : item.amounts === null ? 'group' : 'leaf'
@@ -47,7 +39,9 @@ export const ItemRow = memo(function ItemRow({
       </th>
       <td className={descriptionCell({ level: item.level })}>
         <div className="flex items-center gap-1">
-          {item.level > 1 && <CornerDownRight aria-hidden className={treeConnector} />}
+          {item.level > 1 && (
+            <CornerDownRight aria-hidden data-print="hide" className={treeConnector} />
+          )}
           <EditableDescription
             kind={kind === 'root' ? 'section' : kind === 'group' ? 'group' : 'line'}
             value={item.description}
@@ -83,10 +77,7 @@ export const ItemRow = memo(function ItemRow({
           code={item.code}
           addChildBlockedReason={addChildBlockedReason(item)}
           onAddChild={() => actions.openAddChild(item.id)}
-          isFirst={isFirst}
-          isLast={isLast}
           onEdit={() => setEditing(true)}
-          onMove={(direction) => actions.move(item.id, direction)}
           onDelete={() => actions.askDelete(item)}
         />
       </td>

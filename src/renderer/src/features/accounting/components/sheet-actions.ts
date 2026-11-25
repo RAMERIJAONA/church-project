@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react'
-import type { AccountingItemDTO, MoveDirection } from '@shared/domain/accounting/accounting.types'
+import type { AccountingItemDTO } from '@shared/domain/accounting/accounting.types'
 import type { AmountColumn } from '../accounting.utils'
 
 /**
@@ -11,7 +11,6 @@ export interface SheetActions {
   /** Année affichée N (colonnes Estimation N, Réalisation N, Estimation N+1) */
   year: number
   rename: (id: number, description: string) => void
-  move: (id: number, direction: MoveDirection) => void
   askDelete: (item: AccountingItemDTO) => void
   /** Total direct d'une case simple (`null` : vider) */
   setTotal: (itemId: number, col: AmountColumn, amount: number | null) => void

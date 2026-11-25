@@ -1,12 +1,18 @@
 import { CURRENCY, formatAmount, THOUSANDS_SEPARATOR } from '@shared/utils/money'
 import { currencyMark } from './accounting.styles'
 
-/** « 2 000 000 Ar », le sigle en discret comme dans les champs de saisie. */
-export function Money({ amount }: { amount: number }): React.JSX.Element {
+export interface MoneyProps {
+  amount: number
+  /** Total général : « Ar » en gras comme le chiffre */
+  strong?: boolean
+}
+
+/** « 2 000 000 Ar », le sigle en discret comme dans les champs de saisie (sauf `strong`). */
+export function Money({ amount, strong = false }: MoneyProps): React.JSX.Element {
   return (
     <>
       {formatAmount(amount)}
-      <span className={currencyMark}>
+      <span className={currencyMark({ strong })}>
         {THOUSANDS_SEPARATOR}
         {CURRENCY}
       </span>

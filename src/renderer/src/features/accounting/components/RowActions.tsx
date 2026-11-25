@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, Ellipsis, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Ellipsis, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { Button } from '@renderer/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@renderer/components/ui/popover'
@@ -10,25 +10,20 @@ export interface RowActionsProps {
   /** Raison pour laquelle on ne peut pas ajouter de sous-rubrique, `null` si possible */
   addChildBlockedReason: string | null
   onAddChild: () => void
-  isFirst: boolean
-  isLast: boolean
   onEdit: () => void
-  onMove: (direction: 'up' | 'down') => void
   onDelete: () => void
 }
 
 /**
- * « + » (ajouter une sous-rubrique, l'action courante) toujours à portée, le reste dans un menu
- * « ⋯ » : la colonne reste étroite et laisse la place aux montants en entier (2026-11-25).
+ * « + » (ajouter une sous-rubrique, l'action courante) toujours à portée ; Modifier et Supprimer
+ * dans un menu « ⋯ » : la colonne reste étroite et laisse la place aux montants (2026-11-25).
+ * Pas de Monter / Descendre (retiré à la demande du porteur, 2026-11-25).
  */
 export function RowActions({
   code,
   addChildBlockedReason,
   onAddChild,
-  isFirst,
-  isLast,
   onEdit,
-  onMove,
   onDelete
 }: RowActionsProps): React.JSX.Element {
   const [open, setOpen] = useState(false)
@@ -79,26 +74,6 @@ export function RowActions({
           >
             <Pencil aria-hidden />
             Modifier
-          </Button>
-          <Button
-            variant="ghost"
-            className={menuItem}
-            aria-label={`Monter ${code}`}
-            disabled={isFirst}
-            onClick={() => select(() => onMove('up'))}
-          >
-            <ArrowUp aria-hidden />
-            Monter
-          </Button>
-          <Button
-            variant="ghost"
-            className={menuItem}
-            aria-label={`Descendre ${code}`}
-            disabled={isLast}
-            onClick={() => select(() => onMove('down'))}
-          >
-            <ArrowDown aria-hidden />
-            Descendre
           </Button>
           <Button
             variant="ghost"

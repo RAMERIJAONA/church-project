@@ -28,7 +28,6 @@ import {
   useCreateItem,
   useDeleteEntry,
   useDeleteItem,
-  useMoveItem,
   useSetTotal,
   useUpdateEntry,
   useUpdateItem
@@ -73,7 +72,6 @@ export function YearView({
   const createItemAsync = createItem.mutateAsync
   const { mutate: updateItem } = useUpdateItem()
   const { mutate: deleteItem } = useDeleteItem()
-  const { mutate: moveItem } = useMoveItem()
   const { mutate: setTotal } = useSetTotal()
   const { mutateAsync: addEntry } = useAddEntry()
   const { mutateAsync: updateEntry } = useUpdateEntry()
@@ -88,7 +86,6 @@ export function YearView({
     () => ({
       year: shownYear,
       rename: (id, description) => updateItem({ id, description }, { onError }),
-      move: (id, direction) => moveItem({ id, direction }, { onError }),
       askDelete: (item) =>
         setDeleteTarget({
           kind: 'item',
@@ -111,7 +108,7 @@ export function YearView({
         }
       }
     }),
-    [shownYear, updateItem, moveItem, setTotal, createItemAsync]
+    [shownYear, updateItem, setTotal, createItemAsync]
   )
 
   /** Écriture depuis le détail : toast en cas d'erreur, rejet pour garder la saisie. */

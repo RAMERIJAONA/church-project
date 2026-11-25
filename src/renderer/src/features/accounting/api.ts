@@ -4,7 +4,6 @@ import type {
   CreateItemInput,
   ListEntriesInput,
   PeriodTotalsInput,
-  MoveDirection,
   SetTotalInput,
   UpdateEntryInput
 } from '@shared/domain/accounting/accounting.types'
@@ -15,8 +14,6 @@ export const accountingApi = {
   updateItem: (id: number, description: string) =>
     invoke('accounting.updateItem', { id, description }),
   deleteItem: (id: number) => invoke('accounting.deleteItem', { id }),
-  moveItem: (id: number, direction: MoveDirection) =>
-    invoke('accounting.moveItem', { id, direction }),
   setTotal: (input: SetTotalInput) => invoke('accounting.setTotal', input),
   entries: (input: ListEntriesInput) => invoke('accounting.entries', input),
   addEntry: (input: AddEntryInput) => invoke('accounting.addEntry', input),

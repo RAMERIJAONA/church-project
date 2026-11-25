@@ -11,7 +11,6 @@ function makeActions(overrides: Partial<SheetActions> = {}): SheetActions {
   return {
     year: 2026,
     rename: vi.fn(),
-    move: vi.fn(),
     askDelete: vi.fn(),
     setTotal: vi.fn(),
     openDetail: vi.fn(),
@@ -143,6 +142,8 @@ describe('AccountingSheet', () => {
   it('demande la suppression de l’élément depuis le menu « ⋯ »', async () => {
     const actions = renderSheet()
     await userEvent.click(screen.getByRole('button', { name: 'Actions de F1-II' }))
+    // Monter / Descendre retirés à la demande du porteur (2026-11-25)
+    expect(screen.queryByRole('button', { name: /^(Monter|Descendre) / })).toBeNull()
     await userEvent.click(screen.getByRole('button', { name: 'Supprimer F1-II' }))
     expect(actions.askDelete).toHaveBeenCalledWith(expect.objectContaining({ id: 4 }))
   })

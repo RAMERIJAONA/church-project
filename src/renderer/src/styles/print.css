@@ -64,15 +64,17 @@
   }
   thead th {
     position: static !important;
-    background: var(--print-muted) !important;
   }
-  tr[data-row='root'],
-  tfoot tr {
-    background: var(--print-muted) !important;
-  }
-  tr[data-row='leaf'],
-  tr[data-row='group'] {
+  /* Tout fond en blanc (demande du porteur, 2026-11-25) : bandeaux de rubrique, en-tête, total,
+     cases grisées. Les rubriques restent distinguées par leur texte en gras. */
+  *,
+  *::before,
+  *::after {
     background: transparent !important;
+  }
+  html,
+  body {
+    background: var(--print-background) !important;
   }
   /* Textes longs : retour à la ligne plutôt que troncature (sinon le tableau déborde de la page) */
   td,
@@ -80,8 +82,6 @@
     white-space: normal !important;
     overflow: visible !important;
     text-overflow: clip !important;
-    /* Descriptions limitées à 2 lignes à l'écran (line-clamp) : texte complet à l'impression */
-    -webkit-line-clamp: none !important;
   }
   td:first-child,
   th:first-child,

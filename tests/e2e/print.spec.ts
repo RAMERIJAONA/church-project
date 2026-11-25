@@ -137,6 +137,19 @@ test('impression : tout le plan comptable, sur plusieurs pages et dans la largeu
     }
     await w.evaluate(() => delete document.documentElement.dataset['density'])
 
+    // Descriptions : jamais tronquées par « … », retour à la ligne (2026-11-25)
+    const cut = await w.evaluate(() =>
+      [
+        ...document.querySelectorAll<HTMLElement>(
+          'tbody td button[title$="(cliquer pour modifier)"]'
+        )
+      ]
+        .filter((b) => b.scrollHeight > b.clientHeight + 1 || b.scrollWidth > b.clientWidth + 1)
+        .map((b) => b.textContent)
+        .slice(0, 3)
+    )
+    expect(cut).toEqual([])
+
     await w.emulateMedia({ media: 'print' })
     await w.setViewportSize({ width: A4_CONTENT_WIDTH, height: 1000 })
     const layout = await w.evaluate(() => {

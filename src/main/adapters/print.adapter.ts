@@ -28,10 +28,10 @@ export const electronPrint: PrintAdapter = {
   print() {
     const win = window()
     return new Promise((resolve, reject) => {
-      // printBackground : garde les bandeaux de rubrique et la ligne de total
+      // Pas de fond imprimé : tout en blanc (demande du porteur, 2026-11-25 ; print.css aussi)
       const m = PRINT_MARGIN_PX
       const margins = { marginType: 'custom', top: m, bottom: m, left: m, right: m } as const
-      win.webContents.print({ printBackground: true, margins }, (success, failureReason) => {
+      win.webContents.print({ printBackground: false, margins }, (success, failureReason) => {
         if (success) resolve('printed')
         else if (failureReason === 'cancelled') resolve('cancelled')
         else reject(new Error(`Impression impossible : ${failureReason}`))
@@ -40,7 +40,7 @@ export const electronPrint: PrintAdapter = {
   },
   async savePdf(path) {
     const pdf = await window().webContents.printToPDF({
-      printBackground: true,
+      printBackground: false,
       preferCSSPageSize: true, // format A4 de @page (print.css)
       margins: {
         top: MARGIN_INCHES,

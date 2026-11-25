@@ -70,8 +70,6 @@ export function AccountingSheet({
             <Fragment key={row.item.id}>
               <ItemRow
                 item={row.item}
-                isFirst={row.isFirst}
-                isLast={row.isLast}
                 subtotals={row.item.amounts ? undefined : totals.byItem.get(row.item.id)}
               />
               {parent && i === insertAfter && (
@@ -90,7 +88,7 @@ export function AccountingSheet({
               Total général
             </th>
             {AMOUNT_COLUMNS.map((c) => (
-              <SubtotalCell key={c} value={totals.grand[c]} />
+              <SubtotalCell key={c} value={totals.grand[c]} strong />
             ))}
             <td data-print="hide" />
           </tr>

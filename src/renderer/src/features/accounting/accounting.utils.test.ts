@@ -38,28 +38,15 @@ describe('flattenTree', () => {
   const i = makeItemDTO({ id: 2, code: 'F1-I', amounts: null, children: [i1] })
   const f1 = makeRootDTO({ code: 'F1', children: [i, ii] })
 
-  it('aplatit l’arbre en profondeur d’abord, avec la position parmi les frères', () => {
-    expect(flattenTree([f1]).map((r) => [r.item.code, r.isFirst, r.isLast])).toEqual([
-      ['F1', true, true],
-      ['F1-I', true, false],
-      ['F1-I-1', true, true],
-      ['F1-II', false, true],
-      ['F1-II-1', true, true],
-      ['F1-II-1 A)', true, false],
-      ['F1-II-1 B)', false, true]
-    ])
-  })
-
-  it('au niveau 1, les frères sont ceux de la même lettre', () => {
-    const rows = flattenTree([
-      makeRootDTO({ id: 1, code: 'A1', prefix: 'A' }),
-      makeRootDTO({ id: 2, code: 'A2', prefix: 'A' }),
-      makeRootDTO({ id: 3, code: 'B1', prefix: 'B' })
-    ])
-    expect(rows.map((r) => [r.item.code, r.isFirst, r.isLast])).toEqual([
-      ['A1', true, false],
-      ['A2', false, true],
-      ['B1', true, true]
+  it('aplatit l’arbre en profondeur d’abord', () => {
+    expect(flattenTree([f1]).map((r) => r.item.code)).toEqual([
+      'F1',
+      'F1-I',
+      'F1-I-1',
+      'F1-II',
+      'F1-II-1',
+      'F1-II-1 A)',
+      'F1-II-1 B)'
     ])
   })
 

@@ -22,7 +22,7 @@ export function SheetHelp(): React.JSX.Element {
           détail (saisies, libellés, dates et heures).{' '}
           <Plus aria-hidden className="inline size-3.5 align-[-2px]" /> en bout de ligne : ajouter
           une sous-rubrique ; <Ellipsis aria-hidden className="inline size-3.5 align-[-2px]" /> :
-          modifier, monter, descendre ou supprimer.
+          modifier ou supprimer.
         </li>
       </ul>
     </div>

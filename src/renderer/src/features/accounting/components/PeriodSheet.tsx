@@ -73,8 +73,10 @@ export function PeriodSheet({ label, items, totals }: PeriodSheetProps): React.J
                   </th>
                   <td className={descriptionCell({ level: item.level })}>
                     <div className="flex items-center gap-1">
-                      {item.level > 1 && <CornerDownRight aria-hidden className={treeConnector} />}
-                      <span className="line-clamp-2 min-w-0 flex-1 px-2 py-1 break-words">
+                      {item.level > 1 && (
+                        <CornerDownRight aria-hidden data-print="hide" className={treeConnector} />
+                      )}
+                      <span className="min-w-0 flex-1 px-2 py-1 break-words">
                         {item.description}
                       </span>
                     </div>
@@ -98,7 +100,7 @@ export function PeriodSheet({ label, items, totals }: PeriodSheetProps): React.J
                 Total
               </th>
               <td className={totalCell}>
-                {sums.grand === null ? '' : <Money amount={sums.grand} />}
+                {sums.grand === null ? '' : <Money amount={sums.grand} strong />}
               </td>
             </tr>
           </tfoot>

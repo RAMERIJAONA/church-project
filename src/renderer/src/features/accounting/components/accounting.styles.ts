@@ -72,7 +72,7 @@ export const treeConnector = 'size-3.5 shrink-0 text-muted-foreground/70'
 
 /** Texte cliquable qui passe en édition : discret, mais visiblement modifiable au survol. */
 export const editableText = cva(
-  'line-clamp-2 min-w-0 flex-1 cursor-text rounded-md px-2 py-1 text-left break-words outline-none hover:bg-background focus-visible:ring-2 focus-visible:ring-ring',
+  'min-w-0 flex-1 cursor-text rounded-md px-2 py-1 text-left break-words outline-none hover:bg-background focus-visible:ring-2 focus-visible:ring-ring',
   {
     variants: { kind: { section: 'font-semibold', group: 'font-medium', line: '' } },
     defaultVariants: { kind: 'line' }
@@ -98,8 +98,16 @@ export const subtotalText =
 /** Place du bouton de détail, laissée vide sous un sous-total (alignement des colonnes). */
 export const detailSpacer = 'size-7 shrink-0'
 
-/** Sigle « Ar » après un montant affiché : discret, comme dans les champs. */
-export const currencyMark = 'text-xs font-normal text-muted-foreground'
+/**
+ * Sigle « Ar » après un montant affiché : discret, comme dans les champs. `strong` (total
+ * général) : même graisse, taille et couleur que le chiffre (demande du porteur, 2026-11-25).
+ */
+export const currencyMark = cva('', {
+  variants: {
+    strong: { true: '', false: 'text-xs font-normal text-muted-foreground' }
+  },
+  defaultVariants: { strong: false }
+})
 
 /** Total d'une case détaillée : lecture seule (fond grisé), aligné comme une saisie. */
 export const amountReadonly =
@@ -145,5 +153,5 @@ export const summaryCard = cva(
   }
 )
 
-/** Entrée du menu « ⋯ » d'une rangée (Modifier, Monter, Descendre, Supprimer). */
+/** Entrée du menu « ⋯ » d'une rangée (Modifier, Supprimer). */
 export const menuItem = 'w-full justify-start'

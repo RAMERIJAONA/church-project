@@ -34,25 +34,16 @@ export function columnLabel(year: number, col: AmountColumn): string {
 
 export interface FlatRow {
   item: AccountingItemDTO
-  /** Premier / dernier parmi ses frères (même parent ; au niveau 1 : même lettre) */
-  isFirst: boolean
-  isLast: boolean
 }
 
 /** Ordre d'affichage du tableau : profondeur d'abord. */
 export function flattenTree(items: readonly AccountingItemDTO[]): FlatRow[] {
   const out: FlatRow[] = []
   const walk = (siblings: readonly AccountingItemDTO[]): void => {
-    siblings.forEach((item, i) => {
-      const prev = siblings[i - 1]
-      const next = siblings[i + 1]
-      out.push({
-        item,
-        isFirst: !prev || prev.prefix !== item.prefix,
-        isLast: !next || next.prefix !== item.prefix
-      })
+    for (const item of siblings) {
+      out.push({ item })
       walk(item.children)
-    })
+    }
   }
   walk(items)
   return out

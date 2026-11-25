@@ -4,7 +4,6 @@ import type {
   AddEntryInput,
   CreateItemInput,
   EntryType,
-  MoveDirection,
   PeriodTotalsInput,
   UpdateEntryInput
 } from '@shared/domain/accounting/accounting.types'
@@ -75,10 +74,6 @@ export const useUpdateItem = () =>
   )
 export const useDeleteItem = () =>
   useAccountingMutation((id: number) => accountingApi.deleteItem(id))
-export const useMoveItem = () =>
-  useAccountingMutation((v: { id: number; direction: MoveDirection }) =>
-    accountingApi.moveItem(v.id, v.direction)
-  )
 export const useAddEntry = () =>
   useAccountingMutation((input: AddEntryInput) => accountingApi.addEntry(input))
 export const useUpdateEntry = () =>

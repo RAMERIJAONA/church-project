@@ -209,6 +209,26 @@ test('@smoke comptabilité : arborescence, 3 colonnes, détail, persistés aprè
     await expect(w.getByRole('heading', { name: /: comptabilité$/ })).toBeVisible()
     await expect(w.getByRole('button', { name: 'Actions de A1', exact: true })).toBeHidden()
     await expect(row(w, 'Total général')).toContainText(/770\s000/)
+    // Demandes du porteur (2026-11-25) : tout fond en blanc, pas d'icône « ↳ », « Ar » du total
+    // général en gras comme le chiffre
+    const printed = await w.evaluate(() => {
+      const colored = [...document.querySelectorAll<HTMLElement>('body *')].filter((el) => {
+        const bg = getComputedStyle(el).backgroundColor
+        return el.offsetParent !== null && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent'
+      })
+      const connectors = [...document.querySelectorAll('svg[data-print="hide"]')].filter(
+        (el) => getComputedStyle(el).display !== 'none'
+      )
+      const mark = document.querySelector('tfoot td span span')
+      return {
+        colored: colored.slice(0, 3).map((el) => el.tagName + '.' + el.className),
+        connectors: connectors.length,
+        markWeight: mark ? Number(getComputedStyle(mark).fontWeight) : 0
+      }
+    })
+    expect(printed.colored).toEqual([])
+    expect(printed.connectors).toBe(0)
+    expect(printed.markWeight).toBeGreaterThanOrEqual(600)
     await w.emulateMedia({ media: 'screen' })
 
     // Une rubrique qui a des montants ne reçoit pas de sous-rubrique
