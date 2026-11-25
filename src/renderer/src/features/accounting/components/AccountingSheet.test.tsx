@@ -140,8 +140,9 @@ describe('AccountingSheet', () => {
     expect(actions.addChild).toHaveBeenCalledWith(1, 'Fanampiana')
   })
 
-  it('demande la suppression de l’élément', async () => {
+  it('demande la suppression de l’élément depuis le menu « ⋯ »', async () => {
     const actions = renderSheet()
+    await userEvent.click(screen.getByRole('button', { name: 'Actions de F1-II' }))
     await userEvent.click(screen.getByRole('button', { name: 'Supprimer F1-II' }))
     expect(actions.askDelete).toHaveBeenCalledWith(expect.objectContaining({ id: 4 }))
   })

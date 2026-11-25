@@ -106,14 +106,7 @@
   td input::placeholder {
     color: transparent !important;
   }
-  /* Date sous le montant et en-têtes de montant : alignés sur « Ar » (le bouton de détail
-     n'est pas imprimé). Ligne de date vide : pas de place perdue à l'impression. */
-  td [data-amount-date] {
-    padding-right: calc(var(--spacing) * 2) !important;
-  }
-  td [data-amount-date]:empty {
-    display: none !important;
-  }
+  /* En-têtes de montant : alignés sur « Ar » (le bouton de détail n'est pas imprimé) */
   th[data-amount-head] {
     padding-right: calc(var(--spacing) * 3) !important;
   }

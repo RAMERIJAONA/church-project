@@ -1,11 +1,21 @@
 import { cva } from 'class-variance-authority'
 
-/** Colonnes du tableau (table-fixed) : numéro | description | 3 montants | actions. */
+/**
+ * Colonnes du tableau (table-fixed) : numéro | description | 3 montants | actions.
+ * Montant : jamais tronqué (demande du porteur, 2026-11-25). Largeur = le plus grand montant
+ * (« 999 999 999 999 », 15 caractères ; 17ch avec la marge du gras et de « Ar ») + marges et
+ * bouton de détail (19 pas d'espacement, qui suivent la densité ; le texte, lui, n'en dépend
+ * pas, d'où les `ch`). À l'impression : pas de bouton de détail.
+ */
 export const col = {
-  code: 'w-36',
-  amount: 'w-40',
-  actions: 'w-44'
+  code: 'w-36 print:w-28',
+  amount: 'w-[calc(var(--spacing)*19+17ch)] print:w-[calc(var(--spacing)*8+17ch)]',
+  actions: 'w-20'
 } as const
+
+/** Cadre du tableau ; trop étroit (petite fenêtre) : défilement horizontal plutôt que coupure. */
+export const sheetFrame =
+  'min-w-[60rem] overflow-clip rounded-xl border bg-card text-sm print:min-w-0'
 
 /**
  * En-tête. `amount` : aligné à droite sur la fin des montants, c'est-à-dire sur « Ar »
@@ -22,10 +32,7 @@ export const headCell = cva(
   }
 )
 
-/**
- * Rangée : niveau 1 = bandeau de rubrique ; groupe = texte appuyé ; feuille = montants.
- * `amounts` : cellules alignées en haut, sur la ligne du champ de montant (la date est dessous).
- */
+/** Rangée : niveau 1 = bandeau de rubrique ; groupe = texte appuyé ; feuille = montants. */
 export const sheetRow = cva('group border-b last:border-b-0', {
   variants: {
     kind: {
@@ -33,10 +40,8 @@ export const sheetRow = cva('group border-b last:border-b-0', {
       group: 'focus-within:bg-muted/30 hover:bg-muted/30',
       leaf: 'focus-within:bg-muted/30 hover:bg-muted/30',
       add: 'bg-accent/40'
-    },
-    amounts: { true: '*:align-top', false: '' }
-  },
-  defaultVariants: { amounts: false }
+    }
+  }
 })
 
 /**
@@ -48,30 +53,18 @@ export const codeCell = cva('pr-2 align-middle whitespace-nowrap tabular-nums', 
     kind: {
       root: 'py-2.5 font-display text-base font-semibold',
       group: 'py-1.5 font-medium',
-      // Centré sur le champ de montant (haut de case 4 px + 16 px) : 10 px + demi-ligne 10 px
-      leaf: 'pt-2.5 pb-1.5 text-muted-foreground'
+      leaf: 'py-1.5 text-muted-foreground'
     },
     level: { 1: 'pl-3', 2: 'pl-6', 3: 'pl-9', 4: 'pl-12 text-xs' }
   },
-  // Niveau 4 en petit (ligne de 16 px) : 12 px au-dessus pour rester centré sur le champ
-  compoundVariants: [{ kind: 'leaf', level: 4, class: 'pt-3' }],
   defaultVariants: { level: 1 }
 })
 
 /** Retrait de la description selon le niveau, avec un trait de rattachement au parent. */
-export const descriptionCell = cva('pr-1', {
+export const descriptionCell = cva('py-1 pr-1', {
   variants: {
-    level: { 1: 'pl-1', 2: 'pl-3', 3: 'pl-9', 4: 'pl-15' },
-    // Rangée à montants : texte centré sur le champ (6 px + 4 px + demi-ligne 10 px = 20 px)
-    amounts: { true: 'pt-1.5 pb-1', false: 'py-1' }
-  },
-  defaultVariants: { amounts: false }
-})
-
-/** Actions de ligne ; rangée à montants : boutons centrés sur le champ (6 px + 14 px). */
-export const actionsCell = cva('px-2', {
-  variants: { amounts: { true: 'pt-1.5', false: '' } },
-  defaultVariants: { amounts: false }
+    level: { 1: 'pl-1', 2: 'pl-3', 3: 'pl-9', 4: 'pl-15' }
+  }
 })
 
 /** Trait « └ » devant une sous-rubrique (niveaux 2 à 4). */
@@ -100,7 +93,7 @@ export const amountCell = 'flex items-center gap-0.5'
 
 /** Sous-total ou total : aligné sur les montants saisis (place du bouton de détail réservée). */
 export const subtotalText =
-  'min-w-0 flex-1 truncate px-2 text-right leading-8 font-semibold tabular-nums'
+  'min-w-0 flex-1 px-2 text-right leading-8 font-semibold whitespace-nowrap tabular-nums'
 
 /** Place du bouton de détail, laissée vide sous un sous-total (alignement des colonnes). */
 export const detailSpacer = 'size-7 shrink-0'
@@ -110,7 +103,7 @@ export const currencyMark = 'text-xs font-normal text-muted-foreground'
 
 /** Total d'une case détaillée : lecture seule (fond grisé), aligné comme une saisie. */
 export const amountReadonly =
-  'h-8 min-w-0 flex-1 truncate rounded-md bg-muted/50 px-2 text-right leading-8 font-medium tabular-nums'
+  'h-8 min-w-0 flex-1 rounded-md bg-muted/50 px-2 text-right leading-8 font-medium whitespace-nowrap tabular-nums'
 
 /**
  * Case de saisie : toujours encadrée, pour qu'on voie qu'on peut y taper un montant (demande du
@@ -128,13 +121,7 @@ export const amountInput = cva([
 export const amountSuffix =
   'pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-xs text-muted-foreground'
 
-/**
- * Date et heure de la dernière saisie, sous le montant. Hauteur fixe, même vide : toutes les
- * rangées à montants ont la même hauteur. Alignée à droite sur « Ar » (38 px).
- */
-export const amountDate = 'mt-0.5 h-4 pr-9.5 text-right text-xs leading-4 text-muted-foreground'
-
-/** Actions de ligne : visibles au survol ou au clavier, toujours atteignables au Tab. */
+/** Actions de ligne : « + » et menu « ⋯ », pleinement visibles au survol ou au clavier. */
 export const rowActions =
   'flex items-center justify-end gap-0.5 opacity-40 transition-opacity duration-100 group-hover:opacity-100 group-focus-within:opacity-100'
 
@@ -157,3 +144,6 @@ export const summaryCard = cva(
     defaultVariants: { active: false }
   }
 )
+
+/** Entrée du menu « ⋯ » d'une rangée (Modifier, Monter, Descendre, Supprimer). */
+export const menuItem = 'w-full justify-start'

@@ -1,4 +1,4 @@
-import { Info, List, Plus } from 'lucide-react'
+import { Ellipsis, Info, List, Plus } from 'lucide-react'
 
 /**
  * Mode d'emploi du tableau, toujours visible (le porteur ne voyait pas qu'on pouvait saisir un
@@ -18,10 +18,11 @@ export function SheetHelp(): React.JSX.Element {
           la case suivante. La date et l’heure sont enregistrées automatiquement.
         </li>
         <li className="text-muted-foreground">
-          <List aria-hidden className="inline size-3.5 align-[-2px]" /> à côté d’un montant : le
-          détailler en plusieurs saisies avec libellé.{' '}
+          <List aria-hidden className="inline size-3.5 align-[-2px]" /> à côté d’un montant : son
+          détail (saisies, libellés, dates et heures).{' '}
           <Plus aria-hidden className="inline size-3.5 align-[-2px]" /> en bout de ligne : ajouter
-          une sous-rubrique (modifier, déplacer et supprimer sont à côté).
+          une sous-rubrique ; <Ellipsis aria-hidden className="inline size-3.5 align-[-2px]" /> :
+          modifier, monter, descendre ou supprimer.
         </li>
       </ul>
     </div>

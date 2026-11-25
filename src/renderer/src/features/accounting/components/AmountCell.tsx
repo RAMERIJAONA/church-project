@@ -4,13 +4,13 @@ import type { CellDTO } from '@shared/domain/accounting/accounting.types'
 import { entryDateLabel } from '../accounting.utils'
 import { AmountInput } from './AmountInput'
 import { Money } from './Money'
-import { amountCell, amountDate, amountReadonly, amountTd } from './accounting.styles'
+import { amountCell, amountReadonly, amountTd } from './accounting.styles'
 
 export interface AmountCellProps {
   cell: CellDTO
   /** « Réalisation 2026 de F1-I-1 » : nom accessible de la case */
   label: string
-  /** Année de la case (date affichée : année seule pour une saisie faite après cette année) */
+  /** Année de la case (infobulle : année seule pour une saisie faite après cette année) */
   year: number
   disabled: boolean
   onCommit: (amount: number | null) => void
@@ -20,7 +20,8 @@ export interface AmountCellProps {
 /**
  * Une case de montant. Simple (vide ou un total sans libellé) : saisie directe. Détaillée
  * (plusieurs saisies ou un libellé) : total en lecture seule, modification depuis le détail.
- * Sous le montant : date et heure de la dernière saisie, enregistrées automatiquement.
+ * Date et heure de la dernière saisie : dans le détail, et en infobulle sur la case (pas dans
+ * le tableau, demande du porteur du 2026-11-25 : affichage plus régulier).
  */
 export function AmountCell({
   cell,
@@ -31,7 +32,12 @@ export function AmountCell({
   onOpenDetail
 }: AmountCellProps): React.JSX.Element {
   return (
-    <td className={amountTd}>
+    <td
+      className={amountTd}
+      title={
+        cell.lastEntryAt ? `Dernière saisie : ${entryDateLabel(cell.lastEntryAt, year)}` : undefined
+      }
+    >
       <div className={amountCell}>
         {cell.detailed ? (
           <span
@@ -60,18 +66,6 @@ export function AmountCell({
           <List aria-hidden />
         </Button>
       </div>
-      {/* Toujours présente (vide sans saisie) : même hauteur pour toutes les rangées */}
-      <p
-        data-amount-date
-        className={amountDate}
-        title={
-          cell.lastEntryAt
-            ? 'Dernière saisie (date et heure enregistrées automatiquement)'
-            : undefined
-        }
-      >
-        {cell.lastEntryAt ? entryDateLabel(cell.lastEntryAt, year) : ''}
-      </p>
     </td>
   )
 }

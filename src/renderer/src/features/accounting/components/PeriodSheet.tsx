@@ -81,7 +81,9 @@ export function PeriodSheet({ label, items, totals }: PeriodSheetProps): React.J
                   </td>
                   <td
                     className={
-                      item.amounts ? 'px-3 py-1 text-right font-medium tabular-nums' : totalCell
+                      item.amounts
+                        ? 'px-3 py-1 text-right font-medium whitespace-nowrap tabular-nums'
+                        : totalCell
                     }
                   >
                     {total === null ? '' : <Money amount={total} />}

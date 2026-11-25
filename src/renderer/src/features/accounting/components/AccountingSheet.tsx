@@ -5,7 +5,7 @@ import { AMOUNT_COLUMNS, columnLabel, flattenTree, sheetTotals } from '../accoun
 import { AddChildRow } from './AddChildRow'
 import { ItemRow } from './ItemRow'
 import { SubtotalCell } from './SubtotalCell'
-import { codeCell, col, headCell, totalRow } from './accounting.styles'
+import { codeCell, col, headCell, sheetFrame, totalRow } from './accounting.styles'
 
 export interface AccountingSheetProps {
   year: number
@@ -36,7 +36,7 @@ export function AccountingSheet({
 
   return (
     // overflow-clip : coins arrondis sans créer de conteneur de défilement (l'en-tête reste collant)
-    <div className="overflow-clip rounded-xl border bg-card text-sm">
+    <div className={sheetFrame}>
       <table className="w-full table-fixed border-collapse">
         <caption className="sr-only">Comptabilité {year}</caption>
         <colgroup>

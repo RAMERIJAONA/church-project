@@ -6,7 +6,7 @@ const localDate = (d: Date): string =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 const TODAY = localDate(new Date())
 const YESTERDAY = localDate(new Date(Date.now() - 86_400_000))
-/** « 25/11/2026 » : date affichée sous chaque montant (saisie automatique) */
+/** « 25/11/2026 » : date de saisie automatique (infobulle de la case) */
 const TODAY_FR = TODAY.split('-').reverse().join('/')
 
 const cell = (w: Page, name: string): Locator => w.getByRole('textbox', { name, exact: true })
@@ -96,8 +96,8 @@ test('@smoke comptabilité : arborescence, 3 colonnes, détail, persistés aprè
     // Un groupe n'a pas de case de montant
     await expect(cell(w, `Réalisation ${Y} de A1-II-1`)).toHaveCount(0)
 
-    // Régression (2026-11-25, capture du porteur) : sous-totaux et en-têtes décalés par rapport
-    // aux montants ; numéro et description plus bas que le champ sur les rangées datées.
+    // Régression (2026-11-25, captures du porteur) : sous-totaux et en-têtes décalés par
+    // rapport aux montants ; numéro et description pas alignés sur le champ.
     const geo = await w.evaluate(() => {
       const rowOf = (code: string): Element | undefined =>
         [...document.querySelectorAll('tbody tr')].find(
@@ -110,25 +110,28 @@ test('@smoke comptabilité : arborescence, 3 colonnes, détail, persistés aprè
       }
       const center = (r: DOMRect): number => r.top + r.height / 2
       const leaf = rowOf('A1-I-1')
-      const input = leaf?.querySelector('input[data-amount]')
-      const inputBox = input?.getBoundingClientRect() ?? new DOMRect()
+      const inputBox = leaf?.querySelector('input[data-amount]')?.getBoundingClientRect()
+      const box = inputBox ?? new DOMRect()
       const subtotal = rowOf('A1')?.querySelector('td:nth-of-type(2) span')
       const head = document.querySelector('th[data-amount-head]')
       const headPad = head ? parseFloat(getComputedStyle(head).paddingRight) : 0
       return {
-        subtotalVsInput: (subtotal?.getBoundingClientRect().right ?? 0) - inputBox.right,
+        subtotalVsInput: (subtotal?.getBoundingClientRect().right ?? 0) - box.right,
         // En-tête : fin du texte sur « Ar » (8 px avant le bord droit du champ)
-        headVsSuffix: (head?.getBoundingClientRect().right ?? 0) - headPad - (inputBox.right - 8),
-        codeVsInput: center(textBox(leaf?.querySelector('th'))) - center(inputBox),
-        descVsInput: center(textBox(leaf?.querySelector('td button'))) - center(inputBox),
-        dated: leaf?.querySelector('[data-amount-date]')?.textContent !== ''
+        headVsSuffix: (head?.getBoundingClientRect().right ?? 0) - headPad - (box.right - 8),
+        codeVsInput: center(textBox(leaf?.querySelector('th'))) - center(box),
+        descVsInput: center(textBox(leaf?.querySelector('td button'))) - center(box),
+        // La date n'est plus dans le tableau (seulement dans le détail et en infobulle)
+        dateInSheet: leaf?.textContent?.includes('/') ?? true,
+        tooltip: leaf?.querySelector('td[title^="Dernière saisie"]')?.getAttribute('title') ?? ''
       }
     })
-    expect(geo.dated).toBe(true)
     expect(Math.abs(geo.subtotalVsInput)).toBeLessThanOrEqual(1)
     expect(Math.abs(geo.headVsSuffix)).toBeLessThanOrEqual(1)
     expect(Math.abs(geo.codeVsInput)).toBeLessThanOrEqual(2)
     expect(Math.abs(geo.descVsInput)).toBeLessThanOrEqual(2)
+    expect(geo.dateInSheet).toBe(false)
+    expect(geo.tooltip).toContain(TODAY_FR)
 
     // Détail : saisies avec libellé, la case devient une somme en lecture seule
     await w.getByRole('button', { name: `Détail : Réalisation ${Y} de A1-II-1 A)` }).click()
@@ -143,6 +146,7 @@ test('@smoke comptabilité : arborescence, 3 colonnes, détail, persistés aprè
       await expect(dialog.getByText(label, { exact: true })).toBeVisible()
     }
     await expect(dialog.getByText(/Total : 350\s000/)).toBeVisible()
+    await expect(dialog.getByText(/^Saisi le /).first()).toBeVisible()
     await dialog.getByRole('button', { name: 'Fermer', exact: true }).click()
     await expect(cell(w, `Réalisation ${Y} de A1-II-1 A)`)).toHaveCount(0)
     await expect(row(w, 'A1-II-1 A)')).toContainText(/350\s000/)
@@ -155,9 +159,8 @@ test('@smoke comptabilité : arborescence, 3 colonnes, détail, persistés aprè
       await expect(row(w, code)).toContainText(/600\s000/)
     }
 
-    // Montants en Ariary, date et heure de saisie enregistrées automatiquement sous le montant
+    // Montants en Ariary ; date et heure de saisie : dans le détail (pas dans le tableau)
     await expect(row(w, 'A1-II-1 A)')).toContainText(/350\s000\sAr/)
-    await expect(row(w, 'A1-I-1')).toContainText(TODAY_FR)
 
     // Synthèse : total des réalisations du jour, de la semaine, du mois et de l'année
     for (const title of ['Aujourd’hui', 'Cette semaine', 'Ce mois', 'Cette année']) {
@@ -204,7 +207,7 @@ test('@smoke comptabilité : arborescence, 3 colonnes, détail, persistés aprè
     await w.emulateMedia({ media: 'print' })
     await expect(w.getByRole('button', { name: 'Imprimer' })).toBeHidden()
     await expect(w.getByRole('heading', { name: /: comptabilité$/ })).toBeVisible()
-    await expect(w.getByRole('button', { name: 'Supprimer A1', exact: true })).toBeHidden()
+    await expect(w.getByRole('button', { name: 'Actions de A1', exact: true })).toBeHidden()
     await expect(row(w, 'Total général')).toContainText(/770\s000/)
     await w.emulateMedia({ media: 'screen' })
 
@@ -220,6 +223,7 @@ test('@smoke comptabilité : arborescence, 3 colonnes, détail, persistés aprè
     await w.getByRole('button', { name: 'Année précédente' }).click()
 
     // Suppression d'un groupe : confirmation, descendance retirée, renumérotation
+    await w.getByRole('button', { name: 'Actions de A1-I', exact: true }).click()
     await w.getByRole('button', { name: 'Supprimer A1-I', exact: true }).click()
     await w.getByRole('alertdialog').getByRole('button', { name: 'Supprimer' }).click()
     await expect(w.getByRole('button', { name: 'Mpitandrina', exact: true })).toHaveCount(0)

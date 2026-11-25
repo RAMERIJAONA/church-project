@@ -102,6 +102,41 @@ test('impression : tout le plan comptable, sur plusieurs pages et dans la largeu
 
     expect((await pdfOf(running)).pages).toBeGreaterThanOrEqual(2)
 
+    // Régression (2026-11-25) : « 999 999… » au lieu de « 999 999 999 999 Ar ». Le plus grand
+    // montant possible doit tenir dans chaque case et chaque total, en densité normale et compacte.
+    for (const density of ['comfortable', 'compact']) {
+      const overflow = await w.evaluate((d) => {
+        document.documentElement.dataset['density'] = d
+        const max = '999\u00a0999\u00a0999\u00a0999'
+        const ctx = document.createElement('canvas').getContext('2d')
+        const width = (text: string, el: Element): number => {
+          if (!ctx) return Infinity
+          ctx.font = getComputedStyle(el).font
+          return ctx.measureText(text).width
+        }
+        const inner = (el: HTMLElement): number => {
+          const cs = getComputedStyle(el)
+          return el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)
+        }
+        const bad: string[] = []
+        for (const input of document.querySelectorAll<HTMLInputElement>('input[data-amount]')) {
+          if (width(max, input) > inner(input)) bad.push(input.getAttribute('aria-label') ?? '')
+        }
+        // Sous-totaux et total général : chiffres en gras + « Ar » en petit
+        for (const span of document.querySelectorAll<HTMLElement>(
+          'td > div > span.font-semibold'
+        )) {
+          const mark = span.querySelector('span')
+          const text = width(max, span) + (mark ? width('\u00a0Ar', mark) : 0)
+          if (text > inner(span) || span.scrollWidth > span.clientWidth)
+            bad.push(span.textContent ?? '')
+        }
+        return bad.slice(0, 3)
+      }, density)
+      expect(overflow, density).toEqual([])
+    }
+    await w.evaluate(() => delete document.documentElement.dataset['density'])
+
     await w.emulateMedia({ media: 'print' })
     await w.setViewportSize({ width: A4_CONTENT_WIDTH, height: 1000 })
     const layout = await w.evaluate(() => {

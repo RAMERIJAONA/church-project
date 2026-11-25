@@ -57,23 +57,22 @@ describe('AmountCell', () => {
     expect(screen.queryByTitle(/Dernière saisie/)).toBeNull()
   })
 
-  it('affiche « Ar » et la date et l’heure de la dernière saisie sous le montant', () => {
+  it('affiche « Ar », et la date de dernière saisie seulement en infobulle', () => {
     const at = '2026-11-25T11:32:00.000Z'
     setup({ cell: makeCellDTO({ total: 150000, entryCount: 1, lastEntryAt: at }) })
     expect(screen.getByText('Ar')).toBeDefined()
-    expect(screen.getByTitle(/Dernière saisie/).textContent).toBe(formatShortDateTime(new Date(at)))
-  })
-
-  it('garde la ligne de date même vide (rangées de même hauteur)', () => {
-    setup()
-    const date = screen.getByRole('cell').querySelector('[data-amount-date]')
-    expect(date?.textContent).toBe('')
+    const cell = screen.getByRole('cell')
+    expect(cell.getAttribute('title')).toBe(
+      `Dernière saisie : ${formatShortDateTime(new Date(at))}`
+    )
+    // Pas dans le tableau (demande du porteur, 2026-11-25) : seulement dans le détail
+    expect(cell.textContent).not.toContain('/')
   })
 
   it('saisie faite après la fin de l’année de la case : année seule', () => {
     const at = '2026-02-03T09:00:00.000Z'
     setup({ year: 2025, cell: makeCellDTO({ total: 1, entryCount: 1, lastEntryAt: at }) })
-    expect(screen.getByTitle(/Dernière saisie/).textContent).toBe('2025')
+    expect(screen.getByRole('cell').getAttribute('title')).toBe('Dernière saisie : 2025')
   })
 
   it('désactive la case quand demandé', () => {
