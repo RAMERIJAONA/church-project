@@ -64,6 +64,27 @@ export function periodRange(kind: PeriodKind, anchor: string): DateRange {
   return { from: fromUtc(first), to: fromUtc(last) }
 }
 
+/** Nombre de jours d'une période (bornes incluses). */
+export function dayCount(range: DateRange): number {
+  return Math.round((toUtc(range.to).getTime() - toUtc(range.from).getTime()) / 86_400_000) + 1
+}
+
+/**
+ * Estimation annuelle ramenée à une période, au prorata des jours (demande du porteur,
+ * 2026-11-25 : comparer prévu et réalisé sur le jour, la semaine, le mois). Seuls les jours de
+ * la période qui tombent dans l'année comptent (une semaine à cheval sur deux années n'en
+ * prend que sa part). Arrondi à l'Ariary.
+ * Ex. : 365 000 Ar sur novembre 2026 → 365 000 × 30 / 365 = 30 000 Ar.
+ */
+export function prorateEstimate(annual: number, range: DateRange, year: number): number {
+  const first = `${pad(year, 4)}-01-01`
+  const last = `${pad(year, 4)}-12-31`
+  const from = range.from > first ? range.from : first
+  const to = range.to < last ? range.to : last
+  if (from > to) return 0
+  return Math.round((annual * dayCount({ from, to })) / dayCount({ from: first, to: last }))
+}
+
 /** Date de référence de la période décalée de `delta` (mois : le 1er du mois visé). */
 export function shiftPeriod(kind: PeriodKind, anchor: string, delta: number): string {
   if (kind === 'day') return addDays(anchor, delta)

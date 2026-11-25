@@ -145,11 +145,13 @@ export const selectField =
 export const selectChevron =
   'pointer-events-none absolute top-1/2 right-2 mr-1 size-4 -translate-y-1/2 text-muted-foreground'
 
-/** Carte de la synthèse des réalisations (cliquable : ouvre la vue de la période). */
-export const summaryCard = cva(
-  'flex min-w-0 flex-col gap-1 rounded-xl border bg-card px-4 py-3 text-left outline-none hover:border-ring/60 focus-visible:ring-2 focus-visible:ring-ring',
+/** En-tête de colonne de la synthèse (cliquable : ouvre la vue de la période). */
+export const summaryHead = cva(
+  'w-full rounded-lg px-2 py-1.5 text-right outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring',
   {
-    variants: { active: { true: 'border-primary ring-1 ring-primary', false: '' } },
+    variants: {
+      active: { true: 'bg-accent text-accent-foreground', false: 'text-muted-foreground' }
+    },
     defaultVariants: { active: false }
   }
 )

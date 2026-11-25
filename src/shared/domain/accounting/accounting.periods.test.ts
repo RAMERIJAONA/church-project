@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
+  dayCount,
+  prorateEstimate,
   defaultOperationDate,
   localDateOf,
   monthGrid,
@@ -100,5 +102,33 @@ describe('calendrier', () => {
 
   it('commence au lundi même quand le mois commence un lundi', () => {
     expect(monthGrid('2027-02-10')[0]?.[0]).toBe('2027-02-01')
+  })
+})
+
+describe('estimation au prorata d’une période', () => {
+  it('compte les jours des périodes, bornes incluses', () => {
+    expect(dayCount({ from: '2026-11-25', to: '2026-11-25' })).toBe(1)
+    expect(dayCount(periodRange('week', '2026-11-25'))).toBe(7)
+    expect(dayCount(periodRange('month', '2026-02-10'))).toBe(28)
+    expect(dayCount({ from: '2024-01-01', to: '2024-12-31' })).toBe(366)
+  })
+
+  it('ramène l’estimation annuelle au jour, à la semaine, au mois, à l’année', () => {
+    expect(prorateEstimate(365_000, periodRange('day', '2026-11-25'), 2026)).toBe(1_000)
+    expect(prorateEstimate(365_000, periodRange('week', '2026-11-25'), 2026)).toBe(7_000)
+    expect(prorateEstimate(365_000, periodRange('month', '2026-11-25'), 2026)).toBe(30_000)
+    expect(prorateEstimate(365_000, { from: '2026-01-01', to: '2026-12-31' }, 2026)).toBe(365_000)
+    // Année bissextile : 366 jours
+    expect(prorateEstimate(366_000, periodRange('day', '2024-02-29'), 2024)).toBe(1_000)
+    // Arrondi à l'Ariary
+    expect(prorateEstimate(1_000, periodRange('day', '2026-11-25'), 2026)).toBe(3)
+  })
+
+  it('ne compte que les jours de la période qui tombent dans l’année', () => {
+    // Semaine du lundi 28 décembre 2026 au dimanche 3 janvier 2027 : 4 jours en 2026
+    const week = periodRange('week', '2027-01-01')
+    expect(prorateEstimate(365_000, week, 2026)).toBe(4_000)
+    expect(prorateEstimate(365_000, week, 2027)).toBe(3_000)
+    expect(prorateEstimate(365_000, periodRange('day', '2027-01-01'), 2026)).toBe(0)
   })
 })

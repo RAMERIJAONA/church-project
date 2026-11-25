@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
-import { launchApp, navLink, removeDir, type LaunchedApp } from './app'
+import { ar, launchApp, navLink, removeDir, rowCells, type LaunchedApp } from './app'
 
 const Y = new Date().getFullYear()
 const localDate = (d: Date): string =>
@@ -166,13 +166,17 @@ test('@smoke comptabilité : arborescence, 3 colonnes, détail, persistés aprè
     // Montants en Ariary ; date et heure de saisie : dans le détail (pas dans le tableau)
     await expect(row(w, 'A1-II-1 A)')).toContainText(/350\s000\sAr/)
 
-    // Synthèse : total des réalisations du jour, de la semaine, du mois et de l'année
-    for (const title of ['Aujourd’hui', 'Cette semaine', 'Ce mois', 'Cette année']) {
-      await expect(
-        w.getByRole('button', { name: new RegExp(`^${title} : 770\\s000\\sAr$`) })
-      ).toBeVisible()
-    }
-    await w.getByRole('button', { name: /^Ce mois :/ }).click()
+    // Synthèse prévu / réalisé (2026-11-25) : estimation au prorata des jours, réalisations
+    // par période, estimation N+1 sur l'année seulement
+    const summary = w.getByRole('region', { name: 'Synthèse : prévu et réalisé' })
+    const cells = (label: string): Locator => rowCells(summary, label)
+    await expect(cells(`Réalisation ${Y}`)).toHaveText(Array(4).fill(ar(770000)))
+    await expect(cells(`Estimation ${Y}`).first()).toHaveText(
+      ar(Math.round(500000 / (Y % 4 === 0 ? 366 : 365)))
+    )
+    await expect(cells(`Estimation ${Y}`).last()).toHaveText(ar(500000))
+    await expect(cells(`Estimation ${Y + 1}`)).toHaveText(['—', '—', '—', ar(600000)])
+    await summary.getByRole('button', { name: /^Ce mois/ }).click()
     await expect(w.getByRole('button', { name: 'Mois', exact: true })).toHaveAttribute(
       'aria-pressed',
       'true'

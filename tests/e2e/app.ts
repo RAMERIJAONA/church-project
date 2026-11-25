@@ -1,4 +1,9 @@
-import { _electron as electron, type ElectronApplication, type Page } from '@playwright/test'
+import {
+  _electron as electron,
+  type ElectronApplication,
+  type Locator,
+  type Page
+} from '@playwright/test'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
@@ -54,4 +59,17 @@ export function navLink(window: Page, name: string): ReturnType<Page['getByRole'
   return window
     .getByRole('navigation', { name: 'Navigation principale' })
     .getByRole('link', { name, exact: true })
+}
+
+/** Cases d'une rangée d'un tableau, désignée par son en-tête de rangée (`label`). */
+export function rowCells(scope: Locator, label: string): Locator {
+  return scope
+    .getByRole('row')
+    .filter({ has: scope.page().getByRole('rowheader', { name: label }) })
+    .getByRole('cell')
+}
+
+/** Montant affiché « 1 370 Ar » (espaces insécables) : expression exacte pour `toHaveText`. */
+export function ar(amount: number): RegExp {
+  return new RegExp(`^${String(amount).replace(/\B(?=(\d{3})+(?!\d))/g, '\\s')}\\sAr$`)
 }

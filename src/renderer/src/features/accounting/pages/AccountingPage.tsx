@@ -16,17 +16,11 @@ import {
   operationDateSchema,
   yearSchema
 } from '@shared/domain/accounting/accounting.types'
-import {
-  summaryPeriods,
-  sumPeriodTotals,
-  type AccountingView,
-  type SummaryPeriod
-} from '../accounting.utils'
+import type { AccountingView, SummaryPeriod } from '../accounting.utils'
 import { CustomRangePicker } from '../components/CustomRangePicker'
 import { PeriodStepper } from '../components/PeriodStepper'
-import { RealisationSummary } from '../components/RealisationSummary'
-import { usePeriodTotalsMany } from '../queries'
 import { PeriodView } from './PeriodView'
+import { SummarySection } from './SummarySection'
 import { YearTotalsSection } from './YearTotalsSection'
 import { YearView } from './YearView'
 
@@ -81,20 +75,15 @@ export function AccountingPage(): React.JSX.Element {
     view === 'custom' ? custom : view ? periodRange(view, anchor) : null
   const reference = view === 'custom' ? custom.from : anchor
 
-  // Synthèse : réalisations du jour, de la semaine, du mois et de l'année en cours
-  const periods = useMemo(() => summaryPeriods(today), [today])
-  const summary = usePeriodTotalsMany(periods.map((p) => p.range))
+  // Synthèse : colonne active = vue affichée sur la même période
   const isShown = (p: SummaryPeriod): boolean =>
     p.kind === 'year'
       ? view === null && year === currentYear
       : view === p.kind && shown?.from === p.range.from && shown.to === p.range.to
   const summaryBlock = (
-    <RealisationSummary
-      tiles={periods.map((p, i) => {
-        const data = summary[i]?.data
-        return { ...p, total: data ? sumPeriodTotals(data) : undefined, active: isShown(p) }
-      })}
-      failed={summary.some((q) => q.isError)}
+    <SummarySection
+      today={today}
+      isShown={isShown}
       onSelect={(kind) =>
         kind === 'year'
           ? replace({ annee: String(currentYear) })
