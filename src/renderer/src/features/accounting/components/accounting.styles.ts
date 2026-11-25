@@ -99,12 +99,13 @@ export const subtotalText =
 export const detailSpacer = 'size-7 shrink-0'
 
 /**
- * Sigle « Ar » après un montant affiché : discret, comme dans les champs. `strong` (total
- * général) : même graisse, taille et couleur que le chiffre (demande du porteur, 2026-11-25).
+ * Sigle « Ar » après un montant affiché : toujours de la même graisse que le chiffre (un
+ * chiffre en gras a son « Ar » en gras, demande du porteur, 2026-11-25), en petit et en gris.
+ * `strong` (total général) : même taille et couleur que le chiffre aussi.
  */
 export const currencyMark = cva('', {
   variants: {
-    strong: { true: '', false: 'text-xs font-normal text-muted-foreground' }
+    strong: { true: '', false: 'text-xs text-muted-foreground' }
   },
   defaultVariants: { strong: false }
 })

@@ -220,7 +220,14 @@ test('@smoke comptabilité : arborescence, 3 colonnes, détail, persistés aprè
         (el) => getComputedStyle(el).display !== 'none'
       )
       const mark = document.querySelector('tfoot td span span')
+      // « Ar » de chaque montant affiché : même graisse que son chiffre
+      const lighter = [...document.querySelectorAll<HTMLElement>('td span > span')].filter(
+        (m) =>
+          m.parentElement !== null &&
+          getComputedStyle(m).fontWeight !== getComputedStyle(m.parentElement).fontWeight
+      )
       return {
+        lighterMarks: lighter.length,
         colored: colored.slice(0, 3).map((el) => el.tagName + '.' + el.className),
         connectors: connectors.length,
         markWeight: mark ? Number(getComputedStyle(mark).fontWeight) : 0
@@ -229,6 +236,7 @@ test('@smoke comptabilité : arborescence, 3 colonnes, détail, persistés aprè
     expect(printed.colored).toEqual([])
     expect(printed.connectors).toBe(0)
     expect(printed.markWeight).toBeGreaterThanOrEqual(600)
+    expect(printed.lighterMarks).toBe(0)
     await w.emulateMedia({ media: 'screen' })
 
     // Une rubrique qui a des montants ne reçoit pas de sous-rubrique
