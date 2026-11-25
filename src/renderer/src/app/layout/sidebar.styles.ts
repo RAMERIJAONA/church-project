@@ -2,7 +2,8 @@ import { cva } from 'class-variance-authority'
 
 export const navLink = cva(
   [
-    'group flex h-9 items-center gap-3 rounded-md px-3 text-sm outline-none',
+    // Hauteur minimale (pas fixe) et marge interne : un libellé sur 2 lignes reste aéré
+    'group flex min-h-9 items-center gap-3 rounded-md px-3 py-2 text-sm leading-tight outline-none',
     'focus-visible:ring-2 focus-visible:ring-sidebar-ring',
     '[&_svg]:size-4 [&_svg]:shrink-0'
   ],
@@ -16,3 +17,7 @@ export const navLink = cva(
     defaultVariants: { active: false }
   }
 )
+
+/** Titre de section du menu (« Comptabilité »), au-dessus de ses liens. */
+export const navSection =
+  'px-3 pt-3 pb-1 text-xs font-medium tracking-wide text-muted-foreground uppercase'

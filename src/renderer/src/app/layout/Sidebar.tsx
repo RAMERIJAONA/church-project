@@ -3,14 +3,25 @@ import { NavLink } from 'react-router'
 import { useAppInfo } from '@renderer/lib/app-info.queries'
 import { APP_NAME } from '@shared/domain/identity'
 import { FOOTER_NAV, MAIN_NAV, type NavItem } from './nav-items'
-import { navLink } from './sidebar.styles'
+import { navLink, navSection } from './sidebar.styles'
 
 function NavList({ items }: { items: readonly NavItem[] }): React.JSX.Element {
   return (
     <ul className="flex flex-col gap-0.5">
-      {items.map(({ to, label, icon: Icon }) => (
+      {items.map(({ to, label, title, section, icon: Icon }, i) => (
         <li key={to}>
-          <NavLink to={to} end className={({ isActive }) => navLink({ active: isActive })}>
+          {section && section !== items[i - 1]?.section && (
+            <p aria-hidden className={navSection}>
+              {section}
+            </p>
+          )}
+          <NavLink
+            to={to}
+            end
+            aria-label={title}
+            title={title}
+            className={({ isActive }) => navLink({ active: isActive })}
+          >
             <Icon aria-hidden />
             {label}
           </NavLink>

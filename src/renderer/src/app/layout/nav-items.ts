@@ -2,15 +2,33 @@ import { ArrowDownToLine, ArrowUpFromLine, House, Settings, type LucideIcon } fr
 
 export interface NavItem {
   to: string
+  /** Texte affiché, court pour tenir sur une ligne */
   label: string
   icon: LucideIcon
+  /** Titre de section affiché au-dessus du premier élément de la section */
+  section?: string
+  /** Nom complet (lecteurs d'écran, infobulle), s'il diffère du texte affiché */
+  title?: string
 }
 
 /** Les modules métier s'ajouteront ici (un item par feature). */
 export const MAIN_NAV: readonly NavItem[] = [
   { to: '/', label: 'Accueil', icon: House },
-  { to: '/comptabilite/entrees', label: 'Comptabilité des entrées', icon: ArrowDownToLine },
-  { to: '/comptabilite/sorties', label: 'Comptabilité des sorties', icon: ArrowUpFromLine }
+  // Libellés courts sous un titre « Comptabilité » : une ligne chacun (2026-11-25)
+  {
+    to: '/comptabilite/entrees',
+    label: 'Entrées',
+    title: 'Comptabilité des entrées',
+    section: 'Comptabilité',
+    icon: ArrowDownToLine
+  },
+  {
+    to: '/comptabilite/sorties',
+    label: 'Sorties',
+    title: 'Comptabilité des sorties',
+    section: 'Comptabilité',
+    icon: ArrowUpFromLine
+  }
 ]
 
 export const FOOTER_NAV: readonly NavItem[] = [

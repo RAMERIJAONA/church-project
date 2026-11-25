@@ -12,6 +12,22 @@ test('@smoke comptabilité des entrées : numéros A2…, séparée des sorties'
   try {
     const w = running.window
     await navLink(w, 'Comptabilité des entrées').click()
+    // Régression (2026-11-25) : libellé du menu sur 2 lignes, sans marge en haut ni en bas.
+    // Chaque libellé tient sur une ligne et chaque lien garde sa marge interne.
+    const menu = await w
+      .getByRole('navigation', { name: 'Navigation principale' })
+      .evaluate((nav) =>
+        [...nav.querySelectorAll('a')].map((a) => {
+          const range = document.createRange()
+          range.selectNodeContents(a.lastChild ?? a) // le texte, sans l'icône
+          const lines = new Set([...range.getClientRects()].map((r) => Math.round(r.top))).size
+          return { text: a.textContent, lines, padding: parseFloat(getComputedStyle(a).paddingTop) }
+        })
+      )
+    for (const link of menu) {
+      expect(link.lines, link.text ?? '').toBe(1)
+      expect(link.padding, link.text ?? '').toBeGreaterThan(0)
+    }
     await expect(
       w.getByRole('heading', { level: 1, name: 'Comptabilité des entrées' })
     ).toBeVisible()
