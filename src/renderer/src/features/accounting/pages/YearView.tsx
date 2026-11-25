@@ -32,6 +32,7 @@ import {
   useUpdateEntry,
   useUpdateItem
 } from '../queries'
+import { useExcelExport } from './use-excel-export'
 
 const onError = (err: unknown): void => {
   toast.error(getErrorMessage(err))
@@ -67,6 +68,7 @@ export function YearView({
   const [detail, setDetail] = useState<DetailTarget | null>(null)
 
   const sheet = useAccountingSheet(year, ledger)
+  const excel = useExcelExport()
   // Année des données affichées (pendant un changement d'année, l'ancien tableau reste visible :
   // une saisie faite à ce moment doit aller dans l'année qu'on voit)
   const shownYear = sheet.data?.year ?? year
@@ -153,6 +155,8 @@ export function YearView({
         onViewChange={onViewChange}
         navigation={<YearStepper year={year} currentYear={currentYear} onChange={onYearChange} />}
         onPrint={() => void printWithFeedback()}
+        onExport={() => excel.run({ view: 'year', ledger, year: shownYear })}
+        exporting={excel.pending}
         onNewSection={() => setCreating(true)}
         creating={creating}
       />

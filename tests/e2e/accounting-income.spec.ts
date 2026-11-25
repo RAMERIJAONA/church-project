@@ -1,4 +1,7 @@
+import { existsSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { expect, test, type Page } from '@playwright/test'
+import { unzip } from '../helpers/unzip'
 import { launchApp, navLink, removeDir } from './app'
 
 const rowheader = (w: Page, code: string) => w.getByRole('rowheader', { name: code, exact: true })
@@ -64,6 +67,19 @@ test('@smoke comptabilité des entrées : numéros A2…, séparée des sorties'
       includeHidden: true
     })
     await expect(printed).toBeAttached()
+
+    // Export Excel (2026-11-25) : boîte « Enregistrer » simulée, fichier relu
+    const xlsx = join(running.userData, 'entrees.xlsx')
+    await running.app.evaluate(({ dialog }, file) => {
+      dialog.showSaveDialog = (async () => ({ canceled: false, filePath: file })) as never
+    }, xlsx)
+    await w.getByRole('button', { name: 'Exporter en Excel' }).click()
+    await expect(w.getByText('Tableau exporté en Excel')).toBeVisible()
+    expect(existsSync(xlsx)).toBe(true)
+    const sheet = unzip(readFileSync(xlsx)).get('xl/worksheets/sheet1.xml') ?? ''
+    expect(sheet).toContain('>A2-1<')
+    expect(sheet).toContain('>Rakitra alahady<')
+    expect(sheet).toContain('<v>250000</v>')
 
     await navLink(w, 'Comptabilité des sorties').click()
     await expect(

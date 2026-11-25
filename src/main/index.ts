@@ -162,7 +162,8 @@ async function start(): Promise<void> {
     print: () => services.print.print(),
     settings: services.settings,
     maintenance: services.maintenance,
-    accounting: services.accounting
+    accounting: services.accounting,
+    accountingExport: services.accountingExport
   })
 
   const openWindow = (): void => {

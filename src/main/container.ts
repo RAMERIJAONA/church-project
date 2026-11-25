@@ -15,6 +15,7 @@ import { inspectDatabaseFile } from '@main/db/inspect'
 import type { Logger } from '@main/logging/logger'
 import { createAccountingRepository } from '@main/repositories/accounting.repository'
 import { createSettingsRepository } from '@main/repositories/settings.repository'
+import { createAccountingExportService } from '@main/services/accounting-export.service'
 import { createAccountingService } from '@main/services/accounting.service'
 import { createMaintenanceService } from '@main/services/maintenance.service'
 import { createPrintService } from '@main/services/print.service'
@@ -100,6 +101,15 @@ export async function createContainer(paths: AppPaths, logger: Logger, platform:
     logger: logger.child({ module: 'accounting' })
   })
 
+  const accountingExport = createAccountingExportService({
+    accounting,
+    dialog: platform.dialog,
+    fs: nodeFs,
+    documentsDir: paths.documentsDir,
+    clock: systemClock,
+    logger: logger.child({ module: 'export' })
+  })
+
   const print = createPrintService({
     printer: platform.print,
     dialog: platform.dialog,
@@ -108,7 +118,16 @@ export async function createContainer(paths: AppPaths, logger: Logger, platform:
     logger: logger.child({ module: 'print' })
   })
 
-  return { handle, backup, settings, maintenance, accounting, print, dispose: closeDatabase }
+  return {
+    handle,
+    backup,
+    settings,
+    maintenance,
+    accounting,
+    accountingExport,
+    print,
+    dispose: closeDatabase
+  }
 }
 
 export type Container = Awaited<ReturnType<typeof createContainer>>

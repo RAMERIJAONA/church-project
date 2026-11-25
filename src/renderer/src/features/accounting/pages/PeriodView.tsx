@@ -9,6 +9,7 @@ import { AccountingToolbar } from '../components/AccountingToolbar'
 import { PeriodSheet } from '../components/PeriodSheet'
 import { PrintHeader } from '../components/PrintHeader'
 import { useAccountingSheet, usePeriodTotals } from '../queries'
+import { useExcelExport } from './use-excel-export'
 
 export interface PeriodViewProps {
   ledger: Ledger
@@ -36,6 +37,7 @@ export function PeriodView({
   // La structure (rubriques, numéros) est la même pour toutes les années
   const sheet = useAccountingSheet(Number(range.from.slice(0, 4)), ledger)
   const totals = usePeriodTotals({ ...range, ledger })
+  const excel = useExcelExport()
   const totalById = useMemo(
     () => new Map((totals.data ?? []).map((t) => [t.itemId, t.total])),
     [totals.data]
@@ -50,6 +52,8 @@ export function PeriodView({
         onViewChange={onViewChange}
         navigation={navigation}
         onPrint={() => void printWithFeedback()}
+        onExport={() => excel.run({ view, ledger, ...range })}
+        exporting={excel.pending}
       />
       <PrintHeader ledger={ledger} title={`Réalisations : ${label}`} printedAt={new Date()} />
       <p data-print="hide" className="text-sm text-muted-foreground">

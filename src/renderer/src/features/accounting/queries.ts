@@ -1,4 +1,5 @@
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
+import type { ExportSheetInput } from '@shared/domain/accounting/accounting.export'
 import type {
   AccountingSheetDTO,
   AddEntryInput,
@@ -115,4 +116,9 @@ export function useSetTotal() {
     },
     onSettled: () => qc.invalidateQueries({ queryKey: accountingKeys.all })
   })
+}
+
+/** Export Excel du tableau affiché (boîte « Enregistrer » côté main). Ne modifie rien. */
+export function useExportExcel() {
+  return useMutation({ mutationFn: (input: ExportSheetInput) => accountingApi.exportExcel(input) })
 }

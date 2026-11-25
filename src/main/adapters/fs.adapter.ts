@@ -5,7 +5,8 @@ import {
   readdirSync,
   renameSync,
   rmSync,
-  statSync
+  statSync,
+  writeFileSync
 } from 'node:fs'
 import { join } from 'node:path'
 
@@ -25,6 +26,8 @@ export interface FsAdapter {
   copyFile(from: string, to: string): void
   /** Renommage atomique sur un même volume (remplace la cible). */
   rename(from: string, to: string): void
+  /** Crée ou remplace un fichier (exports). */
+  writeFile(path: string, data: Uint8Array): void
 }
 
 export const nodeFs: FsAdapter = {
@@ -50,5 +53,8 @@ export const nodeFs: FsAdapter = {
   },
   rename: (from, to) => {
     renameSync(from, to)
+  },
+  writeFile: (path, data) => {
+    writeFileSync(path, data)
   }
 }

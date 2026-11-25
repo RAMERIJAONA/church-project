@@ -33,10 +33,32 @@ describe('impression', () => {
   it('la barre d’outils propose « Imprimer » et ne s’imprime pas elle-même', async () => {
     const onPrint = vi.fn()
     const { container } = render(
-      <AccountingToolbar view="year" onViewChange={vi.fn()} navigation={null} onPrint={onPrint} />
+      <AccountingToolbar
+        view="year"
+        onViewChange={vi.fn()}
+        navigation={null}
+        onPrint={onPrint}
+        onExport={vi.fn()}
+      />
     )
     expect(container.firstElementChild?.getAttribute('data-print')).toBe('hide')
     await userEvent.click(screen.getByRole('button', { name: 'Imprimer' }))
     expect(onPrint).toHaveBeenCalledOnce()
+  })
+
+  it('la barre d’outils propose « Exporter en Excel », désactivé pendant l’export', async () => {
+    const onExport = vi.fn()
+    const props = {
+      view: 'year',
+      onViewChange: vi.fn(),
+      navigation: null,
+      onPrint: vi.fn()
+    } as const
+    const { rerender } = render(<AccountingToolbar {...props} onExport={onExport} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Exporter en Excel' }))
+    expect(onExport).toHaveBeenCalledOnce()
+
+    rerender(<AccountingToolbar {...props} onExport={onExport} exporting />)
+    expect(screen.getByRole('button', { name: 'Export…' })).toHaveProperty('disabled', true)
   })
 })

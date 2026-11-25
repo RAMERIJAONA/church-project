@@ -1,3 +1,4 @@
+import type { AccountingExportService } from '@main/services/accounting-export.service'
 import type { AccountingService } from '@main/services/accounting.service'
 import type { Logger } from '@main/logging/logger'
 import type { MaintenanceService } from '@main/services/maintenance.service'
@@ -17,6 +18,8 @@ export interface IpcServices {
   settings: SettingsService
   maintenance: MaintenanceService
   accounting: AccountingService
+  /** Export Excel du tableau affiché */
+  accountingExport: AccountingExportService
 }
 
 /** Enregistre tous les canaux. Appelé une fois par main/index.ts. */
@@ -29,5 +32,5 @@ export function registerIpc(
   registerAppIpc(handle, services.appInfo, services.print)
   registerSettingsIpc(handle, services.settings)
   registerMaintenanceIpc(handle, services.maintenance)
-  registerAccountingIpc(handle, services.accounting)
+  registerAccountingIpc(handle, services.accounting, services.accountingExport)
 }

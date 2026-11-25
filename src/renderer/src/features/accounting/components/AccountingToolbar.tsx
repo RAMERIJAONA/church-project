@@ -1,4 +1,4 @@
-import { Plus, Printer } from 'lucide-react'
+import { FileSpreadsheet, Plus, Printer } from 'lucide-react'
 import { Button } from '@renderer/components/ui/button'
 import type { AccountingView } from '../accounting.utils'
 import { ViewSwitch } from './ViewSwitch'
@@ -10,6 +10,10 @@ export interface AccountingToolbarProps {
   navigation: React.ReactNode
   /** Imprime le tableau affiché */
   onPrint: () => void
+  /** Exporte le tableau affiché en Excel (.xlsx) */
+  onExport: () => void
+  /** Export en cours : bouton désactivé */
+  exporting?: boolean
   /** Vue Année uniquement ; bouton masqué pendant la création */
   onNewSection?: () => void
   creating?: boolean
@@ -20,6 +24,8 @@ export function AccountingToolbar({
   onViewChange,
   navigation,
   onPrint,
+  onExport,
+  exporting = false,
   onNewSection,
   creating = false
 }: AccountingToolbarProps): React.JSX.Element {
@@ -33,6 +39,10 @@ export function AccountingToolbar({
         <Button variant="outline" onClick={onPrint}>
           <Printer aria-hidden />
           Imprimer
+        </Button>
+        <Button variant="outline" onClick={onExport} disabled={exporting}>
+          <FileSpreadsheet aria-hidden />
+          {exporting ? 'Export…' : 'Exporter en Excel'}
         </Button>
         {onNewSection && !creating && (
           <Button onClick={onNewSection}>

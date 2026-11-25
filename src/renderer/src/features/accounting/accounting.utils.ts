@@ -7,31 +7,25 @@ import {
 } from '@shared/domain/accounting/accounting.periods'
 import { rollUp, type RollUp } from '@shared/domain/accounting/accounting.totals'
 import { formatShortDateTime } from '@shared/utils/dates'
+import { AMOUNT_COLUMNS, type AmountColumn } from '@shared/domain/accounting/accounting.columns'
 import type {
   AccountingItemDTO,
   AccountingSheetDTO,
-  EntryType,
   ItemAmountsDTO,
-  Ledger,
   PeriodTotalDTO
 } from '@shared/domain/accounting/accounting.types'
 
-/** Les 3 colonnes de l'année affichée N, dans l'ordre du tableau. */
-export const AMOUNT_COLUMNS = ['estimate', 'actual', 'nextEstimate'] as const
-export type AmountColumn = (typeof AMOUNT_COLUMNS)[number]
+// Partagés avec l'export Excel (main) : définis dans shared
+export {
+  AMOUNT_COLUMNS,
+  columnLabel,
+  columnTarget,
+  LEDGER_TITLES,
+  type AmountColumn
+} from '@shared/domain/accounting/accounting.columns'
 
 /** Sous-totaux ou total général des 3 colonnes. */
 export type ColumnTotals = Record<AmountColumn, number | null>
-
-/** Année et type réellement écrits par une colonne (Estimation N+1 = estimation de N+1). */
-export function columnTarget(year: number, col: AmountColumn): { year: number; type: EntryType } {
-  return col === 'nextEstimate' ? { year: year + 1, type: 'estimate' } : { year, type: col }
-}
-
-export function columnLabel(year: number, col: AmountColumn): string {
-  const target = columnTarget(year, col)
-  return `${target.type === 'estimate' ? 'Estimation' : 'Réalisation'} ${target.year}`
-}
 
 export interface FlatRow {
   item: AccountingItemDTO
@@ -158,10 +152,4 @@ export function summaryPeriods(today: string): SummaryPeriod[] {
 /** Total des réalisations d'une période (toutes rubriques), `null` si aucune saisie. */
 export function sumPeriodTotals(totals: readonly PeriodTotalDTO[]): number | null {
   return totals.length === 0 ? null : totals.reduce((sum, t) => sum + t.total, 0)
-}
-
-/** « Comptabilité des sorties » / « des entrées » : titres d'écran et d'impression. */
-export const LEDGER_TITLES: Record<Ledger, string> = {
-  expense: 'Comptabilité des sorties',
-  income: 'Comptabilité des entrées'
 }
