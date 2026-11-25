@@ -28,11 +28,14 @@ describe('description', () => {
 
 describe('cases de montant', () => {
   it('une case vide ou à une saisie sans libellé est simple', () => {
-    expect(cellOf([])).toEqual({ total: null, entryCount: 0, detailed: false })
-    expect(cellOf([{ amount: 500000, label: null }])).toEqual({
+    expect(cellOf([])).toEqual({ total: null, entryCount: 0, detailed: false, lastEntryAt: null })
+    expect(
+      cellOf([{ amount: 500000, label: null, updatedAt: '2026-11-20T08:00:00.000Z' }])
+    ).toEqual({
       total: 500000,
       entryCount: 1,
-      detailed: false
+      detailed: false,
+      lastEntryAt: '2026-11-20T08:00:00.000Z'
     })
   })
 
@@ -40,10 +43,24 @@ describe('cases de montant', () => {
     expect(isDetailed([{ amount: 1000, label: 'Kojakoja' }])).toBe(true)
     expect(
       cellOf([
-        { amount: 1000, label: null },
-        { amount: 2500, label: null }
+        { amount: 1000, label: null, updatedAt: '2026-11-25T11:32:00.000Z' },
+        { amount: 2500, label: null, updatedAt: '2026-11-20T08:00:00.000Z' }
       ])
-    ).toEqual({ total: 3500, entryCount: 2, detailed: true })
+    ).toEqual({
+      total: 3500,
+      entryCount: 2,
+      detailed: true,
+      lastEntryAt: '2026-11-25T11:32:00.000Z'
+    })
+  })
+
+  it('date de la case : la plus récente saisie ou modification', () => {
+    expect(
+      cellOf([
+        { amount: 1, label: null, updatedAt: '2026-11-20T08:00:00.000Z' },
+        { amount: 2, label: null, updatedAt: '2026-11-25T11:32:00.000Z' }
+      ]).lastEntryAt
+    ).toBe('2026-11-25T11:32:00.000Z')
   })
 })
 

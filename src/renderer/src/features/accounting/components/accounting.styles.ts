@@ -2,7 +2,7 @@ import { cva } from 'class-variance-authority'
 
 /** Colonnes du tableau (table-fixed) : numéro | description | 3 montants | actions. */
 export const col = {
-  code: 'w-32',
+  code: 'w-36',
   amount: 'w-40',
   actions: 'w-44'
 } as const
@@ -27,26 +27,35 @@ export const sheetRow = cva('group border-b last:border-b-0', {
   }
 })
 
-export const codeCell = cva('px-3 align-middle whitespace-nowrap tabular-nums', {
+/**
+ * Numéro : décalé selon le niveau (l'arbre se lit aussi dans cette colonne). Sans niveau :
+ * ligne de total.
+ */
+export const codeCell = cva('pr-2 align-middle whitespace-nowrap tabular-nums', {
   variants: {
     kind: {
       root: 'py-2.5 font-display text-base font-semibold',
       group: 'py-1.5 font-medium',
       leaf: 'py-1.5 text-muted-foreground'
-    }
+    },
+    level: { 1: 'pl-3', 2: 'pl-6', 3: 'pl-9', 4: 'pl-12 text-xs' }
+  },
+  defaultVariants: { level: 1 }
+})
+
+/** Retrait de la description selon le niveau, avec un trait de rattachement au parent. */
+export const descriptionCell = cva('py-1 pr-1', {
+  variants: {
+    level: { 1: 'pl-1', 2: 'pl-3', 3: 'pl-9', 4: 'pl-15' }
   }
 })
 
-/** Retrait de la description selon le niveau (l'arbre se lit dans cette colonne). */
-export const descriptionCell = cva('py-1 pr-1', {
-  variants: {
-    level: { 1: 'pl-1', 2: 'pl-5', 3: 'pl-9', 4: 'pl-13' }
-  }
-})
+/** Trait « └ » devant une sous-rubrique (niveaux 2 à 4). */
+export const treeConnector = 'size-3.5 shrink-0 text-muted-foreground/70'
 
 /** Texte cliquable qui passe en édition : discret, mais visiblement modifiable au survol. */
 export const editableText = cva(
-  'w-full cursor-text truncate rounded-md px-2 py-1 text-left outline-none hover:bg-background focus-visible:ring-2 focus-visible:ring-ring',
+  'min-w-0 flex-1 cursor-text truncate rounded-md px-2 py-1 text-left outline-none hover:bg-background focus-visible:ring-2 focus-visible:ring-ring',
   {
     variants: { kind: { section: 'font-semibold', group: 'font-medium', line: '' } },
     defaultVariants: { kind: 'line' }
@@ -62,19 +71,30 @@ export const totalRow = 'border-t-2 bg-muted/60'
 /** Case montant : saisie + bouton détail côte à côte. */
 export const amountCell = 'flex items-center gap-0.5'
 
-/** Total d'une case détaillée : lecture seule, aligné comme une saisie. */
+/** Total d'une case détaillée : lecture seule (fond grisé), aligné comme une saisie. */
 export const amountReadonly =
-  'h-8 flex-1 truncate px-2 text-right leading-8 font-medium tabular-nums'
+  'h-8 min-w-0 flex-1 truncate rounded-md bg-muted/50 px-2 text-right leading-8 font-medium tabular-nums'
 
+/**
+ * Case de saisie : toujours encadrée, pour qu'on voie qu'on peut y taper un montant (demande du
+ * porteur, 2026-11-25). Place à droite pour le sigle « Ar ».
+ */
 export const amountInput = cva([
-  'h-8 w-full rounded-md border border-transparent bg-transparent px-2 text-right tabular-nums outline-none',
-  'placeholder:text-muted-foreground/60 hover:border-input focus:border-ring focus:bg-background focus:ring-2 focus:ring-ring/40',
+  'h-8 w-full rounded-md border border-input bg-background pr-7 pl-2 text-right tabular-nums outline-none',
+  'placeholder:text-muted-foreground/70 hover:border-ring/60 focus:border-ring focus:ring-2 focus:ring-ring/40',
   'disabled:opacity-50'
 ])
 
+/** Sigle « Ar » affiché dans la case, à droite du montant. */
+export const amountSuffix =
+  'pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-xs text-muted-foreground'
+
+/** Date et heure de la dernière saisie, sous le montant. */
+export const amountDate = 'mt-0.5 pr-9 text-right text-xs leading-tight text-muted-foreground'
+
 /** Actions de ligne : visibles au survol ou au clavier, toujours atteignables au Tab. */
 export const rowActions =
-  'flex items-center justify-end gap-0.5 opacity-0 transition-opacity duration-100 group-hover:opacity-100 group-focus-within:opacity-100'
+  'flex items-center justify-end gap-0.5 opacity-40 transition-opacity duration-100 group-hover:opacity-100 group-focus-within:opacity-100'
 
 /**
  * Liste déroulante native, alignée visuellement sur <Input>. Chevron du navigateur masqué
@@ -86,3 +106,12 @@ export const selectField =
 /** Chevron du select : 4px de marge (mr-1) en plus du retrait du champ. */
 export const selectChevron =
   'pointer-events-none absolute top-1/2 right-2 mr-1 size-4 -translate-y-1/2 text-muted-foreground'
+
+/** Carte de la synthèse des réalisations (cliquable : ouvre la vue de la période). */
+export const summaryCard = cva(
+  'flex min-w-0 flex-col gap-1 rounded-xl border bg-card px-4 py-3 text-left outline-none hover:border-ring/60 focus-visible:ring-2 focus-visible:ring-ring',
+  {
+    variants: { active: { true: 'border-primary ring-1 ring-primary', false: '' } },
+    defaultVariants: { active: false }
+  }
+)

@@ -4,7 +4,6 @@ import { Button } from '@renderer/components/ui/button'
 import { getErrorMessage } from '@renderer/lib/error-messages'
 import { printWithFeedback } from '@renderer/lib/print'
 import { countDescendants } from '@shared/domain/accounting/accounting.tree'
-import { defaultOperationDate } from '@shared/domain/accounting/accounting.periods'
 import { MAX_YEAR } from '@shared/domain/accounting/accounting.types'
 import { AccountingEmptyState } from '../components/AccountingEmptyState'
 import { AccountingSheet } from '../components/AccountingSheet'
@@ -13,6 +12,7 @@ import { ConfirmDeleteDialog, type DeleteTarget } from '../components/ConfirmDel
 import { EntriesDialog } from '../components/EntriesDialog'
 import { NewSectionForm, type NewRootInput } from '../components/NewSectionForm'
 import { PrintHeader } from '../components/PrintHeader'
+import { SheetHelp } from '../components/SheetHelp'
 import { SheetActionsProvider, type SheetActions } from '../components/sheet-actions'
 import { YearStepper } from '../components/YearStepper'
 import {
@@ -182,6 +182,7 @@ export function YearView({
       {sheet.data && items.length === 0 && !creating && (
         <AccountingEmptyState onCreate={() => setCreating(true)} />
       )}
+      {items.length > 0 && <SheetHelp />}
       {items.length > 0 && (
         <SheetActionsProvider value={actions}>
           <AccountingSheet year={shownYear} items={items} addingChildTo={addingChildTo} />
@@ -196,22 +197,10 @@ export function YearView({
           entries={entries.data}
           loading={entries.isPending}
           error={entries.isError ? entries.error : null}
+          year={detailCell.year}
           disabled={detailCell.year > MAX_YEAR}
-          dates={
-            detailCell.type === 'actual'
-              ? {
-                  min: `${detailCell.year}-01-01`,
-                  max: `${detailCell.year}-12-31`,
-                  initial: defaultOperationDate(new Date(), detailCell.year)
-                }
-              : null
-          }
-          onAdd={(amount, label, operatedOn) =>
-            withToast(() => addEntry({ ...detailCell, amount, label, operatedOn }))
-          }
-          onUpdate={(id, amount, label, operatedOn) =>
-            withToast(() => updateEntry({ id, amount, label, operatedOn }))
-          }
+          onAdd={(amount, label) => withToast(() => addEntry({ ...detailCell, amount, label }))}
+          onUpdate={(id, amount, label) => withToast(() => updateEntry({ id, amount, label }))}
           onAskDelete={(entry) =>
             setDeleteTarget({
               kind: 'entry',

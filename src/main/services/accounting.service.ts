@@ -3,9 +3,9 @@ import type { Db, DbOrTx } from '@main/db/client'
 import type { Logger } from '@main/logging/logger'
 import type { AccountingRepository } from '@main/repositories/accounting.repository'
 import { availableLetters } from '@shared/domain/accounting/accounting.codes'
-import { defaultOperationDate } from '@shared/domain/accounting/accounting.periods'
 import {
   isDetailed,
+  newEntryOperationDate,
   normalizeDescription,
   normalizePrefix,
   operationDateError
@@ -220,8 +220,7 @@ export function createAccountingService(deps: {
           // La date d'opération d'un total existant est conservée
           repo.updateEntry(tx, existing.id, { amount: input.amount, label: null }, at)
         } else {
-          const operatedOn =
-            input.type === 'actual' ? defaultOperationDate(deps.clock(), input.year) : null
+          const operatedOn = newEntryOperationDate(input.type, input.year, deps.clock())
           repo.insertEntry(tx, { ...input, amount: input.amount, label: null, operatedOn, at })
         }
       })
@@ -237,10 +236,12 @@ export function createAccountingService(deps: {
     addEntry(input: AddEntryInput): CreatedEntryDTO {
       return deps.db.transaction((tx) => {
         const item = requireAmountHolder(tx, input.itemId)
-        checkOperationDate(input.type, input.year, input.operatedOn)
+        const { type, year } = input
+        const operatedOn = newEntryOperationDate(type, year, deps.clock(), input.operatedOn)
+        checkOperationDate(type, year, operatedOn)
         const entries = repo.listCellEntries(tx, input.itemId, input.year, input.type)
         checkTotal(item.code, sum(entries) + input.amount)
-        return { id: repo.insertEntry(tx, { ...input, at: now() }) }
+        return { id: repo.insertEntry(tx, { ...input, operatedOn, at: now() }) }
       })
     },
 
@@ -248,17 +249,15 @@ export function createAccountingService(deps: {
       deps.db.transaction((tx) => {
         const entry = requireEntry(tx, input.id)
         const item = requireAmountHolder(tx, entry.itemId)
-        checkOperationDate(entry.type, entry.year, input.operatedOn)
+        // Date absente (UI) : la date d'opération de la saisie est conservée
+        const operatedOn = input.operatedOn !== undefined ? input.operatedOn : entry.operatedOn
+        checkOperationDate(entry.type, entry.year, operatedOn)
         const others = repo
           .listCellEntries(tx, entry.itemId, entry.year, entry.type)
           .filter((x) => x.id !== entry.id)
         checkTotal(item.code, sum(others) + input.amount)
-        repo.updateEntry(
-          tx,
-          entry.id,
-          { amount: input.amount, label: input.label, operatedOn: input.operatedOn },
-          now()
-        )
+        const { amount, label } = input
+        repo.updateEntry(tx, entry.id, { amount, label, operatedOn }, now())
       })
     },
 

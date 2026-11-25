@@ -61,7 +61,16 @@ describe('buildSheet : arborescence', () => {
     const sheet = buildSheet(
       2026,
       [item({ id: 9, prefix: 'A' })],
-      [{ itemId: 9, year: 2026, type: 'actual', amount: 1000, label: null }],
+      [
+        {
+          itemId: 9,
+          year: 2026,
+          type: 'actual',
+          amount: 1000,
+          label: null,
+          updatedAt: '2026-11-20T08:00:00.000Z'
+        }
+      ],
       new Set([9])
     )
     expect(sheet.items[0]?.amounts?.actual.total).toBe(1000)
@@ -70,14 +79,50 @@ describe('buildSheet : arborescence', () => {
 
   it('remplit Estimation N+1 avec l’estimation de l’année suivante', () => {
     const entries: EntryRow[] = [
-      { itemId: 3, year: 2027, type: 'estimate', amount: 600000, label: null },
-      { itemId: 3, year: 2026, type: 'actual', amount: 420000, label: null },
-      { itemId: 3, year: 2026, type: 'actual', amount: 80000, label: 'Bonus' }
+      {
+        itemId: 3,
+        year: 2027,
+        type: 'estimate',
+        amount: 600000,
+        label: null,
+        updatedAt: '2026-11-20T08:00:00.000Z'
+      },
+      {
+        itemId: 3,
+        year: 2026,
+        type: 'actual',
+        amount: 420000,
+        label: null,
+        updatedAt: '2026-11-20T08:00:00.000Z'
+      },
+      {
+        itemId: 3,
+        year: 2026,
+        type: 'actual',
+        amount: 80000,
+        label: 'Bonus',
+        updatedAt: '2026-11-25T11:32:00.000Z'
+      }
     ]
     const amounts = findItem(buildSheet(2026, church, entries, new Set([3])), 3)?.amounts
-    expect(amounts?.nextEstimate).toEqual({ total: 600000, entryCount: 1, detailed: false })
-    expect(amounts?.estimate).toEqual({ total: null, entryCount: 0, detailed: false })
-    expect(amounts?.actual).toEqual({ total: 500000, entryCount: 2, detailed: true })
+    expect(amounts?.nextEstimate).toEqual({
+      total: 600000,
+      entryCount: 1,
+      detailed: false,
+      lastEntryAt: '2026-11-20T08:00:00.000Z'
+    })
+    expect(amounts?.estimate).toEqual({
+      total: null,
+      entryCount: 0,
+      detailed: false,
+      lastEntryAt: null
+    })
+    expect(amounts?.actual).toEqual({
+      total: 500000,
+      entryCount: 2,
+      detailed: true,
+      lastEntryAt: '2026-11-25T11:32:00.000Z'
+    })
   })
 
   it('interdit d’ajouter un enfant à un élément qui a des saisies, même d’une autre année', () => {

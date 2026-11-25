@@ -51,7 +51,7 @@ export function AddChildRow({ parent, code }: AddChildRowProps): React.JSX.Eleme
 
   return (
     <tr data-print="hide" className={sheetRow({ kind: 'add' })}>
-      <td className={codeCell({ kind: 'leaf' })}>{code}</td>
+      <td className={codeCell({ kind: 'leaf', level })}>{code}</td>
       <td className={descriptionCell({ level })} colSpan={4}>
         <Input
           ref={inputRef}
@@ -78,12 +78,12 @@ export function AddChildRow({ parent, code }: AddChildRowProps): React.JSX.Eleme
       </td>
       <td className="px-2 py-2 align-top">
         <div className="flex items-center justify-end gap-1">
-          <Button size="sm" disabled={busy} onClick={() => void submit()}>
+          <Button disabled={busy} onClick={() => void submit()}>
             Ajouter
           </Button>
           <Button
             variant="ghost"
-            size="icon-sm"
+            size="icon"
             title="Fermer"
             aria-label="Fermer l’ajout de sous-rubrique"
             onClick={() => actions.openAddChild(null)}

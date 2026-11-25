@@ -30,6 +30,8 @@ export interface EntryRow {
   type: EntryType
   amount: number
   label: string | null
+  /** ISO 8601 UTC */
+  updatedAt: string
 }
 
 const byPosition = (a: ItemRow, b: ItemRow): number => a.position - b.position || a.id - b.id

@@ -6,6 +6,8 @@ const localDate = (d: Date): string =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 const TODAY = localDate(new Date())
 const YESTERDAY = localDate(new Date(Date.now() - 86_400_000))
+/** « 25/11/2026 » : date affichée sous chaque montant (saisie automatique) */
+const TODAY_FR = TODAY.split('-').reverse().join('/')
 
 const cell = (w: Page, name: string): Locator => w.getByRole('textbox', { name, exact: true })
 const row = (w: Page, code: string): Locator =>
@@ -118,6 +120,23 @@ test('@smoke comptabilité : arborescence, 3 colonnes, détail, persistés aprè
       await expect(row(w, code)).toContainText(/770\s000/)
       await expect(row(w, code)).toContainText(/600\s000/)
     }
+
+    // Montants en Ariary, date et heure de saisie enregistrées automatiquement sous le montant
+    await expect(row(w, 'A1-II-1 A)')).toContainText(/350\s000\sAr/)
+    await expect(row(w, 'A1-I-1')).toContainText(TODAY_FR)
+
+    // Synthèse : total des réalisations du jour, de la semaine, du mois et de l'année
+    for (const title of ['Aujourd’hui', 'Cette semaine', 'Ce mois', 'Cette année']) {
+      await expect(
+        w.getByRole('button', { name: new RegExp(`^${title} : 770\\s000\\sAr$`) })
+      ).toBeVisible()
+    }
+    await w.getByRole('button', { name: /^Ce mois :/ }).click()
+    await expect(w.getByRole('button', { name: 'Mois', exact: true })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    )
+    await w.getByRole('button', { name: 'Année', exact: true }).click()
 
     // Vues par période : réalisations par date d'opération (aujourd'hui par défaut), lecture seule
     const view = (name: string): Locator => w.getByRole('button', { name, exact: true })

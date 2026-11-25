@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { getMoneyInputProps } from '@renderer/lib/money-input'
-import { formatAmount, parseAmount } from '@shared/utils/money'
-import { amountInput } from './accounting.styles'
+import { CURRENCY, formatAmount, parseAmount } from '@shared/utils/money'
+import { amountInput, amountSuffix } from './accounting.styles'
 
 export interface AmountInputProps {
   value: number | null
@@ -22,7 +22,8 @@ function focusNextAmount(current: HTMLInputElement): void {
 }
 
 /**
- * Case montant éditable en place, toujours affichée « 2 000 000 » (y compris pendant la frappe).
+ * Case montant éditable en place, toujours affichée « 2 000 000 Ar » (y compris pendant la
+ * frappe ; « Ar » est affiché à côté, hors du champ). Vide : « Montant », pour inviter à taper (même mot que le détail).
  * Entrée : enregistre et passe à la case suivante. Échap : annule. Sortie de la case : enregistre.
  */
 export function AmountInput({
@@ -56,27 +57,35 @@ export function AmountInput({
   const money = getMoneyInputProps(text, setDraft)
 
   return (
-    <input
-      data-amount
-      type="text"
-      aria-label={label}
-      disabled={disabled}
-      className={amountInput()}
-      onFocus={(e) => e.currentTarget.select()}
-      onBlur={() => {
-        if (!skipBlur.current) commit()
-      }}
-      {...money}
-      onKeyDown={(e) => {
-        money.onKeyDown(e)
-        if (e.key === 'Enter') {
-          e.preventDefault()
-          if (commit()) leave(e.currentTarget, focusNextAmount)
-        } else if (e.key === 'Escape') {
-          setDraft(null)
-          leave(e.currentTarget, (el) => el.blur())
-        }
-      }}
-    />
+    <div className="relative min-w-0 flex-1">
+      <input
+        data-amount
+        type="text"
+        aria-label={label}
+        placeholder={disabled ? undefined : 'Montant'}
+        disabled={disabled}
+        className={amountInput()}
+        onFocus={(e) => e.currentTarget.select()}
+        onBlur={() => {
+          if (!skipBlur.current) commit()
+        }}
+        {...money}
+        onKeyDown={(e) => {
+          money.onKeyDown(e)
+          if (e.key === 'Enter') {
+            e.preventDefault()
+            if (commit()) leave(e.currentTarget, focusNextAmount)
+          } else if (e.key === 'Escape') {
+            setDraft(null)
+            leave(e.currentTarget, (el) => el.blur())
+          }
+        }}
+      />
+      {text !== '' && (
+        <span aria-hidden className={amountSuffix}>
+          {CURRENCY}
+        </span>
+      )}
+    </div>
   )
 }

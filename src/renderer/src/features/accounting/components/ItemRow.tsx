@@ -1,15 +1,16 @@
+import { CornerDownRight } from 'lucide-react'
 import { memo, useState } from 'react'
 import {
   MAX_DEPTH,
   MAX_YEAR,
   type AccountingItemDTO
 } from '@shared/domain/accounting/accounting.types'
-import { formatAmount } from '@shared/utils/money'
+import { formatAriary } from '@shared/utils/money'
 import { AMOUNT_COLUMNS, columnLabel, columnTarget, type ColumnTotals } from '../accounting.utils'
 import { AmountCell } from './AmountCell'
 import { EditableDescription } from './EditableDescription'
 import { RowActions } from './RowActions'
-import { codeCell, descriptionCell, sheetRow, totalCell } from './accounting.styles'
+import { codeCell, descriptionCell, sheetRow, totalCell, treeConnector } from './accounting.styles'
 import { useSheetActions } from './sheet-actions'
 
 export interface ItemRowProps {
@@ -41,25 +42,28 @@ export const ItemRow = memo(function ItemRow({
   const amounts = item.amounts
   return (
     <tr data-row={kind} className={sheetRow({ kind })}>
-      <th scope="row" className={codeCell({ kind })}>
+      <th scope="row" className={codeCell({ kind, level: item.level })}>
         {item.code}
       </th>
       <td className={descriptionCell({ level: item.level })}>
-        <EditableDescription
-          kind={kind === 'root' ? 'section' : kind === 'group' ? 'group' : 'line'}
-          value={item.description}
-          label={`Description de ${item.code}`}
-          editing={editing}
-          onEditingChange={setEditing}
-          onSave={(d) => actions.rename(item.id, d)}
-        />
+        <div className="flex items-center gap-1">
+          {item.level > 1 && <CornerDownRight aria-hidden className={treeConnector} />}
+          <EditableDescription
+            kind={kind === 'root' ? 'section' : kind === 'group' ? 'group' : 'line'}
+            value={item.description}
+            label={`Description de ${item.code}`}
+            editing={editing}
+            onEditingChange={setEditing}
+            onSave={(d) => actions.rename(item.id, d)}
+          />
+        </div>
       </td>
       {!amounts &&
         AMOUNT_COLUMNS.map((col) => {
           const value = subtotals?.[col] ?? null
           return (
             <td key={col} className={totalCell} title="Sous-total (somme des sous-rubriques)">
-              {value === null ? '' : formatAmount(value)}
+              {value === null ? '' : formatAriary(value)}
             </td>
           )
         })}
@@ -69,6 +73,7 @@ export const ItemRow = memo(function ItemRow({
             key={col}
             cell={amounts[col]}
             label={`${columnLabel(actions.year, col)} de ${item.code}`}
+            year={columnTarget(actions.year, col).year}
             disabled={columnTarget(actions.year, col).year > MAX_YEAR}
             onCommit={(amount) => actions.setTotal(item.id, col, amount)}
             onOpenDetail={() => actions.openDetail(item, col)}

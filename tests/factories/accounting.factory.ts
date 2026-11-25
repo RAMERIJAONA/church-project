@@ -17,7 +17,7 @@ export function makeChildInput(
 }
 
 export function makeCellDTO(overrides: Partial<CellDTO> = {}): CellDTO {
-  return { total: null, entryCount: 0, detailed: false, ...overrides }
+  return { total: null, entryCount: 0, detailed: false, lastEntryAt: null, ...overrides }
 }
 
 /** Par défaut : feuille de niveau 2 « A1-I », montants vides. */

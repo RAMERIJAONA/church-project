@@ -13,9 +13,8 @@ import { getErrorMessage } from '@renderer/lib/error-messages'
 import { cellOf } from '@shared/domain/accounting/accounting.rules'
 import type { EntryDTO } from '@shared/domain/accounting/accounting.types'
 import { formatDateTime } from '@shared/utils/dates'
-import { formatAmount } from '@shared/utils/money'
-import { operationDateLabel } from '../accounting.utils'
-import { EntryForm, type OperationDateBounds } from './EntryForm'
+import { formatAriary } from '@shared/utils/money'
+import { EntryForm } from './EntryForm'
 
 export interface EntriesDialogProps {
   open: boolean
@@ -26,23 +25,24 @@ export interface EntriesDialogProps {
   entries: EntryDTO[] | undefined
   loading: boolean
   error: unknown
+  /** Année de la case : une saisie faite après cette année affiche l'année seule */
+  year: number
   /** Case non modifiable (ex. Estimation 2201) */
   disabled: boolean
-  /** Réalisation : bornes de la date d'opération ; `null` pour une estimation */
-  dates: OperationDateBounds | null
-  onAdd: (amount: number, label: string | null, operatedOn: string | null) => Promise<void>
-  onUpdate: (
-    id: number,
-    amount: number,
-    label: string | null,
-    operatedOn: string | null
-  ) => Promise<void>
+  onAdd: (amount: number, label: string | null) => Promise<void>
+  onUpdate: (id: number, amount: number, label: string | null) => Promise<void>
   onAskDelete: (entry: EntryDTO) => void
   onRetry: () => void
   onClose: () => void
 }
 
 const nameOf = (entry: EntryDTO): string => entry.label ?? 'sans libellé'
+
+/** « Saisi le 25 novembre 2026 à 14:32 », ou « Saisi après la clôture de 2025 » (année seule). */
+function savedLabel(at: string, year: number, verb: 'Saisi' | 'modifié'): string {
+  const date = new Date(at)
+  return date.getFullYear() > year ? `${verb} après ${year}` : `${verb} le ${formatDateTime(date)}`
+}
 
 /** Détail d'une case : chaque saisie avec son libellé, son montant, sa date et son heure. */
 export function EntriesDialog({
@@ -52,8 +52,8 @@ export function EntriesDialog({
   entries,
   loading,
   error,
+  year,
   disabled,
-  dates,
   onAdd,
   onUpdate,
   onAskDelete,
@@ -91,11 +91,10 @@ export function EntriesDialog({
                   <EntryForm
                     target={`de la saisie ${nameOf(entry)}`}
                     initial={entry}
-                    dates={dates}
                     submitLabel="Enregistrer"
                     disabled={disabled}
-                    onSubmit={async (amount, label, operatedOn) => {
-                      await onUpdate(entry.id, amount, label, operatedOn)
+                    onSubmit={async (amount, label) => {
+                      await onUpdate(entry.id, amount, label)
                       setEditingId(null)
                     }}
                     onCancel={() => setEditingId(null)}
@@ -107,18 +106,13 @@ export function EntriesDialog({
                         {entry.label ?? 'Sans libellé'}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {entry.operatedOn && (
-                          <span className="font-medium text-foreground">
-                            Opération du {operationDateLabel(entry.operatedOn)} ·{' '}
-                          </span>
-                        )}
-                        <span>saisi le {formatDateTime(new Date(entry.createdAt))}</span>
+                        <span>{savedLabel(entry.createdAt, year, 'Saisi')}</span>
                         {entry.updatedAt !== entry.createdAt && (
-                          <span> · modifié le {formatDateTime(new Date(entry.updatedAt))}</span>
+                          <span> · {savedLabel(entry.updatedAt, year, 'modifié')}</span>
                         )}
                       </p>
                     </div>
-                    <span className="font-medium tabular-nums">{formatAmount(entry.amount)}</span>
+                    <span className="font-medium tabular-nums">{formatAriary(entry.amount)}</span>
                     <Button
                       variant="ghost"
                       size="icon-sm"
@@ -149,7 +143,6 @@ export function EntriesDialog({
 
         <EntryForm
           target="de la nouvelle saisie"
-          dates={dates}
           submitLabel="Ajouter"
           disabled={disabled || entries === undefined}
           onSubmit={onAdd}
@@ -157,7 +150,7 @@ export function EntriesDialog({
 
         <DialogFooter className="sm:justify-between">
           <p className="self-center font-medium tabular-nums">
-            Total : {total === null ? 'aucun montant' : formatAmount(total)}
+            Total : {total === null ? 'aucun montant' : formatAriary(total)}
           </p>
           <Button variant="outline" onClick={onClose}>
             Fermer

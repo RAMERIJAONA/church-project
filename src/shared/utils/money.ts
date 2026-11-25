@@ -19,9 +19,17 @@ export function groupDigits(digits: string): string {
   return digits.replace(/\B(?=(\d{3})+(?!\d))/g, THOUSANDS_SEPARATOR)
 }
 
-/** « 2 000 000 » */
+/** « 2 000 000 » (sans unité : champs de saisie, qui affichent « Ar » à côté) */
 export function formatAmount(amount: number): string {
   return groupDigits(String(amount))
+}
+
+/** Sigle de l'Ariary, la monnaie de tous les montants. */
+export const CURRENCY = 'Ar'
+
+/** « 2 000 000 Ar » : affichage d'un montant (tableaux, totaux, impression). Espace insécable. */
+export function formatAriary(amount: number): string {
+  return `${formatAmount(amount)}${THOUSANDS_SEPARATOR}${CURRENCY}`
 }
 
 /**

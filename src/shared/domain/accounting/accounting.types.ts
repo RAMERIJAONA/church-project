@@ -115,15 +115,16 @@ export const setTotalInputSchema = z
   .strict()
 export const listEntriesInputSchema = z.object(cellTarget).strict()
 /**
- * `operatedOn` : date d'opération, obligatoire pour une réalisation (dans l'année de la case),
- * `null` pour une estimation. Contrôlé par le service, qui connaît le type de la case.
+ * `operatedOn` : date d'opération d'une réalisation (dans l'année de la case), `null` pour une
+ * estimation. Absente (cas de l'UI) : calculée par le service, aujourd'hui ramené dans l'année
+ * à l'ajout, inchangée à la modification. Contrôlée par le service, qui connaît le type de la case.
  */
 export const addEntryInputSchema = z
   .object({
     ...cellTarget,
     amount: amountSchema,
     label: labelSchema,
-    operatedOn: operationDateSchema.nullable()
+    operatedOn: operationDateSchema.nullable().optional()
   })
   .strict()
 export const updateEntryInputSchema = z
@@ -131,7 +132,7 @@ export const updateEntryInputSchema = z
     id: idSchema,
     amount: amountSchema,
     label: labelSchema,
-    operatedOn: operationDateSchema.nullable()
+    operatedOn: operationDateSchema.nullable().optional()
   })
   .strict()
 /** Période d'affichage des réalisations (bornes incluses, de n'importe quelle durée). */
@@ -155,6 +156,8 @@ export interface CellDTO {
   entryCount: number
   /** Plusieurs saisies ou une saisie avec libellé : modifiable seulement depuis le détail */
   detailed: boolean
+  /** Dernière saisie ou modification (ISO 8601 UTC), `null` si aucune saisie */
+  lastEntryAt: string | null
 }
 
 /** Les 3 colonnes de l'année affichée N. */

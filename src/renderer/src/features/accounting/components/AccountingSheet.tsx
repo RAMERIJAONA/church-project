@@ -1,7 +1,7 @@
 import { Fragment, useMemo } from 'react'
 import type { AccountingItemDTO } from '@shared/domain/accounting/accounting.types'
 import { nextChildCode } from '@shared/domain/accounting/accounting.tree'
-import { formatAmount } from '@shared/utils/money'
+import { formatAriary } from '@shared/utils/money'
 import { AMOUNT_COLUMNS, columnLabel, flattenTree, sheetTotals } from '../accounting.utils'
 import { AddChildRow } from './AddChildRow'
 import { ItemRow } from './ItemRow'
@@ -93,7 +93,7 @@ export function AccountingSheet({
               const value = totals.grand[c]
               return (
                 <td key={c} className={totalCell}>
-                  {value === null ? '' : formatAmount(value)}
+                  {value === null ? '' : formatAriary(value)}
                 </td>
               )
             })}

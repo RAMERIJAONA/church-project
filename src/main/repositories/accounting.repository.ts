@@ -78,7 +78,14 @@ export function createAccountingRepository() {
 
     listEntriesForYears(db: DbOrTx, years: number[]): EntryRow[] {
       return db
-        .select({ itemId: e.itemId, year: e.year, type: e.type, amount: e.amount, label: e.label })
+        .select({
+          itemId: e.itemId,
+          year: e.year,
+          type: e.type,
+          amount: e.amount,
+          label: e.label,
+          updatedAt: e.updatedAt
+        })
         .from(e)
         .where(and(inArray(e.year, years), isNull(e.deletedAt)))
         .all()

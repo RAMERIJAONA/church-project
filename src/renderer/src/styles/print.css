@@ -1,8 +1,10 @@
 /* Impression (tableaux de comptabilité, reçus, listes). Chargé avec media="print". */
 @page {
   size: A4;
-  /* Marges demandées par le porteur, identiques sur les 4 côtés (imprimante et PDF) */
-  margin: 32px;
+  /* Marges demandées par le porteur (2026-11-25), identiques sur les 4 côtés. Même valeur
+     passée à Electron (adapters/print.adapter.ts, PRINT_MARGIN_PX) : la boîte d'impression
+     du système ne lit pas toujours @page. */
+  margin: 64px;
 }
 
 @media print {
@@ -94,6 +96,17 @@
     padding: 0 !important;
     height: auto !important;
     color: inherit !important;
+  }
+  /* Case montant : place pour « Ar » (à droite du chiffre), pas d'invite « Saisir » */
+  td input[data-amount] {
+    padding-right: calc(var(--spacing) * 7) !important;
+  }
+  td input::placeholder {
+    color: transparent !important;
+  }
+  /* Date sous le montant : alignée sur « Ar » (le bouton de détail n'est pas imprimé) */
+  td [data-amount-date] {
+    padding-right: calc(var(--spacing) * 2) !important;
   }
   /* Cadre arrondi de l'écran */
   .rounded-xl {

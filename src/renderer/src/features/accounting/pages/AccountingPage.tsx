@@ -16,9 +16,16 @@ import {
   operationDateSchema,
   yearSchema
 } from '@shared/domain/accounting/accounting.types'
-import type { AccountingView } from '../accounting.utils'
+import {
+  summaryPeriods,
+  sumPeriodTotals,
+  type AccountingView,
+  type SummaryPeriod
+} from '../accounting.utils'
 import { CustomRangePicker } from '../components/CustomRangePicker'
 import { PeriodStepper } from '../components/PeriodStepper'
+import { RealisationSummary } from '../components/RealisationSummary'
+import { usePeriodTotalsMany } from '../queries'
 import { PeriodView } from './PeriodView'
 import { YearView } from './YearView'
 
@@ -73,6 +80,28 @@ export function AccountingPage(): React.JSX.Element {
     view === 'custom' ? custom : view ? periodRange(view, anchor) : null
   const reference = view === 'custom' ? custom.from : anchor
 
+  // Synthèse : réalisations du jour, de la semaine, du mois et de l'année en cours
+  const periods = useMemo(() => summaryPeriods(today), [today])
+  const summary = usePeriodTotalsMany(periods.map((p) => p.range))
+  const isShown = (p: SummaryPeriod): boolean =>
+    p.kind === 'year'
+      ? view === null && year === currentYear
+      : view === p.kind && shown?.from === p.range.from && shown.to === p.range.to
+  const summaryBlock = (
+    <RealisationSummary
+      tiles={periods.map((p, i) => {
+        const data = summary[i]?.data
+        return { ...p, total: data ? sumPeriodTotals(data) : undefined, active: isShown(p) }
+      })}
+      failed={summary.some((q) => q.isError)}
+      onSelect={(kind) =>
+        kind === 'year'
+          ? replace({ annee: String(currentYear) })
+          : replace({ vue: VIEW_PARAM[kind], date: today })
+      }
+    />
+  )
+
   const changeView = (next: AccountingView): void => {
     if (next === 'year') replace({ annee: String(yearOf(reference)) })
     else if (next === 'custom') {
@@ -81,57 +110,66 @@ export function AccountingPage(): React.JSX.Element {
     } else replace({ vue: VIEW_PARAM[next], date: reference })
   }
 
-  if (view === 'custom') {
-    return (
-      <PeriodView
-        view="custom"
-        range={custom}
-        label={rangeLabel(custom)}
-        onViewChange={changeView}
-        navigation={
-          <CustomRangePicker
-            range={custom}
-            onChange={(r) => replace({ vue: VIEW_PARAM.custom, du: r.from, au: r.to })}
-          />
-        }
-      />
-    )
-  }
-
-  if (view) {
-    const kind: PeriodKind = view
-    const range = periodRange(kind, anchor)
-    const label = periodLabel(kind, range)
-    const shift = (delta: -1 | 1): void => {
-      const next = shiftPeriod(kind, anchor, delta)
-      if (yearOf(next) >= MIN_YEAR && yearOf(next) <= MAX_YEAR) {
-        replace({ vue: VIEW_PARAM[kind], date: next })
-      }
-    }
-    return (
-      <PeriodView
-        view={kind}
-        range={range}
-        label={label}
-        onViewChange={changeView}
-        navigation={
-          <PeriodStepper
-            label={label}
-            isCurrent={range.from <= today && today <= range.to}
-            onShift={shift}
-            onToday={() => replace({ vue: VIEW_PARAM[kind], date: today })}
-          />
-        }
-      />
-    )
-  }
-
   return (
-    <YearView
-      year={year}
-      currentYear={currentYear}
-      onYearChange={(y) => replace({ annee: String(y) })}
-      onViewChange={changeView}
-    />
+    <div className="flex flex-col gap-6">
+      {summaryBlock}
+      {content()}
+    </div>
   )
+
+  function content(): React.JSX.Element {
+    if (view === 'custom') {
+      return (
+        <PeriodView
+          view="custom"
+          range={custom}
+          label={rangeLabel(custom)}
+          onViewChange={changeView}
+          navigation={
+            <CustomRangePicker
+              range={custom}
+              onChange={(r) => replace({ vue: VIEW_PARAM.custom, du: r.from, au: r.to })}
+            />
+          }
+        />
+      )
+    }
+
+    if (view) {
+      const kind: PeriodKind = view
+      const range = periodRange(kind, anchor)
+      const label = periodLabel(kind, range)
+      const shift = (delta: -1 | 1): void => {
+        const next = shiftPeriod(kind, anchor, delta)
+        if (yearOf(next) >= MIN_YEAR && yearOf(next) <= MAX_YEAR) {
+          replace({ vue: VIEW_PARAM[kind], date: next })
+        }
+      }
+      return (
+        <PeriodView
+          view={kind}
+          range={range}
+          label={label}
+          onViewChange={changeView}
+          navigation={
+            <PeriodStepper
+              label={label}
+              isCurrent={range.from <= today && today <= range.to}
+              onShift={shift}
+              onToday={() => replace({ vue: VIEW_PARAM[kind], date: today })}
+            />
+          }
+        />
+      )
+    }
+
+    return (
+      <YearView
+        year={year}
+        currentYear={currentYear}
+        onYearChange={(y) => replace({ annee: String(y) })}
+        onViewChange={changeView}
+      />
+    )
+  }
 }

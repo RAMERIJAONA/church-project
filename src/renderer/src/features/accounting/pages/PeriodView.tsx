@@ -50,7 +50,11 @@ export function PeriodView({
       />
       <PrintHeader title={`Réalisations : ${label}`} printedAt={new Date()} />
       <p data-print="hide" className="text-sm text-muted-foreground">
-        Somme des réalisations par date d’opération. Pour saisir ou modifier, passez en vue Année.
+        Somme des réalisations enregistrées sur cette période. Pour saisir ou modifier un montant,{' '}
+        <Button variant="link" className="h-auto p-0" onClick={() => onViewChange('year')}>
+          passez en vue Année
+        </Button>
+        .
       </p>
 
       {(sheet.isPending || totals.isPending) && (

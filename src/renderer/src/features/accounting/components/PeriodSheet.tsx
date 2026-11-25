@@ -1,7 +1,8 @@
+import { CornerDownRight } from 'lucide-react'
 import { useMemo } from 'react'
 import { rollUp } from '@shared/domain/accounting/accounting.totals'
 import type { AccountingItemDTO } from '@shared/domain/accounting/accounting.types'
-import { formatAmount } from '@shared/utils/money'
+import { formatAriary } from '@shared/utils/money'
 import { flattenTree } from '../accounting.utils'
 import {
   codeCell,
@@ -10,7 +11,8 @@ import {
   headCell,
   sheetRow,
   totalCell,
-  totalRow
+  totalRow,
+  treeConnector
 } from './accounting.styles'
 
 export interface PeriodSheetProps {
@@ -66,18 +68,23 @@ export function PeriodSheet({ label, items, totals }: PeriodSheetProps): React.J
               const total = sums.byItem.get(item.id) ?? null
               return (
                 <tr key={item.id} data-row={kind} className={sheetRow({ kind })}>
-                  <th scope="row" className={codeCell({ kind })}>
+                  <th scope="row" className={codeCell({ kind, level: item.level })}>
                     {item.code}
                   </th>
                   <td className={descriptionCell({ level: item.level })}>
-                    <span className="block truncate px-2 py-1">{item.description}</span>
+                    <div className="flex items-center gap-1">
+                      {item.level > 1 && <CornerDownRight aria-hidden className={treeConnector} />}
+                      <span className="block min-w-0 flex-1 truncate px-2 py-1">
+                        {item.description}
+                      </span>
+                    </div>
                   </td>
                   <td
                     className={
                       item.amounts ? 'px-3 py-1 text-right font-medium tabular-nums' : totalCell
                     }
                   >
-                    {total === null ? '' : formatAmount(total)}
+                    {total === null ? '' : formatAriary(total)}
                   </td>
                 </tr>
               )
@@ -88,7 +95,7 @@ export function PeriodSheet({ label, items, totals }: PeriodSheetProps): React.J
               <th scope="row" colSpan={2} className={codeCell({ kind: 'root' })}>
                 Total
               </th>
-              <td className={totalCell}>{sums.grand === null ? '' : formatAmount(sums.grand)}</td>
+              <td className={totalCell}>{sums.grand === null ? '' : formatAriary(sums.grand)}</td>
             </tr>
           </tfoot>
         </table>

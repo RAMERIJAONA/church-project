@@ -30,12 +30,6 @@ export function AccountingToolbar({
         {navigation}
       </div>
       <div className="flex items-center gap-4">
-        {onNewSection && (
-          <p className="hidden text-xs text-muted-foreground xl:block">
-            Astuce : tapez un montant puis <kbd className="font-sans font-semibold">Entrée</kbd>{' '}
-            pour passer à la case suivante.
-          </p>
-        )}
         <Button variant="outline" onClick={onPrint}>
           <Printer aria-hidden />
           Imprimer

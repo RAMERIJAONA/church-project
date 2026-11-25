@@ -24,6 +24,24 @@ describe('AccountingService : date d’opération et périodes', () => {
     expect(dates(2026, 'estimate')).toEqual([[3, null]])
   })
 
+  // Demande du porteur (2026-11-25) : l'UI n'envoie plus de date, le service la fixe
+  it('date automatiquement une saisie du détail et garde sa date à la modification', () => {
+    const { church, service, clock } = setup()
+    const { a } = church()
+    const added = (year: number, type: 'actual' | 'estimate') =>
+      service.addEntry({ itemId: a.id, year, type, amount: 1, label: 'X' }).id
+    const now = added(YEAR, 'actual')
+    const past = added(2025, 'actual')
+    const estimate = added(YEAR, 'estimate')
+    clock.set(new Date('2026-12-02T09:00:00.000Z'))
+    service.updateEntry({ id: now, amount: 5, label: 'Y' })
+    const dateOf = (year: number, type: 'actual' | 'estimate', id: number) =>
+      service.listEntries({ itemId: a.id, year, type }).find((e) => e.id === id)?.operatedOn
+    expect(dateOf(YEAR, 'actual', now)).toBe(D)
+    expect(dateOf(2025, 'actual', past)).toBe('2025-12-31')
+    expect(dateOf(YEAR, 'estimate', estimate)).toBeNull()
+  })
+
   it('exige une date d’opération dans l’année pour une réalisation, aucune pour une estimation', () => {
     const { church, service } = setup()
     const { a } = church()

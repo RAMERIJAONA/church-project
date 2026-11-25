@@ -1,36 +1,29 @@
-import { useId, useRef, useState } from 'react'
-import { DateField } from '@renderer/components/common/DateField'
+import { useRef, useState } from 'react'
 import { Button } from '@renderer/components/ui/button'
 import { Input } from '@renderer/components/ui/input'
 import { getMoneyInputProps } from '@renderer/lib/money-input'
 import { labelSchema } from '@shared/domain/accounting/accounting.types'
-import { formatAmount, parseAmount } from '@shared/utils/money'
-
-/** Bornes et valeur proposée du champ date (réalisations seulement). */
-export interface OperationDateBounds {
-  min: string
-  max: string
-  initial: string
-}
+import { CURRENCY, formatAmount, parseAmount } from '@shared/utils/money'
+import { amountSuffix } from './accounting.styles'
 
 export interface EntryFormProps {
   /** Complète les noms accessibles : « de la nouvelle saisie », « de la saisie Kojakoja » */
   target: string
-  initial?: { amount: number; label: string | null; operatedOn: string | null }
-  /** Réalisation : champ date d'opération ; `null` pour une estimation (pas de date) */
-  dates: OperationDateBounds | null
+  initial?: { amount: number; label: string | null }
   submitLabel: string
   disabled: boolean
   /** Rejette en cas d'échec (la saisie est alors conservée) */
-  onSubmit: (amount: number, label: string | null, operatedOn: string | null) => Promise<void>
+  onSubmit: (amount: number, label: string | null) => Promise<void>
   onCancel?: () => void
 }
 
-/** Libellé (facultatif) + montant. Entrée enregistre. Sert à l'ajout comme à la modification. */
+/**
+ * Libellé (facultatif) + montant. Entrée enregistre. Sert à l'ajout comme à la modification.
+ * Pas de champ date : la date et l'heure sont enregistrées automatiquement (demande du porteur).
+ */
 export function EntryForm({
   target,
   initial,
-  dates,
   submitLabel,
   disabled,
   onSubmit,
@@ -38,8 +31,6 @@ export function EntryForm({
 }: EntryFormProps): React.JSX.Element {
   const [label, setLabel] = useState(initial?.label ?? '')
   const [amount, setAmount] = useState(initial ? formatAmount(initial.amount) : '')
-  const dateLabelId = useId()
-  const [operatedOn, setOperatedOn] = useState(initial?.operatedOn ?? dates?.initial ?? '')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const labelRef = useRef<HTMLInputElement>(null)
@@ -59,13 +50,9 @@ export function EntryForm({
       amountRef.current?.focus()
       return
     }
-    if (dates && !(operatedOn >= dates.min && operatedOn <= dates.max)) {
-      setError(`Choisissez une date entre le ${dates.min} et le ${dates.max}.`)
-      return
-    }
     setBusy(true)
     try {
-      await onSubmit(parsedAmount.value, parsedLabel.data, dates ? operatedOn : null)
+      await onSubmit(parsedAmount.value, parsedLabel.data)
       setError(null)
       if (!initial) {
         setLabel('')
@@ -92,21 +79,6 @@ export function EntryForm({
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-center gap-2">
-        {dates && (
-          <>
-            <span id={dateLabelId} className="sr-only">
-              Date {target}
-            </span>
-            <DateField
-              labelId={dateLabelId}
-              value={operatedOn}
-              min={dates.min}
-              max={dates.max}
-              disabled={disabled}
-              onChange={setOperatedOn}
-            />
-          </>
-        )}
         <Input
           ref={labelRef}
           aria-label={`Libellé ${target}`}
@@ -119,24 +91,29 @@ export function EntryForm({
           onChange={(e) => setLabel(e.currentTarget.value)}
           onKeyDown={onKeyDown}
         />
-        <Input
-          ref={amountRef}
-          aria-label={`Montant ${target}`}
-          placeholder="Montant"
-          className="w-36 text-right tabular-nums"
-          disabled={disabled}
-          aria-invalid={error !== null ? true : undefined}
-          {...money}
-          onKeyDown={(e) => {
-            money.onKeyDown(e)
-            onKeyDown(e)
-          }}
-        />
-        <Button size="sm" disabled={disabled || busy} onClick={() => void submit()}>
+        <div className="relative w-40">
+          <Input
+            ref={amountRef}
+            aria-label={`Montant ${target}`}
+            placeholder="Montant"
+            className="pr-8 text-right tabular-nums"
+            disabled={disabled}
+            aria-invalid={error !== null ? true : undefined}
+            {...money}
+            onKeyDown={(e) => {
+              money.onKeyDown(e)
+              onKeyDown(e)
+            }}
+          />
+          <span aria-hidden className={amountSuffix}>
+            {CURRENCY}
+          </span>
+        </div>
+        <Button disabled={disabled || busy} onClick={() => void submit()}>
           {submitLabel}
         </Button>
         {onCancel && (
-          <Button size="sm" variant="ghost" onClick={onCancel}>
+          <Button variant="ghost" onClick={onCancel}>
             Annuler
           </Button>
         )}

@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
+import { formatShortDateTime } from '@shared/utils/dates'
 import { makeItemDTO, makeRootDTO } from '@tests/factories/accounting.factory'
 import {
+  entryDateLabel,
+  summaryPeriods,
+  sumPeriodTotals,
   AMOUNT_COLUMNS,
   columnLabel,
   columnTarget,
@@ -66,7 +70,8 @@ describe('flattenTree', () => {
     expect(updated?.amounts?.nextEstimate).toEqual({
       total: 600000,
       entryCount: 1,
-      detailed: false
+      detailed: false,
+      lastEntryAt: expect.any(String) // heure locale, remplacée au rechargement
     })
     expect(updated?.amounts?.actual.total).toBeNull()
     expect(
@@ -75,10 +80,41 @@ describe('flattenTree', () => {
     ).toEqual({
       total: null,
       entryCount: 0,
-      detailed: false
+      detailed: false,
+      lastEntryAt: null
     })
     expect(
       sheet.items[0]?.children[1]?.children[0]?.children[0]?.amounts?.nextEstimate.total
     ).toBeNull()
+  })
+})
+
+describe('synthèse des réalisations', () => {
+  it('donne le jour, la semaine (lundi-dimanche), le mois et l’année en cours', () => {
+    expect(summaryPeriods('2026-11-25').map((p) => [p.title, p.range.from, p.range.to])).toEqual([
+      ['Aujourd’hui', '2026-11-25', '2026-11-25'],
+      ['Cette semaine', '2026-11-23', '2026-11-29'],
+      ['Ce mois', '2026-11-01', '2026-11-30'],
+      ['Cette année', '2026-01-01', '2026-12-31']
+    ])
+  })
+
+  it('additionne les réalisations de toutes les rubriques, vide si aucune', () => {
+    expect(
+      sumPeriodTotals([
+        { itemId: 1, total: 420000, entryCount: 1 },
+        { itemId: 2, total: 350000, entryCount: 2 }
+      ])
+    ).toBe(770000)
+    expect(sumPeriodTotals([])).toBeNull()
+  })
+})
+
+describe('date sous un montant', () => {
+  it('date et heure de la saisie, ou l’année seule si saisie après la fin de l’année', () => {
+    const at = '2026-11-25T11:32:00.000Z'
+    expect(entryDateLabel(at, 2026)).toBe(formatShortDateTime(new Date(at)))
+    expect(entryDateLabel(at, 2027)).toBe(formatShortDateTime(new Date(at)))
+    expect(entryDateLabel(at, 2025)).toBe('2025')
   })
 })

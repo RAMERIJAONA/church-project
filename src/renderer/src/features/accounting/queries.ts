@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import type {
   AccountingSheetDTO,
   AddEntryInput,
@@ -45,6 +45,16 @@ export function usePeriodTotals(range: PeriodTotalsInput) {
     queryKey: accountingKeys.periodTotals(range),
     queryFn: () => accountingApi.periodTotals(range),
     placeholderData: (previous) => previous
+  })
+}
+
+/** Réalisations de plusieurs périodes à la fois (synthèse jour / semaine / mois / année). */
+export function usePeriodTotalsMany(ranges: readonly PeriodTotalsInput[]) {
+  return useQueries({
+    queries: ranges.map((range) => ({
+      queryKey: accountingKeys.periodTotals(range),
+      queryFn: () => accountingApi.periodTotals(range)
+    }))
   })
 }
 

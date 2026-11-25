@@ -2,27 +2,60 @@ import { execFileSync } from 'node:child_process'
 import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { inflateSync } from 'node:zlib'
 import { expect, test } from '@playwright/test'
 import { launchApp, navLink, removeDir } from './app'
 
-/** Marge du PDF demandée par le porteur (haut, bas, gauche, droite). */
-const PAGE_MARGIN = '32px'
-/** Largeur utile d'une page A4 (210 mm) moins deux marges de 32 px, en px CSS. */
-const A4_CONTENT_WIDTH = Math.floor((210 / 25.4) * 96) - 2 * 32
+/** Marge du PDF demandée par le porteur (haut, bas, gauche, droite), 2026-11-25. */
+const MARGIN_PX = 64
+const PAGE_MARGIN = `${MARGIN_PX}px`
+/** Largeur utile d'une page A4 (210 mm) moins deux marges, en px CSS. */
+const A4_CONTENT_WIDTH = Math.floor((210 / 25.4) * 96) - 2 * MARGIN_PX
+
+/**
+ * Marges réelles de la 1re page du PDF, en points (1 px CSS = 0,75 pt). Chromium (Skia) ouvre
+ * le contenu de page par une mise à l'échelle (`s 0 0 -s 0 h cm`) puis un rectangle de
+ * découpe (`q x y l h re W* n`) placé à la marge gauche / haute.
+ */
+function pdfMargins(pdf: Buffer): { left: number; top: number } | null {
+  for (const m of pdf.toString('latin1').matchAll(/stream\r?\n/g)) {
+    const start = (m.index ?? 0) + m[0].length
+    const end = pdf.indexOf('endstream', start, 'latin1')
+    let text: string
+    try {
+      text = inflateSync(pdf.subarray(start, end)).toString('latin1')
+    } catch {
+      continue // flux non compressé (police, image) : ignoré
+    }
+    const scale = /^([\d.]+) 0 0 -[\d.]+ 0 [\d.]+ cm/.exec(text)
+    const clip = /q\n([\d.]+) ([\d.]+) [\d.]+ [\d.]+ re\nW\* n/.exec(text)
+    if (scale && clip) {
+      const s = Number(scale[1])
+      return { left: Number(clip[1]) * s, top: Number(clip[2]) * s }
+    }
+  }
+  return null
+}
 
 const pdfOf = (running: Awaited<ReturnType<typeof launchApp>>) =>
-  running.app.evaluate(async ({ BrowserWindow }) => {
-    const contents = BrowserWindow.getAllWindows()[0]?.webContents
-    if (!contents) throw new Error('aucune fenêtre')
-    const printers = await contents.getPrintersAsync()
-    const pdf = await contents.printToPDF({ printBackground: true, preferCSSPageSize: true })
-    const text = Buffer.from(pdf).toString('latin1')
-    return {
-      printers: Array.isArray(printers),
-      head: text.slice(0, 4),
-      pages: (text.match(/\/Type\s*\/Page[^s]/g) ?? []).length
-    }
-  })
+  running.app
+    .evaluate(async ({ BrowserWindow }) => {
+      const contents = BrowserWindow.getAllWindows()[0]?.webContents
+      if (!contents) throw new Error('aucune fenêtre')
+      const printers = await contents.getPrintersAsync()
+      const pdf = await contents.printToPDF({ printBackground: true, preferCSSPageSize: true })
+      return { printers: Array.isArray(printers), base64: Buffer.from(pdf).toString('base64') }
+    })
+    .then(({ printers, base64 }) => {
+      const pdf = Buffer.from(base64, 'base64')
+      const text = pdf.toString('latin1')
+      return {
+        printers,
+        head: text.slice(0, 4),
+        pages: (text.match(/\/Type\s*\/Page[^s]/g) ?? []).length,
+        margins: pdfMargins(pdf)
+      }
+    })
 
 /**
  * Les deux appels Electron de `adapters/print.adapter.ts`, sur l'app réelle : liste des
@@ -37,6 +70,10 @@ test('impression : liste des imprimantes et PDF de la page de comptabilité', as
     const pdf = await pdfOf(running)
     expect(pdf.printers).toBe(true)
     expect(pdf.head).toBe('%PDF')
+    // Régression (2026-11-25) : marges de 64 px non visibles dans le PDF. Mesurées dans le PDF
+    // produit (@page de print.css seul, sans option de marge), pas seulement dans le CSS.
+    expect(pdf.margins?.left).toBeCloseTo(MARGIN_PX * 0.75, 0)
+    expect(pdf.margins?.top).toBeCloseTo(MARGIN_PX * 0.75, 0)
   } finally {
     await running.close()
     removeDir(running.userData)
@@ -47,7 +84,7 @@ test('impression : liste des imprimantes et PDF de la page de comptabilité', as
  * Régression (2026-11-24) : le PDF du plan 2025 (107 rubriques) n'avait qu'une page (la coque
  * de l'app fixe la hauteur à l'écran et fait défiler <main>) et la colonne de droite était
  * coupée (descriptions sur une seule ligne : tableau plus large que la page A4).
- * Demande du porteur : marges de 32 px et total une seule fois, à la fin du tableau.
+ * Demande du porteur : marges de 64 px et total une seule fois, à la fin du tableau.
  */
 test('impression : tout le plan comptable, sur plusieurs pages et dans la largeur A4', async () => {
   const userData = mkdtempSync(join(tmpdir(), 'church-print-'))

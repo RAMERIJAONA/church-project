@@ -141,7 +141,13 @@ describe('AccountingService : montants', () => {
         updatedAt: T10
       }
     ])
-    expect(item(i1.id)?.amounts?.actual).toEqual({ total: 600000, entryCount: 1, detailed: false })
+    // Date affichée : la dernière modification
+    expect(item(i1.id)?.amounts?.actual).toEqual({
+      total: 600000,
+      entryCount: 1,
+      detailed: false,
+      lastEntryAt: T10
+    })
 
     service.setTotal({ ...cell, itemId: i1.id, amount: null })
     expect(service.listEntries({ ...cell, itemId: i1.id })).toEqual([])
@@ -169,7 +175,12 @@ describe('AccountingService : montants', () => {
       ['Kojakoja', T9],
       ['Fanatsarana', T10]
     ])
-    expect(item(a.id)?.amounts?.actual).toEqual({ total: 350000, entryCount: 2, detailed: true })
+    expect(item(a.id)?.amounts?.actual).toEqual({
+      total: 350000,
+      entryCount: 2,
+      detailed: true,
+      lastEntryAt: T10
+    })
   })
 
   it('modifie et supprime une saisie', () => {

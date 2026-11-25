@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import { formatAmount } from '@shared/utils/money'
+import { formatAriary } from '@shared/utils/money'
+import { formatShortDateTime } from '@shared/utils/dates'
 import { makeCellDTO } from '@tests/factories/accounting.factory'
 import { AmountCell, type AmountCellProps } from './AmountCell'
 
@@ -17,6 +18,7 @@ function setup(props: Partial<AmountCellProps> = {}) {
           <AmountCell
             cell={makeCellDTO()}
             label={LABEL}
+            year={2026}
             disabled={false}
             onCommit={onCommit}
             onOpenDetail={onOpenDetail}
@@ -44,9 +46,28 @@ describe('AmountCell', () => {
     })
     expect(screen.queryByRole('textbox')).toBeNull()
     // Testing Library normalise les espaces affichées (U+00A0 → espace) : même chose ici
-    expect(screen.getByText(formatAmount(3500).replace(/\s/g, ' '))).toBeDefined()
+    expect(screen.getByText(formatAriary(3500).replace(/\s/g, ' '))).toBeDefined()
     await userEvent.click(screen.getByRole('button', { name: `Détail : ${LABEL}` }))
     expect(onOpenDetail).toHaveBeenCalledOnce()
+  })
+
+  it('invite à saisir dans une case vide, sans date', () => {
+    setup()
+    expect(screen.getByRole('textbox', { name: LABEL }).getAttribute('placeholder')).toBe('Montant')
+    expect(screen.queryByTitle(/Dernière saisie/)).toBeNull()
+  })
+
+  it('affiche « Ar » et la date et l’heure de la dernière saisie sous le montant', () => {
+    const at = '2026-11-25T11:32:00.000Z'
+    setup({ cell: makeCellDTO({ total: 150000, entryCount: 1, lastEntryAt: at }) })
+    expect(screen.getByText('Ar')).toBeDefined()
+    expect(screen.getByTitle(/Dernière saisie/).textContent).toBe(formatShortDateTime(new Date(at)))
+  })
+
+  it('saisie faite après la fin de l’année de la case : année seule', () => {
+    const at = '2026-02-03T09:00:00.000Z'
+    setup({ year: 2025, cell: makeCellDTO({ total: 1, entryCount: 1, lastEntryAt: at }) })
+    expect(screen.getByTitle(/Dernière saisie/).textContent).toBe('2025')
   })
 
   it('désactive la case quand demandé', () => {
