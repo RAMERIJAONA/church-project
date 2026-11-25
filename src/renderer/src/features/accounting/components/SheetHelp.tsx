@@ -17,12 +17,19 @@ export function SheetHelp(): React.JSX.Element {
           en Ariary (Ar), puis <kbd className="font-sans font-semibold">Entrée</kbd> pour passer à
           la case suivante. La date et l’heure sont enregistrées automatiquement.
         </li>
+        {/* Une explication par ligne (demande du porteur, 2026-11-25) */}
         <li className="text-muted-foreground">
           <List aria-hidden className="inline size-3.5 align-[-2px]" /> à côté d’un montant : son
-          détail (saisies, libellés, dates et heures).{' '}
+          détail (saisies, libellés, dates et heures).
+        </li>
+        <li className="text-muted-foreground">
           <Plus aria-hidden className="inline size-3.5 align-[-2px]" /> en bout de ligne : ajouter
-          une sous-rubrique ; <Ellipsis aria-hidden className="inline size-3.5 align-[-2px]" /> :
-          modifier ou supprimer.
+          une sous-rubrique.
+        </li>
+        <li className="text-muted-foreground">
+          <Ellipsis aria-hidden className="inline size-3.5 align-[-2px]" /> à côté du{' '}
+          <Plus aria-hidden className="inline size-3.5 align-[-2px]" /> : modifier ou supprimer la
+          rubrique.
         </li>
       </ul>
     </div>
