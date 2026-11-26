@@ -52,13 +52,14 @@ describe('EntriesDialog', () => {
     const dialog = screen.getByRole('dialog', { name: 'Réalisation 2026 de F1-II-1 A)' })
     const rows = within(dialog).getAllByRole('listitem')
     expect(rows).toHaveLength(2)
-    expect(within(rows[0]!).getByText('Kojakoja')).toBeDefined()
-    expect(within(rows[0]!).getByText(shown(formatAriary(250000)))).toBeDefined()
-    expect(rows[0]?.textContent).toContain(
+    // La plus récente en haut : Fanatsarana (10:00) avant Kojakoja (09:00)
+    expect(within(rows[1]!).getByText('Kojakoja')).toBeDefined()
+    expect(within(rows[1]!).getByText(shown(formatAriary(250000)))).toBeDefined()
+    expect(rows[1]?.textContent).toContain(
       shown(`Saisi le ${formatDateTime(new Date('2026-11-24T09:00:00.000Z'))}`)
     )
     // Modifiée après sa création : les deux dates sont visibles
-    expect(rows[1]?.textContent).toContain(
+    expect(rows[0]?.textContent).toContain(
       shown(`modifié le ${formatDateTime(new Date('2026-11-24T11:30:00.000Z'))}`)
     )
     expect(within(dialog).getByText(shown(`Total : ${formatAriary(350000)}`))).toBeDefined()

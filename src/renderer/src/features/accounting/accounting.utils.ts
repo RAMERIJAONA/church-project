@@ -155,6 +155,18 @@ export function entrySavedOn(entry: Pick<EntryDTO, 'createdAt'>): string {
   return localDateOf(new Date(entry.createdAt))
 }
 
+/**
+ * Ordre d'affichage du détail : la saisie la plus récente en haut (date de saisie, puis ordre
+ * d'enregistrement ; demande du porteur, 2026-11-26).
+ */
+export function newestFirst<T extends Pick<EntryDTO, 'id' | 'createdAt'>>(
+  entries: readonly T[]
+): T[] {
+  return [...entries].sort((a, b) =>
+    a.createdAt === b.createdAt ? b.id - a.id : a.createdAt < b.createdAt ? 1 : -1
+  )
+}
+
 /** Saisies faites entre deux jours locaux, bornes incluses (filtre du détail). */
 export function entriesSavedIn<T extends Pick<EntryDTO, 'createdAt'>>(
   entries: readonly T[],

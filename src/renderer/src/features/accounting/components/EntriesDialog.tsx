@@ -15,7 +15,7 @@ import { cellOf } from '@shared/domain/accounting/accounting.rules'
 import type { EntryDTO } from '@shared/domain/accounting/accounting.types'
 import { formatDateTime } from '@shared/utils/dates'
 import { formatAriary } from '@shared/utils/money'
-import { entriesSavedIn, entriesSavedRange } from '../accounting.utils'
+import { entriesSavedIn, entriesSavedRange, newestFirst } from '../accounting.utils'
 import { EntriesFilter } from './EntriesFilter'
 import { EntryForm } from './EntryForm'
 
@@ -70,7 +70,7 @@ export function EntriesDialog({
   // Filtre par date de saisie ; `null` : toutes les dates
   const [filter, setFilter] = useState<DateRange | null>(null)
   const all = entries ?? []
-  const shown = filter ? entriesSavedIn(all, filter) : all
+  const shown = newestFirst(filter ? entriesSavedIn(all, filter) : all)
   const total = cellOf(all).total
   const shownTotal = cellOf(shown).total
   const money = (value: number | null): string =>

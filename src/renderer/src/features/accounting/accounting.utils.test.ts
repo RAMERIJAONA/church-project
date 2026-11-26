@@ -4,6 +4,7 @@ import { makeItemDTO, makeRootDTO } from '@tests/factories/accounting.factory'
 import {
   entriesSavedIn,
   entriesSavedRange,
+  newestFirst,
   entryDateLabel,
   summaryPeriods,
   AMOUNT_COLUMNS,
@@ -115,5 +116,19 @@ describe('filtre du détail par date de saisie', () => {
       to: '2026-11-30'
     })
     expect(entriesSavedRange([], '2026-11-30')).toEqual({ from: '2026-11-30', to: '2026-11-30' })
+  })
+})
+
+describe('ordre du détail', () => {
+  it('met la saisie la plus récente en haut, la dernière enregistrée en cas d’égalité', () => {
+    const e = (id: number, createdAt: string) => ({ id, createdAt })
+    const list = [
+      e(1, '2026-11-10T09:00:00.000Z'),
+      e(2, '2026-11-26T08:00:00.000Z'),
+      e(3, '2026-11-24T09:00:00.000Z'),
+      e(4, '2026-11-26T08:00:00.000Z')
+    ]
+    expect(newestFirst(list).map((x) => x.id)).toEqual([4, 2, 3, 1])
+    expect(list.map((x) => x.id)).toEqual([1, 2, 3, 4]) // liste d'origine intacte
   })
 })

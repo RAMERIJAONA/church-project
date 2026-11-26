@@ -130,6 +130,8 @@ test('@smoke comptabilité : arborescence, 3 colonnes, détail, persistés aprè
     }
     await expect(dialog.getByText(/Total : 350\s000/)).toBeVisible()
     await expect(dialog.getByText(/^Saisi le /).first()).toBeVisible()
+    // La saisie la plus récente en haut (2026-11-26)
+    await expect(dialog.getByRole('listitem').first()).toContainText('Fanatsarana')
     // Filtre par date de saisie (2026-11-26) : Du / Au, deux totaux, retour à toutes les dates
     await expect(dialog.getByRole('group', { name: 'Filtrer par date de saisie' })).toBeVisible()
     await pickDate(w, 'Du', TODAY)
