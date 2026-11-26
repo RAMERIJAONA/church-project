@@ -4,8 +4,6 @@
  * `.dev-data/seed/`, dossier SÉPARÉ de la base de dev habituelle (jamais touchée). La base est
  * recréée à chaque lancement, datée par rapport à aujourd'hui (cartes « Aujourd'hui »…).
  * Ensuite : `npm run dev:seed` ouvre l'application sur cette base.
- * Le plan réel 2025 de l'église reste dans `tests/fixtures/accounting/church-plan-2025.ts`
- * (contrôle de la numérotation, `tests/integration/accounting.seed.test.ts`).
  *
  * Lancé via Vitest (projet "seed") pour réutiliser les alias et le runtime Electron.
  */
