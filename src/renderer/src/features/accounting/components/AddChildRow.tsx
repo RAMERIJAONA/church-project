@@ -52,44 +52,48 @@ export function AddChildRow({ parent, code }: AddChildRowProps): React.JSX.Eleme
   return (
     <tr data-print="hide" className={sheetRow({ kind: 'add' })}>
       <td className={codeCell({ level })}>{code}</td>
-      <td className={descriptionCell({ level })} colSpan={4}>
-        <Input
-          ref={inputRef}
-          autoFocus
-          aria-label={`Description de la nouvelle sous-rubrique ${code}`}
-          placeholder="Description (ex. Mpitandrina)"
-          maxLength={200}
-          value={description}
-          aria-invalid={error !== null ? true : undefined}
-          onChange={(e) => setDescription(e.currentTarget.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') actions.openAddChild(null)
-            if (e.key === 'Enter') {
-              e.preventDefault()
-              void submit()
-            }
-          }}
-        />
-        {error && (
-          <p role="alert" className="mt-1 px-1 text-xs text-destructive">
-            {error}
-          </p>
-        )}
-      </td>
-      <td className="px-2 py-2 align-top">
-        <div className="flex items-center justify-end gap-1">
-          <Button disabled={busy} onClick={() => void submit()}>
-            Ajouter
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            title="Fermer"
-            aria-label="Fermer l’ajout de sous-rubrique"
-            onClick={() => actions.openAddChild(null)}
-          >
-            <X aria-hidden />
-          </Button>
+      {/* Description, 3 montants et actions : les boutons suivent le champ dans la même
+          cellule (la colonne d'actions, w-20, est plus étroite qu'eux : régression 2026-11-26) */}
+      <td className={descriptionCell({ level })} colSpan={5}>
+        <div className="flex items-start gap-2">
+          <div className="min-w-0 flex-1">
+            <Input
+              ref={inputRef}
+              autoFocus
+              aria-label={`Description de la nouvelle sous-rubrique ${code}`}
+              placeholder="Description (ex. Mpitandrina)"
+              maxLength={200}
+              value={description}
+              aria-invalid={error !== null ? true : undefined}
+              onChange={(e) => setDescription(e.currentTarget.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') actions.openAddChild(null)
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  void submit()
+                }
+              }}
+            />
+            {error && (
+              <p role="alert" className="mt-1 px-1 text-xs text-destructive">
+                {error}
+              </p>
+            )}
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
+            <Button disabled={busy} onClick={() => void submit()}>
+              Ajouter
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              title="Fermer"
+              aria-label="Fermer l’ajout de sous-rubrique"
+              onClick={() => actions.openAddChild(null)}
+            >
+              <X aria-hidden />
+            </Button>
+          </div>
         </div>
       </td>
     </tr>
