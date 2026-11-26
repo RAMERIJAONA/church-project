@@ -4,10 +4,11 @@
  * fichier lui-même est écrit par le main (main/export).
  */
 import { z } from 'zod'
-import { AMOUNT_COLUMNS, columnLabel, LEDGER_TITLES } from './accounting.columns'
+import { AMOUNT_COLUMNS, columnLabel, LEDGER_TITLES, type AmountColumn } from './accounting.columns'
 import { periodLabel, rangeLabel, type DateRange, type PeriodKind } from './accounting.periods'
 import { rollUp } from './accounting.totals'
 import {
+  amountColumnSchema,
   ledgerSchema,
   operationDateSchema,
   yearSchema,
@@ -19,7 +20,7 @@ import {
 } from './accounting.types'
 import { CHURCH_NAME } from '@shared/domain/identity'
 
-/** Vue exportée : l'année (3 colonnes) ou une période de réalisations, comme à l'écran. */
+/** Vue exportée : l'année (3 colonnes) ou une période (colonne choisie), comme à l'écran. */
 export const exportSheetInputSchema = z.union([
   z.object({ view: z.literal('year'), ledger: ledgerSchema, year: yearSchema }).strict(),
   z
@@ -27,7 +28,8 @@ export const exportSheetInputSchema = z.union([
       view: z.enum(['day', 'week', 'month', 'custom']),
       ledger: ledgerSchema,
       from: operationDateSchema,
-      to: operationDateSchema
+      to: operationDateSchema,
+      column: amountColumnSchema
     })
     .strict()
     .refine((r) => r.from <= r.to, 'Période invalide : la date de début suit la date de fin')
@@ -110,19 +112,29 @@ export function exportPeriodLabel(view: ExportPeriodView, range: DateRange): str
   return view === 'custom' ? rangeLabel(range) : periodLabel(view, range)
 }
 
-/** Vues par période : une colonne « Réalisations » (date d'opération dans la période). */
+/** Titre d'une vue par période : « Réalisation 2026 : Novembre 2026 ». */
+export function periodTitle(year: number, column: AmountColumn, label: string): string {
+  return `${columnLabel(year, column)} : ${label}`
+}
+
+/**
+ * Vues par période : une colonne, celle choisie (Estimation N, Réalisation N ou Estimation N+1),
+ * somme des saisies faites pendant la période.
+ */
 export function periodExportTable(
   sheet: AccountingSheetDTO,
   totals: readonly PeriodTotalDTO[],
-  label: string
+  label: string,
+  column: AmountColumn
 ): ExportTable {
+  const columnTitle = columnLabel(sheet.year, column)
   const totalById = new Map(totals.map((t) => [t.itemId, t.total]))
   const sums = rollUp(sheet.items, (item) =>
     item.amounts ? (totalById.get(item.id) ?? null) : null
   )
   return {
-    ...heading(sheet.ledger, `Réalisations : ${label}`, label),
-    columns: ['Réalisations'],
+    ...heading(sheet.ledger, periodTitle(sheet.year, column, label), `${columnTitle} - ${label}`),
+    columns: [columnTitle],
     rows: flatten(sheet.items).map((item) => ({
       code: item.code,
       description: item.description,

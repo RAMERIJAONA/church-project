@@ -19,19 +19,26 @@ import {
 export interface PeriodSheetProps {
   /** « Semaine du 23 au 29 novembre 2026 » */
   label: string
+  /** Colonne affichée : « Réalisation 2026 », « Estimation 2027 »… */
+  columnTitle: string
   /** Éléments de niveau 1 (structure commune à toutes les périodes) */
   items: AccountingItemDTO[]
-  /** Somme des réalisations de la période, par élément */
+  /** Somme des saisies de la période, par élément */
   totals: ReadonlyMap<number, number>
 }
 
 const lowerFirst = (text: string): string => text.charAt(0).toLowerCase() + text.slice(1)
 
 /**
- * Réalisations d'une période (date d'opération), en lecture seule : même arbre que le
- * tableau annuel, une seule colonne. Les modifications se font dans la vue Année.
+ * Une période, en lecture seule : même arbre que le tableau annuel, une seule colonne (celle
+ * choisie, saisies faites pendant la période). Les modifications se font dans la vue Année.
  */
-export function PeriodSheet({ label, items, totals }: PeriodSheetProps): React.JSX.Element {
+export function PeriodSheet({
+  label,
+  columnTitle,
+  items,
+  totals
+}: PeriodSheetProps): React.JSX.Element {
   const rows = flattenTree(items)
   const sums = useMemo(
     () => rollUp(items, (item) => (item.amounts ? (totals.get(item.id) ?? null) : null)),
@@ -40,11 +47,15 @@ export function PeriodSheet({ label, items, totals }: PeriodSheetProps): React.J
   return (
     <div className="flex flex-col gap-2">
       {totals.size === 0 && (
-        <p className="text-sm text-muted-foreground">Aucune réalisation sur cette période.</p>
+        <p className="text-sm text-muted-foreground">
+          Aucune saisie « {columnTitle} » sur cette période.
+        </p>
       )}
       <div className="overflow-clip rounded-xl border bg-card text-sm">
         <table className="w-full table-fixed border-collapse">
-          <caption className="sr-only">Réalisations : {lowerFirst(label)}</caption>
+          <caption className="sr-only">
+            {columnTitle} : {lowerFirst(label)}
+          </caption>
           <colgroup>
             <col className={col.code} />
             <col />
@@ -59,7 +70,7 @@ export function PeriodSheet({ label, items, totals }: PeriodSheetProps): React.J
                 Description
               </th>
               <th scope="col" className={headCell({ align: 'right' })}>
-                Réalisations
+                {columnTitle}
               </th>
             </tr>
           </thead>

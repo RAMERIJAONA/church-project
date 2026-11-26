@@ -2,10 +2,12 @@ import { useMemo } from 'react'
 import { Button } from '@renderer/components/ui/button'
 import { getErrorMessage } from '@renderer/lib/error-messages'
 import { printWithFeedback } from '@renderer/lib/print'
+import { periodTitle } from '@shared/domain/accounting/accounting.export'
 import type { DateRange } from '@shared/domain/accounting/accounting.periods'
 import type { Ledger } from '@shared/domain/accounting/accounting.types'
-import type { AccountingView } from '../accounting.utils'
+import { columnLabel, type AccountingView, type AmountColumn } from '../accounting.utils'
 import { AccountingToolbar } from '../components/AccountingToolbar'
+import { ColumnSwitch } from '../components/ColumnSwitch'
 import { PeriodSheet } from '../components/PeriodSheet'
 import { PrintHeader } from '../components/PrintHeader'
 import { useAccountingSheet, usePeriodTotals } from '../queries'
@@ -19,12 +21,16 @@ export interface PeriodViewProps {
   label: string
   /** Précédent / suivant, ou champs Du / Au */
   navigation: React.ReactNode
+  /** Montants affichés, imprimés et exportés */
+  column: AmountColumn
+  onColumnChange: (column: AmountColumn) => void
   onViewChange: (view: AccountingView) => void
 }
 
 /**
- * Container des vues par période (mois, semaine, jour, personnalisée) : réalisations par date
- * d'opération, sous-totaux et total, en lecture seule.
+ * Container des vues par période (mois, semaine, jour, personnalisée) : la colonne choisie
+ * (Estimation N, Réalisation N, Estimation N+1 ; N = année du premier jour), saisies faites
+ * pendant la période, sous-totaux et total, en lecture seule.
  */
 export function PeriodView({
   ledger,
@@ -32,11 +38,15 @@ export function PeriodView({
   range,
   label,
   navigation,
+  column,
+  onColumnChange,
   onViewChange
 }: PeriodViewProps): React.JSX.Element {
+  const year = Number(range.from.slice(0, 4))
   // La structure (rubriques, numéros) est la même pour toutes les années
-  const sheet = useAccountingSheet(Number(range.from.slice(0, 4)), ledger)
-  const totals = usePeriodTotals({ ...range, ledger })
+  const sheet = useAccountingSheet(year, ledger)
+  const totals = usePeriodTotals({ ...range, ledger, column })
+  const columnTitle = columnLabel(year, column)
   const excel = useExcelExport()
   const totalById = useMemo(
     () => new Map((totals.data ?? []).map((t) => [t.itemId, t.total])),
@@ -52,12 +62,18 @@ export function PeriodView({
         onViewChange={onViewChange}
         navigation={navigation}
         onPrint={() => void printWithFeedback()}
-        onExport={() => excel.run({ view, ledger, ...range })}
+        onExport={() => excel.run({ view, ledger, ...range, column })}
         exporting={excel.pending}
       />
-      <PrintHeader ledger={ledger} title={`Réalisations : ${label}`} printedAt={new Date()} />
+      <ColumnSwitch year={year} column={column} onChange={onColumnChange} />
+      <PrintHeader
+        ledger={ledger}
+        title={periodTitle(year, column, label)}
+        printedAt={new Date()}
+      />
       <p data-print="hide" className="text-sm text-muted-foreground">
-        Somme des réalisations enregistrées sur cette période. Pour saisir ou modifier un montant,{' '}
+        Somme des montants « {columnTitle} » saisis sur cette période. Pour saisir ou modifier un
+        montant,{' '}
         <Button variant="link" className="h-auto p-0" onClick={() => onViewChange('year')}>
           passez en vue Année
         </Button>
@@ -88,7 +104,7 @@ export function PeriodView({
         </p>
       )}
       {items.length > 0 && totals.data && (
-        <PeriodSheet label={label} items={items} totals={totalById} />
+        <PeriodSheet label={label} columnTitle={columnTitle} items={items} totals={totalById} />
       )}
     </div>
   )

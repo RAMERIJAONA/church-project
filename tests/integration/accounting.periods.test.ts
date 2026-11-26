@@ -1,4 +1,7 @@
-/** Date d'opération des réalisations et totaux par période (jour, semaine, mois). */
+/**
+ * Date d'opération des réalisations. Les totaux des vues par période se font par date de saisie
+ * depuis le 2026-11-26 : `accounting.summary.test.ts`.
+ */
 import { describe, expect, it } from 'vitest'
 import {
   cell,
@@ -58,31 +61,5 @@ describe('AccountingService : date d’opération et périodes', () => {
     )
     service.updateEntry({ id, amount: 1, label: 'X', operatedOn: '2026-06-30' })
     expect(service.listEntries({ ...cell, itemId: a.id })[0]?.operatedOn).toBe('2026-06-30')
-  })
-
-  it('totalise les réalisations d’une période par date d’opération', () => {
-    const { church, service } = setup()
-    const { a, b, i, i1 } = church()
-    const add = (itemId: number, amount: number, operatedOn: string) =>
-      service.addEntry({ ...cell, itemId, amount, label: 'X', operatedOn })
-    add(a.id, 100, '2026-11-23')
-    add(a.id, 200, '2026-11-29')
-    add(a.id, 400, '2026-11-30') // semaine suivante
-    add(b.id, 50, '2026-11-25')
-    const deleted = add(b.id, 1000, '2026-11-25')
-    service.deleteEntry(deleted.id)
-    service.addEntry({ ...cell, itemId: i1.id, amount: 7, label: 'X', operatedOn: '2026-11-24' })
-    service.setTotal({ itemId: a.id, year: 2026, type: 'estimate', amount: 9999 })
-    service.deleteItem(i.id) // ses réalisations ne comptent plus
-
-    const totals = service.getPeriodTotals({
-      from: '2026-11-23',
-      to: '2026-11-29',
-      ledger: 'expense'
-    })
-    expect([...totals].sort((x, y) => x.itemId - y.itemId)).toEqual([
-      { itemId: a.id, total: 300, entryCount: 2 },
-      { itemId: b.id, total: 50, entryCount: 1 }
-    ])
   })
 })

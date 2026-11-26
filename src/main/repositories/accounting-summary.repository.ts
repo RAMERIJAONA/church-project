@@ -1,9 +1,9 @@
 import { and, eq, gte, inArray, isNull, lt, sql } from 'drizzle-orm'
 import type { DbOrTx } from '@main/db/client'
 import { accountingEntries, accountingItems } from '@main/db/schema'
-import type { EntryType, Ledger } from '@shared/domain/accounting/accounting.types'
+import type { EntryType, Ledger, PeriodTotalDTO } from '@shared/domain/accounting/accounting.types'
 
-/** Requêtes de la synthèse prévu / réalisé (par date de saisie). */
+/** Requêtes par date de saisie : synthèse prévu / réalisé et vues par période. */
 export function createAccountingSummaryRepository() {
   const t = accountingItems
   const e = accountingEntries
@@ -31,6 +31,34 @@ export function createAccountingSummaryRepository() {
           )
         )
         .groupBy(e.year, e.type)
+        .all()
+    },
+
+    /** Vues par période : même filtre, une année et un type, par élément. */
+    sumEnteredByItem(
+      db: DbOrTx,
+      input: { ledger: Ledger; year: number; type: EntryType; from: string; to: string }
+    ): PeriodTotalDTO[] {
+      return db
+        .select({
+          itemId: e.itemId,
+          total: sql<number>`sum(${e.amount})`,
+          entryCount: sql<number>`count(*)`
+        })
+        .from(e)
+        .innerJoin(t, eq(t.id, e.itemId))
+        .where(
+          and(
+            eq(e.year, input.year),
+            eq(e.type, input.type),
+            isNull(e.deletedAt),
+            isNull(t.deletedAt),
+            eq(t.ledger, input.ledger),
+            gte(e.createdAt, input.from),
+            lt(e.createdAt, input.to)
+          )
+        )
+        .groupBy(e.itemId)
         .all()
     }
   }

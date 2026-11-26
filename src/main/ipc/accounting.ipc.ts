@@ -30,11 +30,11 @@ export function registerAccountingIpc(
     accounting.updateEntry(input)
     return null
   })
-  handle('accounting.periodTotals', (range) => accounting.getPeriodTotals(range))
   handle('accounting.deleteEntry', ({ id }) => {
     accounting.deleteEntry(id)
     return null
   })
   handle('accounting.exportExcel', (input) => exporter.exportExcel(input))
   handle('accounting.enteredTotals', (input) => summary.getEnteredTotals(input))
+  handle('accounting.periodTotals', (input) => summary.getPeriodTotals(input))
 }

@@ -13,6 +13,7 @@ function setup({ savePath = '/Documents/compta.xlsx' as string | null, failWith 
   const requests: Array<Parameters<DialogAdapter['chooseSavePath']>[0]> = []
   const exporter = createAccountingExportService({
     accounting: ctx.service,
+    summary: ctx.totals,
     dialog: {
       chooseSavePath: async (options) => {
         requests.push(options)
@@ -82,21 +83,23 @@ describe('export Excel de la comptabilité', () => {
     expect(numbersOfRow(xml, 8)).toEqual([2_000_000, 1_750_000, 300_000])
   })
 
-  it('vue par période : réalisations dont la date d’opération tombe dans la période', async () => {
+  it('vue par période : colonne choisie, saisies faites pendant la période', async () => {
     const t = setup()
     t.plan()
     const result = await t.exporter.exportExcel({
       view: 'month',
       ledger: 'expense',
       from: '2026-11-01',
-      to: '2026-11-30'
+      to: '2026-11-30',
+      column: 'actual'
     })
     expect(result.status).toBe('saved')
     expect(t.requests[0]?.defaultPath).toBe(
-      '/Documents/Comptabilité des sorties - Novembre 2026.xlsx'
+      '/Documents/Comptabilité des sorties - Réalisation 2026 - Novembre 2026.xlsx'
     )
     const xml = t.sheetXml()
-    expect(xml).toContain('>Réalisations : Novembre 2026 · Exporté le ')
+    expect(xml).toContain('>Réalisation 2026 : Novembre 2026 · Exporté le ')
+    expect(xml).toContain('>Réalisation 2026<')
     expect(numbersOfRow(xml, 5)).toEqual([1_750_000])
     expect(numbersOfRow(xml, 8)).toEqual([1_750_000])
 
@@ -105,10 +108,23 @@ describe('export Excel de la comptabilité', () => {
       view: 'day',
       ledger: 'expense',
       from: '2026-11-02',
-      to: '2026-11-02'
+      to: '2026-11-02',
+      column: 'actual'
     })
     expect(numbersOfRow(t.sheetXml(), 5)).toEqual([])
     expect(D).toBe('2026-11-24')
+
+    // Estimation N+1 (2027), saisie le ${D} : colonne et chiffres de cette estimation
+    await t.exporter.exportExcel({
+      view: 'month',
+      ledger: 'expense',
+      from: '2026-11-01',
+      to: '2026-11-30',
+      column: 'nextEstimate'
+    })
+    const next = t.sheetXml()
+    expect(next).toContain('>Estimation 2027 : Novembre 2026 · Exporté le ')
+    expect(numbersOfRow(next, 8)).toEqual([300_000])
   })
 
   it('comptabilité des entrées : seulement ses rubriques (A2…)', async () => {

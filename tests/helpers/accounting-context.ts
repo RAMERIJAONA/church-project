@@ -5,7 +5,9 @@
 import { expect } from 'vitest'
 import { createFixedClock } from '@main/adapters/clock.adapter'
 import { createLogger, createMemorySink } from '@main/logging/logger'
+import { createAccountingSummaryRepository } from '@main/repositories/accounting-summary.repository'
 import { createAccountingRepository } from '@main/repositories/accounting.repository'
+import { createAccountingSummaryService } from '@main/services/accounting-summary.service'
 import { createAccountingService } from '@main/services/accounting.service'
 import { findItem } from '@shared/domain/accounting/accounting.tree'
 import type { AccountingItemDTO } from '@shared/domain/accounting/accounting.types'
@@ -29,6 +31,11 @@ export function setupAccounting() {
     accounting: createAccountingRepository(),
     clock,
     logger: createLogger(createMemorySink())
+  })
+  // Totaux par date de saisie : synthèse et vues par période
+  const totals = createAccountingSummaryService({
+    db: handle.db,
+    summary: createAccountingSummaryRepository()
   })
   const codes = (year = YEAR): string[] => {
     const out: string[] = []
@@ -55,7 +62,7 @@ export function setupAccounting() {
     const b = child(ii1.id, 'Akany')
     return { f1, i, i1, ii, ii1, a, b }
   }
-  return { handle, clock, service, codes, item, child, church }
+  return { handle, clock, service, totals, codes, item, child, church }
 }
 
 export const expectAppError = (fn: () => unknown, code: string): void => {

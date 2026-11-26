@@ -14,6 +14,7 @@ import {
 } from '@shared/domain/accounting/accounting.export'
 import { AppError } from '@shared/domain/errors'
 import type { ExportResultDTO } from '@shared/ipc/contract'
+import type { AccountingSummaryService } from './accounting-summary.service'
 import type { AccountingService } from './accounting.service'
 
 /** Caractères interdits dans un nom de fichier Windows. */
@@ -29,7 +30,8 @@ const errorCode = (err: unknown): unknown =>
  * comptabilités. Mêmes chiffres qu'à l'écran : calculés depuis le même tableau.
  */
 export function createAccountingExportService(deps: {
-  accounting: Pick<AccountingService, 'getSheet' | 'getPeriodTotals'>
+  accounting: Pick<AccountingService, 'getSheet'>
+  summary: Pick<AccountingSummaryService, 'getPeriodTotals'>
   dialog: Pick<DialogAdapter, 'chooseSavePath'>
   fs: Pick<FsAdapter, 'writeFile'>
   documentsDir: string
@@ -43,8 +45,12 @@ export function createAccountingExportService(deps: {
     const range = { from: input.from, to: input.to }
     // La structure (rubriques, numéros) est la même pour toutes les années
     const sheet = deps.accounting.getSheet(Number(input.from.slice(0, 4)), input.ledger)
-    const totals = deps.accounting.getPeriodTotals({ ...range, ledger: input.ledger })
-    return periodExportTable(sheet, totals, exportPeriodLabel(input.view, range))
+    const totals = deps.summary.getPeriodTotals({
+      ...range,
+      ledger: input.ledger,
+      column: input.column
+    })
+    return periodExportTable(sheet, totals, exportPeriodLabel(input.view, range), input.column)
   }
 
   return {

@@ -103,18 +103,19 @@ export async function createContainer(paths: AppPaths, logger: Logger, platform:
     logger: logger.child({ module: 'accounting' })
   })
 
+  const accountingSummary = createAccountingSummaryService({
+    db: handle.db,
+    summary: createAccountingSummaryRepository()
+  })
+
   const accountingExport = createAccountingExportService({
     accounting,
+    summary: accountingSummary,
     dialog: platform.dialog,
     fs: nodeFs,
     documentsDir: paths.documentsDir,
     clock: systemClock,
     logger: logger.child({ module: 'export' })
-  })
-
-  const accountingSummary = createAccountingSummaryService({
-    db: handle.db,
-    summary: createAccountingSummaryRepository()
   })
 
   const print = createPrintService({

@@ -21,8 +21,6 @@ import {
   type EntryDTO,
   type EntryType,
   type Ledger,
-  type PeriodTotalDTO,
-  type PeriodTotalsInput,
   type ListEntriesInput,
   type MoveDirection,
   type MoveResultDTO,
@@ -257,13 +255,6 @@ export function createAccountingService(deps: {
         const { amount, label } = input
         repo.updateEntry(tx, entry.id, { amount, label, operatedOn }, now())
       })
-    },
-
-    /** Réalisations par élément sur une période (date d'opération, bornes incluses). */
-    getPeriodTotals(range: PeriodTotalsInput): PeriodTotalDTO[] {
-      return deps.db.transaction((tx) =>
-        repo.sumActualBetween(tx, range.ledger, range.from, range.to)
-      )
     },
 
     deleteEntry(id: number): void {

@@ -118,7 +118,7 @@ describe('saisie (schémas)', () => {
 
   it('accepte une période de n’importe quelle durée, dans l’ordre', () => {
     const ok = (from: string, to: string): boolean =>
-      periodTotalsInputSchema.safeParse({ from, to, ledger: 'expense' }).success
+      periodTotalsInputSchema.safeParse({ from, to, ledger: 'expense', column: 'actual' }).success
     expect(ok('2026-11-23', '2026-11-29')).toBe(true)
     expect(ok('2024-01-01', '2026-12-31')).toBe(true) // plusieurs années
     expect(ok('2026-11-24', '2026-11-24')).toBe(true)

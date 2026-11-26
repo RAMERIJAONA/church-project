@@ -23,7 +23,7 @@ const flat = (items: AccountingItemDTO[]): AccountingItemDTO[] =>
 
 describe('seed de démonstration', () => {
   // Une seule génération pour tout le fichier (quelques milliers de saisies)
-  const { service, summary } = seeded()
+  const { service, totals, summary } = seeded()
   const sheet = (year: number, ledger: Ledger = 'expense') =>
     flat(service.getSheet(year, ledger).items)
   const total = (year: number, col: 'estimate' | 'actual' | 'nextEstimate', ledger: Ledger) =>
@@ -76,16 +76,12 @@ describe('seed de démonstration', () => {
     }
   })
 
-  it('n’a aucune réalisation dans le futur, et en a aujourd’hui et cette semaine', () => {
-    expect(
-      service.getPeriodTotals({ from: '2026-11-26', to: '2027-12-31', ledger: 'expense' })
-    ).toEqual([])
-    expect(
-      service.getPeriodTotals({ from: TODAY, to: TODAY, ledger: 'expense' }).length
-    ).toBeGreaterThan(0)
-    expect(
-      service.getPeriodTotals({ ...periodRange('week', TODAY), ledger: 'expense' }).length
-    ).toBeGreaterThan(1)
+  it('n’a aucune saisie dans le futur, et des réalisations saisies aujourd’hui et cette semaine', () => {
+    const actual = (range: { from: string; to: string }) =>
+      totals.getPeriodTotals({ ...range, ledger: 'expense', column: 'actual' })
+    expect(actual({ from: '2026-11-26', to: '2027-12-31' })).toEqual([])
+    expect(actual({ from: TODAY, to: TODAY }).length).toBeGreaterThan(0)
+    expect(actual(periodRange('week', TODAY)).length).toBeGreaterThan(1)
   })
 
   it('mélange cases vides, simples, détaillées, modifiées, supprimées et tardives', () => {

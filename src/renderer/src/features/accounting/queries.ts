@@ -20,7 +20,7 @@ export const accountingKeys = {
   entries: (itemId: number, year: number, type: EntryType) =>
     [...accountingKeys.all, 'entries', itemId, year, type] as const,
   periodTotals: (range: PeriodTotalsInput) =>
-    [...accountingKeys.all, 'period', range.ledger, range.from, range.to] as const,
+    [...accountingKeys.all, 'period', range.ledger, range.column, range.from, range.to] as const,
   enteredTotals: (input: EnteredTotalsInput) =>
     [...accountingKeys.all, 'entered', input.ledger, input.year, input.from, input.to] as const
 }
@@ -43,7 +43,7 @@ export function useCellEntries(cell: { itemId: number; year: number; type: Entry
   })
 }
 
-/** Réalisations par élément sur une période ; l'ancienne période reste affichée au changement. */
+/** Vues par période : colonne choisie, par élément ; l'ancienne période reste affichée. */
 export function usePeriodTotals(range: PeriodTotalsInput) {
   return useQuery({
     queryKey: accountingKeys.periodTotals(range),

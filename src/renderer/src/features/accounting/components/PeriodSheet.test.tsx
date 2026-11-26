@@ -1,8 +1,9 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { formatAmount } from '@shared/utils/money'
 import { makeItemDTO, makeRootDTO } from '@tests/factories/accounting.factory'
+import { ColumnSwitch } from './ColumnSwitch'
 import { PeriodSheet } from './PeriodSheet'
 import { ViewSwitch } from './ViewSwitch'
 
@@ -22,9 +23,10 @@ const b1 = makeRootDTO({
 const items = [makeRootDTO({ id: 1, code: 'A1', children: [i] }), b1]
 
 describe('PeriodSheet', () => {
-  it('affiche les réalisations de la période pour chaque rubrique qui porte des montants', () => {
+  it('affiche la colonne choisie pour chaque rubrique qui porte des montants', () => {
     render(
       <PeriodSheet
+        columnTitle="Réalisation 2026"
         label="Semaine du 23 au 29 novembre 2026"
         items={items}
         totals={
@@ -43,9 +45,9 @@ describe('PeriodSheet', () => {
       'B1',
       'Total'
     ])
-    expect(screen.getByRole('columnheader', { name: 'Réalisations' })).toBeDefined()
+    expect(screen.getByRole('columnheader', { name: 'Réalisation 2026' })).toBeDefined()
     expect(
-      screen.getByRole('table', { name: 'Réalisations : semaine du 23 au 29 novembre 2026' })
+      screen.getByRole('table', { name: 'Réalisation 2026 : semaine du 23 au 29 novembre 2026' })
     ).toBeDefined()
     const rowOf = (code: string) =>
       shown(screen.getByRole('rowheader', { name: code }).closest('tr')?.textContent ?? '')
@@ -58,6 +60,7 @@ describe('PeriodSheet', () => {
   it('affiche les sous-totaux des groupes et le total de la période', () => {
     render(
       <PeriodSheet
+        columnTitle="Réalisation 2026"
         label="Novembre 2026"
         items={items}
         totals={
@@ -75,9 +78,33 @@ describe('PeriodSheet', () => {
     expect(rowOf('Total')).toContain(shown(formatAmount(421000)))
   })
 
-  it('signale une période sans réalisation', () => {
-    render(<PeriodSheet label="Mardi 24 novembre 2026" items={items} totals={new Map()} />)
-    expect(screen.getByText('Aucune réalisation sur cette période.')).toBeDefined()
+  it('signale une période sans saisie pour la colonne affichée', () => {
+    render(
+      <PeriodSheet
+        label="Mardi 24 novembre 2026"
+        columnTitle="Estimation 2027"
+        items={items}
+        totals={new Map()}
+      />
+    )
+    expect(screen.getByText('Aucune saisie « Estimation 2027 » sur cette période.')).toBeDefined()
+    expect(screen.getByRole('columnheader', { name: 'Estimation 2027' })).toBeDefined()
+  })
+})
+
+describe('ColumnSwitch', () => {
+  it('propose Estimation N, Réalisation N et Estimation N+1, et indique le choix', async () => {
+    const onChange = vi.fn()
+    render(<ColumnSwitch year={2026} column="actual" onChange={onChange} />)
+    const group = screen.getByRole('group', { name: 'Montants affichés' })
+    const buttons = within(group).getAllByRole('button')
+    expect(buttons.map((b) => [b.textContent, b.getAttribute('aria-pressed')])).toEqual([
+      ['Estimation 2026', 'false'],
+      ['Réalisation 2026', 'true'],
+      ['Estimation 2027', 'false']
+    ])
+    await userEvent.click(screen.getByRole('button', { name: 'Estimation 2027' }))
+    expect(onChange).toHaveBeenCalledWith('nextEstimate')
   })
 })
 

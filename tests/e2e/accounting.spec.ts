@@ -1,5 +1,15 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
-import { ar, launchApp, navLink, pickDate, removeDir, rowCells, type LaunchedApp } from './app'
+import {
+  addChildren,
+  ar,
+  launchApp,
+  navLink,
+  newChild,
+  pickDate,
+  removeDir,
+  rowCells,
+  type LaunchedApp
+} from './app'
 
 const Y = new Date().getFullYear()
 const localDate = (d: Date): string =>
@@ -8,28 +18,12 @@ const TODAY = localDate(new Date())
 const YESTERDAY = localDate(new Date(Date.now() - 86_400_000))
 /** « 25/11/2026 » : date de saisie automatique (infobulle de la case) */
 const TODAY_FR = TODAY.split('-').reverse().join('/')
+/** Vue par période vide, colonne Réalisation N */
+const NO_ACTUAL = /^Aucune saisie « Réalisation \d+ » sur cette période\.$/
 
 const cell = (w: Page, name: string): Locator => w.getByRole('textbox', { name, exact: true })
 const row = (w: Page, code: string): Locator =>
   w.locator('tr', { has: w.getByRole('rowheader', { name: code, exact: true }) })
-const newChild = (w: Page, code: string): Locator =>
-  w.getByRole('textbox', {
-    name: `Description de la nouvelle sous-rubrique ${code}`,
-    exact: true
-  })
-
-/** Ajoute des sous-rubriques à la suite (le formulaire reste ouvert), puis le ferme. */
-async function addChildren(w: Page, parent: string, items: Array<[string, string]>): Promise<void> {
-  await w
-    .getByRole('button', { name: `Ajouter une sous-rubrique à ${parent}`, exact: true })
-    .click()
-  for (const [code, description] of items) {
-    await newChild(w, code).fill(description)
-    await newChild(w, code).press('Enter')
-  }
-  await w.keyboard.press('Escape')
-}
-
 test('@smoke comptabilité : arborescence, 3 colonnes, détail, persistés après redémarrage', async () => {
   let running: LaunchedApp | null = await launchApp()
   const { userData } = running
@@ -177,7 +171,8 @@ test('@smoke comptabilité : arborescence, 3 colonnes, détail, persistés aprè
     )
     await w.getByRole('button', { name: 'Année', exact: true }).click()
 
-    // Vues par période : réalisations par date d'opération (aujourd'hui par défaut), lecture seule
+    // Vues par période (règle du 2026-11-26) : colonne choisie (Réalisation N par défaut),
+    // saisies faites pendant la période (aujourd'hui par défaut), lecture seule
     const view = (name: string): Locator => w.getByRole('button', { name, exact: true })
     for (const name of ['Mois', 'Semaine', 'Jour']) {
       await view(name).click()
@@ -187,8 +182,19 @@ test('@smoke comptabilité : arborescence, 3 colonnes, détail, persistés aprè
       await expect(w.getByRole('textbox')).toHaveCount(0)
       await expect(row(w, 'Total')).toContainText(/770\s000/)
     }
+    // Estimation N, Estimation N+1 : le choix reste en changeant de vue
+    const amounts = (name: string): Locator =>
+      w.getByRole('group', { name: 'Montants affichés' }).getByRole('button', { name })
+    await amounts(`Estimation ${Y}`).click()
+    await expect(row(w, 'Total')).toContainText(/500\s000/)
+    await view('Mois').click()
+    await expect(row(w, 'Total')).toContainText(/500\s000/)
+    await amounts(`Estimation ${Y + 1}`).click()
+    await expect(row(w, 'Total')).toContainText(/600\s000/)
+    await amounts(`Réalisation ${Y}`).click()
+    await view('Jour').click()
     await w.getByRole('button', { name: 'Période précédente' }).click()
-    await expect(w.getByText('Aucune réalisation sur cette période.')).toBeVisible()
+    await expect(w.getByText(NO_ACTUAL)).toBeVisible()
     await expect(row(w, 'A1-I-1')).not.toContainText(/420/)
     await w.getByRole('button', { name: 'Revenir à aujourd’hui' }).click()
     await expect(row(w, 'A1-I-1')).toContainText(/420\s000/)
@@ -199,7 +205,7 @@ test('@smoke comptabilité : arborescence, 3 colonnes, détail, persistés aprè
     await expect(row(w, 'Total')).toContainText(/770\s000/)
     await pickDate(w, 'Du', YESTERDAY) // l'autre borne suit si besoin
     await pickDate(w, 'Au', YESTERDAY)
-    await expect(w.getByText('Aucune réalisation sur cette période.')).toBeVisible()
+    await expect(w.getByText(NO_ACTUAL)).toBeVisible()
 
     await view('Année').click()
     await expect(cell(w, `Réalisation ${Y} de A1-I-1`)).toHaveValue(/^420\s000$/)

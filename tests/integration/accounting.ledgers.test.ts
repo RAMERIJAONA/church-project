@@ -39,7 +39,7 @@ describe('AccountingService : comptabilités des sorties et des entrées', () =>
   })
 
   it('sépare les rubriques, les lettres et les montants des deux comptabilités', () => {
-    const { service } = setupAccounting()
+    const { service, totals } = setupAccounting()
     const out = service.createItem({
       parentId: null,
       ledger: 'expense',
@@ -60,11 +60,11 @@ describe('AccountingService : comptabilités des sorties et des entrées', () =>
     service.addEntry({ ...cell, itemId: out.id, amount: 100, label: null, operatedOn: D })
     service.addEntry({ ...cell, itemId: inc.id, amount: 700, label: null, operatedOn: D })
     expect(service.getSheet(2026, 'income').items[0]?.amounts?.actual.total).toBe(700)
-    const range = { from: D, to: D }
-    expect(service.getPeriodTotals({ ...range, ledger: 'income' })).toEqual([
+    const range = { from: D, to: D, column: 'actual' } as const
+    expect(totals.getPeriodTotals({ ...range, ledger: 'income' })).toEqual([
       { itemId: inc.id, total: 700, entryCount: 1 }
     ])
-    expect(service.getPeriodTotals({ ...range, ledger: 'expense' })).toEqual([
+    expect(totals.getPeriodTotals({ ...range, ledger: 'expense' })).toEqual([
       { itemId: out.id, total: 100, entryCount: 1 }
     ])
   })

@@ -54,15 +54,16 @@ describe('export Excel : contenu du tableau', () => {
     expect(table.total.values).toEqual([null, null, null])
   })
 
-  it('vue par période : une colonne « Réalisations », cases vides sans réalisation', () => {
+  it('vue par période : la colonne choisie, cases vides sans saisie', () => {
     const table = periodExportTable(
       sheet,
       [{ itemId: 2, total: 400, entryCount: 1 }],
-      'Novembre 2026'
+      'Novembre 2026',
+      'actual'
     )
-    expect(table.subtitle).toBe('Réalisations : Novembre 2026')
-    expect(table.fileName).toBe('Comptabilité des sorties - Novembre 2026')
-    expect(table.columns).toEqual(['Réalisations'])
+    expect(table.subtitle).toBe('Réalisation 2026 : Novembre 2026')
+    expect(table.fileName).toBe('Comptabilité des sorties - Réalisation 2026 - Novembre 2026')
+    expect(table.columns).toEqual(['Réalisation 2026'])
     expect(table.rows.map((r) => [r.code, r.values])).toEqual([
       ['A1', [400]],
       ['A1-1', [400]],
@@ -70,6 +71,9 @@ describe('export Excel : contenu du tableau', () => {
       ['B1', [null]]
     ])
     expect(table.total).toEqual({ label: 'Total', values: [400] })
+    const next = periodExportTable(sheet, [], 'Novembre 2026', 'nextEstimate')
+    expect(next.columns).toEqual(['Estimation 2027'])
+    expect(next.subtitle).toBe('Estimation 2027 : Novembre 2026')
   })
 
   it('titre de la période comme à l’écran', () => {
@@ -85,8 +89,16 @@ describe('export Excel : contenu du tableau', () => {
     expect(
       exportSheetInputSchema.safeParse({ view: 'year', ledger: 'income', year: 2026 }).success
     ).toBe(true)
-    const period = { view: 'week', ledger: 'expense', from: '2026-11-23', to: '2026-11-29' }
+    const period = {
+      view: 'week',
+      ledger: 'expense',
+      from: '2026-11-23',
+      to: '2026-11-29',
+      column: 'estimate'
+    }
     expect(exportSheetInputSchema.safeParse(period).success).toBe(true)
+    expect(exportSheetInputSchema.safeParse({ ...period, column: undefined }).success).toBe(false)
+    expect(exportSheetInputSchema.safeParse({ ...period, column: 'total' }).success).toBe(false)
     expect(exportSheetInputSchema.safeParse({ ...period, from: '2026-11-30' }).success).toBe(false)
     expect(exportSheetInputSchema.safeParse({ view: 'year', ledger: 'expense' }).success).toBe(
       false

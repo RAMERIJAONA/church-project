@@ -17,7 +17,7 @@ import {
   type Ledger,
   yearSchema
 } from '@shared/domain/accounting/accounting.types'
-import type { AccountingView, SummaryPeriod } from '../accounting.utils'
+import type { AccountingView, AmountColumn, SummaryPeriod } from '../accounting.utils'
 import { CustomRangePicker } from '../components/CustomRangePicker'
 import { PeriodStepper } from '../components/PeriodStepper'
 import { PeriodView } from './PeriodView'
@@ -36,6 +36,18 @@ const VIEW_PARAM: Record<PeriodViewKind, string> = {
   week: 'semaine',
   day: 'jour',
   custom: 'personnalise'
+}
+
+/** Montants des vues par période : `?montant=estimation` ; Réalisation N par défaut. */
+const COLUMN_PARAM: Record<AmountColumn, string> = {
+  estimate: 'estimation',
+  actual: 'realisation',
+  nextEstimate: 'estimation-suivante'
+}
+
+function parseColumn(value: string | null): AmountColumn {
+  const columns = Object.keys(COLUMN_PARAM) as AmountColumn[]
+  return columns.find((c) => COLUMN_PARAM[c] === value) ?? 'actual'
 }
 
 function parseView(value: string | null): PeriodViewKind | null {
@@ -71,7 +83,17 @@ export function AccountingPage({ ledger }: { ledger: Ledger }): React.JSX.Elemen
   const today = useMemo(() => localDateOf(new Date()), [])
   const currentYear = yearOf(today)
   const [params, setParams] = useSearchParams()
-  const replace = (next: Record<string, string>): void => setParams(next, { replace: true })
+  const column = parseColumn(params.get('montant'))
+  // Le choix des montants suit les changements de vue et de période
+  const replace = (next: Record<string, string>, nextColumn = column): void =>
+    setParams(nextColumn === 'actual' ? next : { ...next, montant: COLUMN_PARAM[nextColumn] }, {
+      replace: true
+    })
+  const changeColumn = (next: AmountColumn): void => {
+    const rest = Object.fromEntries(params)
+    delete rest.montant
+    replace(rest, next)
+  }
 
   const view = parseView(params.get('vue'))
   const yearParam = yearSchema.safeParse(Number(params.get('annee')))
@@ -128,6 +150,8 @@ export function AccountingPage({ ledger }: { ledger: Ledger }): React.JSX.Elemen
           view="custom"
           range={custom}
           label={rangeLabel(custom)}
+          column={column}
+          onColumnChange={changeColumn}
           onViewChange={changeView}
           navigation={
             <CustomRangePicker
@@ -155,6 +179,8 @@ export function AccountingPage({ ledger }: { ledger: Ledger }): React.JSX.Elemen
           view={kind}
           range={range}
           label={label}
+          column={column}
+          onColumnChange={changeColumn}
           onViewChange={changeView}
           navigation={
             <PeriodStepper

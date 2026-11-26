@@ -92,3 +92,26 @@ export async function pickDate(w: Page, field: 'Du' | 'Au', date: string): Promi
   await calendar.getByRole('button', { name, exact: true }).click()
   await expect(calendar).toHaveCount(0) // fin de l'animation de fermeture
 }
+
+/** Champ de description d'une nouvelle sous-rubrique (comptabilité). */
+export const newChild = (w: Page, code: string): Locator =>
+  w.getByRole('textbox', {
+    name: `Description de la nouvelle sous-rubrique ${code}`,
+    exact: true
+  })
+
+/** Ajoute des sous-rubriques à la suite (le formulaire reste ouvert), puis le ferme. */
+export async function addChildren(
+  w: Page,
+  parent: string,
+  items: Array<[string, string]>
+): Promise<void> {
+  await w
+    .getByRole('button', { name: `Ajouter une sous-rubrique à ${parent}`, exact: true })
+    .click()
+  for (const [code, description] of items) {
+    await newChild(w, code).fill(description)
+    await newChild(w, code).press('Enter')
+  }
+  await w.keyboard.press('Escape')
+}

@@ -12,6 +12,7 @@
  */
 import { z } from 'zod'
 import { MAX_AMOUNT } from '@shared/utils/money'
+import { AMOUNT_COLUMNS } from './accounting.columns'
 import { isCalendarDate } from './accounting.periods'
 
 export const MIN_YEAR = 1900
@@ -156,9 +157,18 @@ export const updateEntryInputSchema = z
     operatedOn: operationDateSchema.nullable().optional()
   })
   .strict()
-/** Période d'affichage des réalisations (bornes incluses, de n'importe quelle durée). */
+export const amountColumnSchema = z.enum(AMOUNT_COLUMNS)
+/**
+ * Vues par période : jours locaux (bornes incluses, de n'importe quelle durée) et colonne
+ * affichée, Estimation N, Réalisation N ou Estimation N+1 (N : année de `from`).
+ */
 export const periodTotalsInputSchema = z
-  .object({ from: operationDateSchema, to: operationDateSchema, ledger: ledgerSchema })
+  .object({
+    from: operationDateSchema,
+    to: operationDateSchema,
+    ledger: ledgerSchema,
+    column: amountColumnSchema
+  })
   .strict()
   .refine((r) => r.from <= r.to, 'Période invalide : la date de début suit la date de fin')
 
@@ -235,7 +245,7 @@ export interface EntryDTO {
   updatedAt: string
 }
 
-/** Somme des réalisations d'un élément sur une période (date d'opération). */
+/** Somme des saisies d'un élément sur une période (date de saisie), pour la colonne choisie. */
 export interface PeriodTotalDTO {
   itemId: number
   total: number
