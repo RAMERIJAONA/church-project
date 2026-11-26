@@ -1,14 +1,9 @@
 import { useMemo } from 'react'
-import { dayCount, prorateEstimate } from '@shared/domain/accounting/accounting.periods'
-import type { Ledger } from '@shared/domain/accounting/accounting.types'
-import {
-  sheetTotals,
-  summaryPeriods,
-  sumPeriodTotals,
-  type SummaryPeriod
-} from '../accounting.utils'
-import { SummaryTable, type SummaryRow } from '../components/SummaryTable'
-import { useAccountingSheet, usePeriodTotalsMany } from '../queries'
+import { localInstantRange } from '@shared/domain/accounting/accounting.periods'
+import type { EnteredTotalsDTO, Ledger } from '@shared/domain/accounting/accounting.types'
+import { sheetTotals, summaryPeriods, type SummaryPeriod } from '../accounting.utils'
+import { SummaryTable, type SummaryCell, type SummaryRow } from '../components/SummaryTable'
+import { useAccountingSheet, useEnteredTotalsMany } from '../queries'
 
 export interface SummarySectionProps {
   ledger: Ledger
@@ -19,10 +14,13 @@ export interface SummarySectionProps {
   onSelect: (kind: SummaryPeriod['kind']) => void
 }
 
+type Line = keyof EnteredTotalsDTO
+
 /**
- * Container de la synthèse : réalisations par période (date d'opération) et estimations de
- * l'année en cours au prorata des jours (`prorateEstimate`) ; Estimation N+1 seulement sur
- * l'année (pas encore son année pour un jour, une semaine, un mois de N).
+ * Container de la synthèse (règle du porteur, 2026-11-26). Jour, semaine, mois : somme des
+ * valeurs saisies pendant la période (date de saisie), pour les trois lignes. Année : total
+ * complet de l'année, comme la ligne « Total général » (une estimation saisie à l'avance, l'année
+ * d'avant, compte aussi).
  */
 export function SummarySection({
   ledger,
@@ -32,7 +30,10 @@ export function SummarySection({
 }: SummarySectionProps): React.JSX.Element {
   const year = Number(today.slice(0, 4))
   const periods = useMemo(() => summaryPeriods(today), [today])
-  const actual = usePeriodTotalsMany(periods.map((p) => ({ ...p.range, ledger })))
+  const short = periods.filter((p) => p.kind !== 'year')
+  const entered = useEnteredTotalsMany(
+    short.map((p) => ({ ledger, year, ...localInstantRange(p.range) }))
+  )
   const sheet = useAccountingSheet(year, ledger)
   // Les données affichées doivent être celles de l'année en cours (pas l'année d'avant en cache)
   const grand = useMemo(
@@ -42,41 +43,33 @@ export function SummarySection({
         : undefined,
     [sheet.data, year, ledger]
   )
-  const yearDays = dayCount({ from: `${year}-01-01`, to: `${year}-12-31` })
+
+  const cellsOf = (line: Line): SummaryCell[] =>
+    periods.map((p) => {
+      if (p.kind === 'year') {
+        return {
+          value: grand ? (grand[line] ?? 0) : undefined,
+          title: `Total de l’année ${year}, comme la ligne « Total général »`
+        }
+      }
+      const data = entered[short.indexOf(p)]?.data
+      return {
+        value: data ? (data[line] ?? 0) : undefined,
+        title: `Valeurs saisies : ${p.caption}`
+      }
+    })
 
   const rows: SummaryRow[] = [
-    {
-      label: `Estimation ${year}`,
-      hint: 'au prorata des jours',
-      cells: periods.map((p) => {
-        const days = dayCount(p.range)
-        return {
-          value: grand ? prorateEstimate(grand.estimate ?? 0, p.range, year) : undefined,
-          title:
-            p.kind === 'year'
-              ? `Estimation ${year} complète`
-              : `Estimation ${year} × ${days} / ${yearDays} jours`
-        }
-      })
-    },
-    {
-      label: `Réalisation ${year}`,
-      cells: actual.map((q) => ({ value: q.data ? (sumPeriodTotals(q.data) ?? 0) : undefined }))
-    },
-    {
-      label: `Estimation ${year + 1}`,
-      cells: periods.map((p) => ({
-        value: p.kind !== 'year' ? null : grand ? (grand.nextEstimate ?? 0) : undefined,
-        title: p.kind !== 'year' ? `Pas de prorata : ${year + 1} n’a pas commencé` : undefined
-      }))
-    }
+    { label: `Estimation ${year}`, cells: cellsOf('estimate') },
+    { label: `Réalisation ${year}`, cells: cellsOf('actual') },
+    { label: `Estimation ${year + 1}`, cells: cellsOf('nextEstimate') }
   ]
 
   return (
     <SummaryTable
       columns={periods.map((p) => ({ ...p, active: isShown(p) }))}
       rows={rows}
-      failed={sheet.isError || actual.some((q) => q.isError)}
+      failed={sheet.isError || entered.some((q) => q.isError)}
       onSelect={onSelect}
     />
   )

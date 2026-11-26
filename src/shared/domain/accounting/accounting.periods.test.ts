@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
-  dayCount,
-  prorateEstimate,
   defaultOperationDate,
   localDateOf,
+  localInstantRange,
   monthGrid,
   periodLabel,
   periodRange,
@@ -105,30 +104,26 @@ describe('calendrier', () => {
   })
 })
 
-describe('estimation au prorata d’une période', () => {
-  it('compte les jours des périodes, bornes incluses', () => {
-    expect(dayCount({ from: '2026-11-25', to: '2026-11-25' })).toBe(1)
-    expect(dayCount(periodRange('week', '2026-11-25'))).toBe(7)
-    expect(dayCount(periodRange('month', '2026-02-10'))).toBe(28)
-    expect(dayCount({ from: '2024-01-01', to: '2024-12-31' })).toBe(366)
+// Synthèse (règle du porteur, 2026-11-26) : les saisies comptent par date de saisie locale.
+// L'ancien calcul au prorata des jours (`prorateEstimate`) est remplacé, ses tests avec lui.
+describe('bornes en instants UTC de jours locaux', () => {
+  const ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/
+
+  it('va de minuit du premier jour local à minuit du lendemain du dernier', () => {
+    const range = periodRange('week', '2026-11-25')
+    const { from, to } = localInstantRange(range)
+    expect(from).toMatch(ISO)
+    expect(to).toMatch(ISO)
+    expect(localDateOf(new Date(from))).toBe('2026-11-23')
+    expect(localDateOf(new Date(Date.parse(from) - 1))).toBe('2026-11-22')
+    expect(localDateOf(new Date(Date.parse(to) - 1))).toBe('2026-11-29')
+    expect(localDateOf(new Date(to))).toBe('2026-11-30')
   })
 
-  it('ramène l’estimation annuelle au jour, à la semaine, au mois, à l’année', () => {
-    expect(prorateEstimate(365_000, periodRange('day', '2026-11-25'), 2026)).toBe(1_000)
-    expect(prorateEstimate(365_000, periodRange('week', '2026-11-25'), 2026)).toBe(7_000)
-    expect(prorateEstimate(365_000, periodRange('month', '2026-11-25'), 2026)).toBe(30_000)
-    expect(prorateEstimate(365_000, { from: '2026-01-01', to: '2026-12-31' }, 2026)).toBe(365_000)
-    // Année bissextile : 366 jours
-    expect(prorateEstimate(366_000, periodRange('day', '2024-02-29'), 2024)).toBe(1_000)
-    // Arrondi à l'Ariary
-    expect(prorateEstimate(1_000, periodRange('day', '2026-11-25'), 2026)).toBe(3)
-  })
-
-  it('ne compte que les jours de la période qui tombent dans l’année', () => {
-    // Semaine du lundi 28 décembre 2026 au dimanche 3 janvier 2027 : 4 jours en 2026
-    const week = periodRange('week', '2027-01-01')
-    expect(prorateEstimate(365_000, week, 2026)).toBe(4_000)
-    expect(prorateEstimate(365_000, week, 2027)).toBe(3_000)
-    expect(prorateEstimate(365_000, periodRange('day', '2027-01-01'), 2026)).toBe(0)
+  it('couvre un jour entier, y compris en fin d’année', () => {
+    const { from, to } = localInstantRange({ from: '2026-12-31', to: '2026-12-31' })
+    expect(localDateOf(new Date(from))).toBe('2026-12-31')
+    expect(localDateOf(new Date(to))).toBe('2027-01-01')
+    expect(Date.parse(to) - Date.parse(from)).toBe(86_400_000)
   })
 })

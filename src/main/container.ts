@@ -13,9 +13,11 @@ import { prepareDatabase } from '@main/db/bootstrap'
 import { openDatabase } from '@main/db/client'
 import { inspectDatabaseFile } from '@main/db/inspect'
 import type { Logger } from '@main/logging/logger'
+import { createAccountingSummaryRepository } from '@main/repositories/accounting-summary.repository'
 import { createAccountingRepository } from '@main/repositories/accounting.repository'
 import { createSettingsRepository } from '@main/repositories/settings.repository'
 import { createAccountingExportService } from '@main/services/accounting-export.service'
+import { createAccountingSummaryService } from '@main/services/accounting-summary.service'
 import { createAccountingService } from '@main/services/accounting.service'
 import { createMaintenanceService } from '@main/services/maintenance.service'
 import { createPrintService } from '@main/services/print.service'
@@ -110,6 +112,11 @@ export async function createContainer(paths: AppPaths, logger: Logger, platform:
     logger: logger.child({ module: 'export' })
   })
 
+  const accountingSummary = createAccountingSummaryService({
+    db: handle.db,
+    summary: createAccountingSummaryRepository()
+  })
+
   const print = createPrintService({
     printer: platform.print,
     dialog: platform.dialog,
@@ -125,6 +132,7 @@ export async function createContainer(paths: AppPaths, logger: Logger, platform:
     maintenance,
     accounting,
     accountingExport,
+    accountingSummary,
     print,
     dispose: closeDatabase
   }

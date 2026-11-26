@@ -167,16 +167,13 @@ test('@smoke comptabilité : arborescence, 3 colonnes, détail, persistés aprè
     // Montants en Ariary ; date et heure de saisie : dans le détail (pas dans le tableau)
     await expect(row(w, 'A1-II-1 A)')).toContainText(/350\s000\sAr/)
 
-    // Synthèse prévu / réalisé (2026-11-25) : estimation au prorata des jours, réalisations
-    // par période, estimation N+1 sur l'année seulement
+    // Synthèse prévu / réalisé (règle du 2026-11-26) : somme des valeurs saisies pendant la
+    // période, par ligne ; tout a été saisi aujourd'hui, donc mêmes montants dans les 4 colonnes
     const summary = w.getByRole('region', { name: 'Synthèse : prévu et réalisé' })
     const cells = (label: string): Locator => rowCells(summary, label)
+    await expect(cells(`Estimation ${Y}`)).toHaveText(Array(4).fill(ar(500000)))
     await expect(cells(`Réalisation ${Y}`)).toHaveText(Array(4).fill(ar(770000)))
-    await expect(cells(`Estimation ${Y}`).first()).toHaveText(
-      ar(Math.round(500000 / (Y % 4 === 0 ? 366 : 365)))
-    )
-    await expect(cells(`Estimation ${Y}`).last()).toHaveText(ar(500000))
-    await expect(cells(`Estimation ${Y + 1}`)).toHaveText(['—', '—', '—', ar(600000)])
+    await expect(cells(`Estimation ${Y + 1}`)).toHaveText(Array(4).fill(ar(600000)))
     await summary.getByRole('button', { name: /^Ce mois/ }).click()
     await expect(w.getByRole('button', { name: 'Mois', exact: true })).toHaveAttribute(
       'aria-pressed',

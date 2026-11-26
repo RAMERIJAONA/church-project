@@ -4,6 +4,7 @@ import type {
   AccountingSheetDTO,
   AddEntryInput,
   CreateItemInput,
+  EnteredTotalsInput,
   EntryType,
   Ledger,
   PeriodTotalsInput,
@@ -19,7 +20,9 @@ export const accountingKeys = {
   entries: (itemId: number, year: number, type: EntryType) =>
     [...accountingKeys.all, 'entries', itemId, year, type] as const,
   periodTotals: (range: PeriodTotalsInput) =>
-    [...accountingKeys.all, 'period', range.ledger, range.from, range.to] as const
+    [...accountingKeys.all, 'period', range.ledger, range.from, range.to] as const,
+  enteredTotals: (input: EnteredTotalsInput) =>
+    [...accountingKeys.all, 'entered', input.ledger, input.year, input.from, input.to] as const
 }
 
 export function useAccountingSheet(year: number, ledger: Ledger) {
@@ -49,12 +52,12 @@ export function usePeriodTotals(range: PeriodTotalsInput) {
   })
 }
 
-/** Réalisations de plusieurs périodes à la fois (synthèse jour / semaine / mois / année). */
-export function usePeriodTotalsMany(ranges: readonly PeriodTotalsInput[]) {
+/** Synthèse : saisies faites pendant chaque période (jour, semaine, mois), par date de saisie. */
+export function useEnteredTotalsMany(inputs: readonly EnteredTotalsInput[]) {
   return useQueries({
-    queries: ranges.map((range) => ({
-      queryKey: accountingKeys.periodTotals(range),
-      queryFn: () => accountingApi.periodTotals(range)
+    queries: inputs.map((input) => ({
+      queryKey: accountingKeys.enteredTotals(input),
+      queryFn: () => accountingApi.enteredTotals(input)
     }))
   })
 }

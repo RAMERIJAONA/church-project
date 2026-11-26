@@ -3,6 +3,7 @@ import { z } from 'zod'
 import {
   addEntryInputSchema,
   createItemInputSchema,
+  enteredTotalsInputSchema,
   idInputSchema,
   listEntriesInputSchema,
   listSheetInputSchema,
@@ -14,6 +15,7 @@ import {
   type AccountingSheetDTO,
   type CreatedEntryDTO,
   type CreatedItemDTO,
+  type EnteredTotalsDTO,
   type EntryDTO,
   type MoveResultDTO,
   type PeriodTotalDTO
@@ -36,6 +38,7 @@ export const ipcInputs = {
   'accounting.updateEntry': updateEntryInputSchema,
   'accounting.deleteEntry': idInputSchema,
   'accounting.periodTotals': periodTotalsInputSchema,
+  'accounting.enteredTotals': enteredTotalsInputSchema,
   'accounting.exportExcel': exportSheetInputSchema,
   'app.info': z.undefined(),
   'app.openLogsFolder': z.undefined(),
@@ -85,6 +88,7 @@ export interface IpcOutputs {
   'accounting.updateEntry': null
   'accounting.deleteEntry': null
   'accounting.periodTotals': PeriodTotalDTO[]
+  'accounting.enteredTotals': EnteredTotalsDTO
   'accounting.exportExcel': ExportResultDTO
   'app.info': AppInfoDTO
   'app.openLogsFolder': null

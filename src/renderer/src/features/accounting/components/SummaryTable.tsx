@@ -10,14 +10,14 @@ export interface SummaryColumn extends SummaryPeriod {
 export interface SummaryCell {
   /** `undefined` : chargement ; `null` : sans objet (« — ») */
   value: number | null | undefined
-  /** Infobulle (ex. calcul au prorata) */
+  /** Infobulle (ce que la case additionne) */
   title?: string
 }
 
 export interface SummaryRow {
   /** « Estimation 2026 », « Réalisation 2026 », « Estimation 2027 » */
   label: string
-  /** Sous-titre discret (« au prorata des jours ») */
+  /** Sous-titre discret */
   hint?: string
   /** Une case par colonne, dans l'ordre des colonnes */
   cells: SummaryCell[]

@@ -4,7 +4,6 @@ import { makeItemDTO, makeRootDTO } from '@tests/factories/accounting.factory'
 import {
   entryDateLabel,
   summaryPeriods,
-  sumPeriodTotals,
   AMOUNT_COLUMNS,
   columnLabel,
   columnTarget,
@@ -84,16 +83,6 @@ describe('synthèse des réalisations', () => {
       ['Ce mois', '2026-11-01', '2026-11-30'],
       ['Cette année', '2026-01-01', '2026-12-31']
     ])
-  })
-
-  it('additionne les réalisations de toutes les rubriques, vide si aucune', () => {
-    expect(
-      sumPeriodTotals([
-        { itemId: 1, total: 420000, entryCount: 1 },
-        { itemId: 2, total: 350000, entryCount: 2 }
-      ])
-    ).toBe(770000)
-    expect(sumPeriodTotals([])).toBeNull()
   })
 })
 

@@ -162,6 +162,18 @@ export const periodTotalsInputSchema = z
   .strict()
   .refine((r) => r.from <= r.to, 'Période invalide : la date de début suit la date de fin')
 
+/** Instant ISO 8601 UTC au format stocké (`toISOString`, millisecondes comprises) : comparable
+ * en texte aux colonnes `created_at`. */
+const instantSchema = z.iso.datetime({ precision: 3 })
+/**
+ * Synthèse : saisies faites entre deux instants (`from` inclus, `to` exclu), pour l'année
+ * `year` (estimation et réalisation) et l'année suivante (estimation).
+ */
+export const enteredTotalsInputSchema = z
+  .object({ ledger: ledgerSchema, year: yearSchema, from: instantSchema, to: instantSchema })
+  .strict()
+  .refine((r) => r.from < r.to, 'Période invalide : la date de début suit la date de fin')
+
 export type MoveDirection = z.infer<typeof directionSchema>
 export type CreateItemInput = z.infer<typeof createItemInputSchema>
 export type SetTotalInput = z.infer<typeof setTotalInputSchema>
@@ -169,6 +181,7 @@ export type ListEntriesInput = z.infer<typeof listEntriesInputSchema>
 export type AddEntryInput = z.infer<typeof addEntryInputSchema>
 export type UpdateEntryInput = z.infer<typeof updateEntryInputSchema>
 export type PeriodTotalsInput = z.infer<typeof periodTotalsInputSchema>
+export type EnteredTotalsInput = z.infer<typeof enteredTotalsInputSchema>
 
 /** Une case du tableau (un type, une année). */
 export interface CellDTO {
@@ -227,6 +240,19 @@ export interface PeriodTotalDTO {
   itemId: number
   total: number
   entryCount: number
+}
+
+/**
+ * Synthèse d'une période : somme des saisies actives faites pendant la période (date de saisie),
+ * par ligne. `null` : aucune saisie.
+ */
+export interface EnteredTotalsDTO {
+  /** Estimations de l'année N */
+  estimate: number | null
+  /** Réalisations de l'année N */
+  actual: number | null
+  /** Estimations de l'année N+1 */
+  nextEstimate: number | null
 }
 
 export interface CreatedItemDTO {

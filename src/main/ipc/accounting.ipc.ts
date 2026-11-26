@@ -1,11 +1,13 @@
 import type { AccountingExportService } from '@main/services/accounting-export.service'
+import type { AccountingSummaryService } from '@main/services/accounting-summary.service'
 import type { AccountingService } from '@main/services/accounting.service'
 import type { Handle } from './handle'
 
 export function registerAccountingIpc(
   handle: Handle,
   accounting: AccountingService,
-  exporter: AccountingExportService
+  exporter: AccountingExportService,
+  summary: AccountingSummaryService
 ): void {
   handle('accounting.sheet', ({ year, ledger }) => accounting.getSheet(year, ledger))
   handle('accounting.createItem', (input) => accounting.createItem(input))
@@ -34,4 +36,5 @@ export function registerAccountingIpc(
     return null
   })
   handle('accounting.exportExcel', (input) => exporter.exportExcel(input))
+  handle('accounting.enteredTotals', (input) => summary.getEnteredTotals(input))
 }

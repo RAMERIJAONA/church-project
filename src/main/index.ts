@@ -163,7 +163,8 @@ async function start(): Promise<void> {
     settings: services.settings,
     maintenance: services.maintenance,
     accounting: services.accounting,
-    accountingExport: services.accountingExport
+    accountingExport: services.accountingExport,
+    accountingSummary: services.accountingSummary
   })
 
   const openWindow = (): void => {

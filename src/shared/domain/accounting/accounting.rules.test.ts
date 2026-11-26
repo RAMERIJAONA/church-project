@@ -9,6 +9,7 @@ import {
 import {
   addEntryInputSchema,
   createItemInputSchema,
+  enteredTotalsInputSchema,
   periodTotalsInputSchema,
   setTotalInputSchema,
   updateEntryInputSchema
@@ -123,6 +124,16 @@ describe('saisie (schémas)', () => {
     expect(ok('2026-11-24', '2026-11-24')).toBe(true)
     expect(ok('2026-11-29', '2026-11-23')).toBe(false)
     expect(ok('2026-02-30', '2026-03-01')).toBe(false)
+  })
+
+  it('exige pour la synthèse des instants au format stocké, dans l’ordre', () => {
+    const ok = (from: string, to: string): boolean =>
+      enteredTotalsInputSchema.safeParse({ ledger: 'income', year: 2026, from, to }).success
+    expect(ok('2026-11-23T21:00:00.000Z', '2026-11-24T21:00:00.000Z')).toBe(true)
+    expect(ok('2026-11-24T21:00:00.000Z', '2026-11-23T21:00:00.000Z')).toBe(false)
+    // Sans millisecondes, la comparaison en texte avec `created_at` serait fausse
+    expect(ok('2026-11-23T21:00:00Z', '2026-11-24T21:00:00.000Z')).toBe(false)
+    expect(ok('2026-11-23', '2026-11-24')).toBe(false)
   })
 })
 

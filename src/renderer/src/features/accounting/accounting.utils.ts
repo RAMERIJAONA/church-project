@@ -11,8 +11,7 @@ import { AMOUNT_COLUMNS, type AmountColumn } from '@shared/domain/accounting/acc
 import type {
   AccountingItemDTO,
   AccountingSheetDTO,
-  ItemAmountsDTO,
-  PeriodTotalDTO
+  ItemAmountsDTO
 } from '@shared/domain/accounting/accounting.types'
 
 // Partagés avec l'export Excel (main) : définis dans shared
@@ -147,9 +146,4 @@ export function summaryPeriods(today: string): SummaryPeriod[] {
       range: { from: `${year}-01-01`, to: `${year}-12-31` }
     }
   ]
-}
-
-/** Total des réalisations d'une période (toutes rubriques), `null` si aucune saisie. */
-export function sumPeriodTotals(totals: readonly PeriodTotalDTO[]): number | null {
-  return totals.length === 0 ? null : totals.reduce((sum, t) => sum + t.total, 0)
 }

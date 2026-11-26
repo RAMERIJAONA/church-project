@@ -14,6 +14,7 @@ export const CHANNELS = [
   'accounting.updateEntry',
   'accounting.deleteEntry',
   'accounting.periodTotals',
+  'accounting.enteredTotals',
   'accounting.exportExcel',
   'app.info',
   'app.openLogsFolder',

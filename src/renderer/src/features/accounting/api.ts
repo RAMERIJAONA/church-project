@@ -3,6 +3,7 @@ import type { ExportSheetInput } from '@shared/domain/accounting/accounting.expo
 import type {
   AddEntryInput,
   CreateItemInput,
+  EnteredTotalsInput,
   Ledger,
   ListEntriesInput,
   PeriodTotalsInput,
@@ -22,5 +23,6 @@ export const accountingApi = {
   updateEntry: (input: UpdateEntryInput) => invoke('accounting.updateEntry', input),
   deleteEntry: (id: number) => invoke('accounting.deleteEntry', { id }),
   periodTotals: (range: PeriodTotalsInput) => invoke('accounting.periodTotals', range),
+  enteredTotals: (input: EnteredTotalsInput) => invoke('accounting.enteredTotals', input),
   exportExcel: (input: ExportSheetInput) => invoke('accounting.exportExcel', input)
 }
