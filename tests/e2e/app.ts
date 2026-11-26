@@ -1,5 +1,6 @@
 import {
   _electron as electron,
+  expect,
   type ElectronApplication,
   type Locator,
   type Page
@@ -72,4 +73,22 @@ export function rowCells(scope: Locator, label: string): Locator {
 /** Montant affiché « 1 370 Ar » (espaces insécables) : expression exacte pour `toHaveText`. */
 export function ar(amount: number): RegExp {
   return new RegExp(`^${String(amount).replace(/\B(?=(\d{3})+(?!\d))/g, '\\s')}\\sAr$`)
+}
+
+/** Choisit une date dans le calendrier du champ « Du » ou « Au ». */
+export async function pickDate(w: Page, field: 'Du' | 'Au', date: string): Promise<void> {
+  await w.getByRole('button', { name: new RegExp(`^${field} `) }).click()
+  const calendar = w.getByRole('dialog', { name: 'Choisir une date' })
+  const [y = 0, m = 1, d = 1] = date.split('-').map(Number)
+  await calendar.getByLabel('Année', { exact: true }).selectOption(String(y))
+  await calendar.getByLabel('Mois', { exact: true }).selectOption(String(m - 1))
+  const name = new Intl.DateTimeFormat('fr-FR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC'
+  }).format(new Date(Date.UTC(y, m - 1, d)))
+  await calendar.getByRole('button', { name, exact: true }).click()
+  await expect(calendar).toHaveCount(0) // fin de l'animation de fermeture
 }

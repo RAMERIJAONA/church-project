@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
-import { ar, launchApp, navLink, removeDir, rowCells, type LaunchedApp } from './app'
+import { ar, launchApp, navLink, pickDate, removeDir, rowCells, type LaunchedApp } from './app'
 
 const Y = new Date().getFullYear()
 const localDate = (d: Date): string =>
@@ -17,24 +17,6 @@ const newChild = (w: Page, code: string): Locator =>
     name: `Description de la nouvelle sous-rubrique ${code}`,
     exact: true
   })
-
-/** Choisit une date dans le calendrier du champ « Du » ou « Au ». */
-async function pickDate(w: Page, field: 'Du' | 'Au', date: string): Promise<void> {
-  await w.getByRole('button', { name: new RegExp(`^${field} `) }).click()
-  const calendar = w.getByRole('dialog', { name: 'Choisir une date' })
-  const [y = 0, m = 1, d = 1] = date.split('-').map(Number)
-  await calendar.getByLabel('Année', { exact: true }).selectOption(String(y))
-  await calendar.getByLabel('Mois', { exact: true }).selectOption(String(m - 1))
-  const name = new Intl.DateTimeFormat('fr-FR', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    timeZone: 'UTC'
-  }).format(new Date(Date.UTC(y, m - 1, d)))
-  await calendar.getByRole('button', { name, exact: true }).click()
-  await expect(calendar).toHaveCount(0) // fin de l'animation de fermeture
-}
 
 /** Ajoute des sous-rubriques à la suite (le formulaire reste ouvert), puis le ferme. */
 async function addChildren(w: Page, parent: string, items: Array<[string, string]>): Promise<void> {
@@ -148,6 +130,18 @@ test('@smoke comptabilité : arborescence, 3 colonnes, détail, persistés aprè
     }
     await expect(dialog.getByText(/Total : 350\s000/)).toBeVisible()
     await expect(dialog.getByText(/^Saisi le /).first()).toBeVisible()
+    // Filtre par date de saisie (2026-11-26) : Du / Au, deux totaux, retour à toutes les dates
+    await expect(dialog.getByRole('group', { name: 'Filtrer par date de saisie' })).toBeVisible()
+    await pickDate(w, 'Du', TODAY)
+    await expect(dialog.getByRole('status')).toHaveText('2 saisies sur 2')
+    await expect(dialog.getByText(/Total des saisies filtrées : 350\s000/)).toBeVisible()
+    await expect(dialog.getByText(/Total de la case : 350\s000/)).toBeVisible()
+    await pickDate(w, 'Au', YESTERDAY) // le début suit : hier seulement
+    await expect(dialog.getByText('Aucune saisie sur cette période')).toBeVisible()
+    await expect(dialog.getByRole('status')).toHaveText('0 saisie sur 2')
+    await dialog.getByRole('button', { name: 'Toutes les dates' }).click()
+    await expect(dialog.getByText('Kojakoja', { exact: true })).toBeVisible()
+    await expect(dialog.getByText(/Total : 350\s000/)).toBeVisible()
     await dialog.getByRole('button', { name: 'Fermer', exact: true }).click()
     await expect(cell(w, `Réalisation ${Y} de A1-II-1 A)`)).toHaveCount(0)
     await expect(row(w, 'A1-II-1 A)')).toContainText(/350\s000/)

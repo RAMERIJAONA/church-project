@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { formatShortDateTime } from '@shared/utils/dates'
 import { makeItemDTO, makeRootDTO } from '@tests/factories/accounting.factory'
 import {
+  entriesSavedIn,
+  entriesSavedRange,
   entryDateLabel,
   summaryPeriods,
   AMOUNT_COLUMNS,
@@ -92,5 +94,26 @@ describe('date sous un montant', () => {
     expect(entryDateLabel(at, 2026)).toBe(formatShortDateTime(new Date(at)))
     expect(entryDateLabel(at, 2027)).toBe(formatShortDateTime(new Date(at)))
     expect(entryDateLabel(at, 2025)).toBe('2025')
+  })
+})
+
+describe('filtre du détail par date de saisie', () => {
+  const at = (day: string) => ({ createdAt: `${day}T09:00:00.000Z` })
+  const entries = [at('2026-11-24'), at('2026-11-10'), at('2026-11-26')]
+
+  it('garde les saisies faites entre deux jours, bornes incluses', () => {
+    expect(entriesSavedIn(entries, { from: '2026-11-24', to: '2026-11-26' })).toEqual([
+      at('2026-11-24'),
+      at('2026-11-26')
+    ])
+    expect(entriesSavedIn(entries, { from: '2026-11-11', to: '2026-11-23' })).toEqual([])
+  })
+
+  it('couvre par défaut de la première saisie à aujourd’hui', () => {
+    expect(entriesSavedRange(entries, '2026-11-30')).toEqual({
+      from: '2026-11-10',
+      to: '2026-11-30'
+    })
+    expect(entriesSavedRange([], '2026-11-30')).toEqual({ from: '2026-11-30', to: '2026-11-30' })
   })
 })

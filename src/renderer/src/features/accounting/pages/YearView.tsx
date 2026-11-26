@@ -50,6 +50,8 @@ export interface YearViewProps {
   ledger: Ledger
   year: number
   currentYear: number
+  /** Date locale du jour, « AAAA-MM-JJ » */
+  today: string
   onYearChange: (year: number) => void
   onViewChange: (view: AccountingView) => void
 }
@@ -59,6 +61,7 @@ export function YearView({
   ledger,
   year,
   currentYear,
+  today,
   onYearChange,
   onViewChange
 }: YearViewProps): React.JSX.Element {
@@ -200,6 +203,7 @@ export function YearView({
 
       {detail && detailCell && (
         <EntriesDialog
+          key={`${detail.itemId}-${detail.col}`}
           open
           title={`${columnLabel(shownYear, detail.col)} de ${detail.code}`}
           subtitle={detail.description}
@@ -207,6 +211,7 @@ export function YearView({
           loading={entries.isPending}
           error={entries.isError ? entries.error : null}
           year={detailCell.year}
+          today={today}
           disabled={detailCell.year > MAX_YEAR}
           onAdd={(amount, label) => withToast(() => addEntry({ ...detailCell, amount, label }))}
           onUpdate={(id, amount, label) => withToast(() => updateEntry({ id, amount, label }))}

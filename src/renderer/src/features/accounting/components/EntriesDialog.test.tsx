@@ -37,6 +37,7 @@ function setup(props: Partial<EntriesDialogProps> = {}) {
       loading={false}
       error={null}
       year={2026}
+      today="2026-11-26"
       disabled={false}
       {...handlers}
       {...props}
@@ -116,6 +117,60 @@ describe('EntriesDialog', () => {
   it('affiche « Aucune saisie » quand la liste est vide', () => {
     setup({ entries: [] })
     expect(screen.getByText('Aucune saisie')).toBeDefined()
+  })
+
+  // Demande du porteur (2026-11-26) : filtre du détail par date de saisie, Du / Au
+  describe('filtre par date de saisie', () => {
+    const older = makeEntryDTO({
+      id: 3,
+      amount: 40000,
+      label: 'Taloha',
+      createdAt: '2026-11-10T09:00:00.000Z',
+      updatedAt: '2026-11-10T09:00:00.000Z'
+    })
+    const setupFilter = () => setup({ entries: [kojakoja, fanatsarana, older] })
+    const pick = async (field: 'Du' | 'Au', day: string): Promise<void> => {
+      await userEvent.click(screen.getByRole('button', { name: new RegExp(`^${field}`) }))
+      await userEvent.click(screen.getByRole('button', { name: day }))
+    }
+
+    it('couvre par défaut toutes les saisies, de la première à aujourd’hui', () => {
+      setupFilter()
+      const filter = screen.getByRole('group', { name: 'Filtrer par date de saisie' })
+      expect(within(filter).getByRole('button', { name: /^Du/ }).textContent).toContain(
+        '10 nov. 2026'
+      )
+      expect(within(filter).getByRole('button', { name: /^Au/ }).textContent).toContain(
+        '26 nov. 2026'
+      )
+      expect(screen.getAllByRole('listitem')).toHaveLength(3)
+      expect(screen.queryByRole('status')).toBeNull()
+      expect(screen.getByText(shown(`Total : ${formatAriary(390000)}`))).toBeDefined()
+    })
+
+    it('n’affiche que les saisies de la période, avec les deux totaux', async () => {
+      setupFilter()
+      await pick('Du', 'mardi 24 novembre 2026')
+      expect(screen.getAllByRole('listitem')).toHaveLength(2)
+      expect(screen.queryByText('Taloha')).toBeNull()
+      expect(screen.getByRole('status').textContent).toBe('2 saisies sur 3')
+      expect(
+        screen.getByText(shown(`Total des saisies filtrées : ${formatAriary(350000)}`))
+      ).toBeDefined()
+      expect(screen.getByText(shown(`Total de la case : ${formatAriary(390000)}`))).toBeDefined()
+
+      await userEvent.click(screen.getByRole('button', { name: 'Toutes les dates' }))
+      expect(screen.getAllByRole('listitem')).toHaveLength(3)
+      expect(screen.queryByRole('status')).toBeNull()
+    })
+
+    it('annonce une période sans saisie', async () => {
+      setupFilter()
+      await pick('Du', 'mercredi 25 novembre 2026')
+      expect(screen.queryAllByRole('listitem')).toHaveLength(0)
+      expect(screen.getByText('Aucune saisie sur cette période')).toBeDefined()
+      expect(screen.getByRole('status').textContent).toBe('0 saisie sur 3')
+    })
   })
 
   it('propose de réessayer en cas d’erreur', async () => {

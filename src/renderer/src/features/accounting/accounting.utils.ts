@@ -1,5 +1,6 @@
 /** Helpers d'affichage purs de la comptabilité (aucun appel IPC). */
 import {
+  localDateOf,
   periodLabel,
   periodRange,
   type DateRange,
@@ -11,6 +12,7 @@ import { AMOUNT_COLUMNS, type AmountColumn } from '@shared/domain/accounting/acc
 import type {
   AccountingItemDTO,
   AccountingSheetDTO,
+  EntryDTO,
   ItemAmountsDTO
 } from '@shared/domain/accounting/accounting.types'
 
@@ -146,4 +148,31 @@ export function summaryPeriods(today: string): SummaryPeriod[] {
       range: { from: `${year}-01-01`, to: `${year}-12-31` }
     }
   ]
+}
+
+/** Jour local (« AAAA-MM-JJ ») où une saisie a été faite. */
+export function entrySavedOn(entry: Pick<EntryDTO, 'createdAt'>): string {
+  return localDateOf(new Date(entry.createdAt))
+}
+
+/** Saisies faites entre deux jours locaux, bornes incluses (filtre du détail). */
+export function entriesSavedIn<T extends Pick<EntryDTO, 'createdAt'>>(
+  entries: readonly T[],
+  range: DateRange
+): T[] {
+  return entries.filter((e) => {
+    const day = entrySavedOn(e)
+    return range.from <= day && day <= range.to
+  })
+}
+
+/** Période qui couvre toutes les saisies : du jour de la première à aujourd'hui (ou après). */
+export function entriesSavedRange(
+  entries: readonly Pick<EntryDTO, 'createdAt'>[],
+  today: string
+): DateRange {
+  const days = entries.map(entrySavedOn).sort()
+  const first = days[0] ?? today
+  const last = days[days.length - 1] ?? today
+  return { from: first < today ? first : today, to: last > today ? last : today }
 }

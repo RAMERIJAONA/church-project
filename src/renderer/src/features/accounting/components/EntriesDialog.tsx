@@ -10,10 +10,13 @@ import {
   DialogTitle
 } from '@renderer/components/ui/dialog'
 import { getErrorMessage } from '@renderer/lib/error-messages'
+import type { DateRange } from '@shared/domain/accounting/accounting.periods'
 import { cellOf } from '@shared/domain/accounting/accounting.rules'
 import type { EntryDTO } from '@shared/domain/accounting/accounting.types'
 import { formatDateTime } from '@shared/utils/dates'
 import { formatAriary } from '@shared/utils/money'
+import { entriesSavedIn, entriesSavedRange } from '../accounting.utils'
+import { EntriesFilter } from './EntriesFilter'
 import { EntryForm } from './EntryForm'
 
 export interface EntriesDialogProps {
@@ -27,6 +30,8 @@ export interface EntriesDialogProps {
   error: unknown
   /** Année de la case : une saisie faite après cette année affiche l'année seule */
   year: number
+  /** Date locale du jour, « AAAA-MM-JJ » (fin de la période du filtre par défaut) */
+  today: string
   /** Case non modifiable (ex. Estimation 2201) */
   disabled: boolean
   onAdd: (amount: number, label: string | null) => Promise<void>
@@ -53,6 +58,7 @@ export function EntriesDialog({
   loading,
   error,
   year,
+  today,
   disabled,
   onAdd,
   onUpdate,
@@ -61,7 +67,14 @@ export function EntriesDialog({
   onClose
 }: EntriesDialogProps): React.JSX.Element {
   const [editingId, setEditingId] = useState<number | null>(null)
-  const total = cellOf(entries ?? []).total
+  // Filtre par date de saisie ; `null` : toutes les dates
+  const [filter, setFilter] = useState<DateRange | null>(null)
+  const all = entries ?? []
+  const shown = filter ? entriesSavedIn(all, filter) : all
+  const total = cellOf(all).total
+  const shownTotal = cellOf(shown).total
+  const money = (value: number | null): string =>
+    value === null ? 'aucun montant' : formatAriary(value)
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -84,8 +97,21 @@ export function EntriesDialog({
           <p className="text-sm text-muted-foreground">Aucune saisie</p>
         )}
         {entries && entries.length > 0 && (
+          <EntriesFilter
+            range={filter ?? entriesSavedRange(entries, today)}
+            filtered={filter !== null}
+            shownCount={shown.length}
+            totalCount={entries.length}
+            onChange={setFilter}
+            onReset={() => setFilter(null)}
+          />
+        )}
+        {entries && entries.length > 0 && shown.length === 0 && (
+          <p className="text-sm text-muted-foreground">Aucune saisie sur cette période</p>
+        )}
+        {shown.length > 0 && (
           <ul className="flex flex-col divide-y rounded-lg border">
-            {entries.map((entry) => (
+            {shown.map((entry) => (
               <li key={entry.id} className="group flex flex-col gap-1 px-3 py-2">
                 {editingId === entry.id ? (
                   <EntryForm
@@ -149,9 +175,14 @@ export function EntriesDialog({
         />
 
         <DialogFooter className="sm:justify-between">
-          <p className="self-center font-medium tabular-nums">
-            Total : {total === null ? 'aucun montant' : formatAriary(total)}
-          </p>
+          {filter ? (
+            <div className="self-center font-medium tabular-nums">
+              <p>Total des saisies filtrées : {money(shownTotal)}</p>
+              <p>Total de la case : {money(total)}</p>
+            </div>
+          ) : (
+            <p className="self-center font-medium tabular-nums">Total : {money(total)}</p>
+          )}
           <Button variant="outline" onClick={onClose}>
             Fermer
           </Button>

@@ -173,6 +173,7 @@ export function AccountingPage({ ledger }: { ledger: Ledger }): React.JSX.Elemen
         ledger={ledger}
         year={year}
         currentYear={currentYear}
+        today={today}
         onYearChange={(y) => replace({ annee: String(y) })}
         onViewChange={changeView}
       />
