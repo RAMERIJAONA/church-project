@@ -23,7 +23,7 @@ const andry = makeMemberDTO({
 const soa = makeMemberDTO({ id: 3, rank: 4, firstName: 'Soa', sex: 'F', matricule: '1/4B-I' })
 
 function setup(props: Partial<HouseholdMembersTableProps> = {}) {
-  const handlers = { onOpen: vi.fn(), onMove: vi.fn(), onDelete: vi.fn(), onSwap: vi.fn() }
+  const handlers = { onOpen: vi.fn(), onDelete: vi.fn(), onSwap: vi.fn() }
   render(
     <HouseholdMembersTable
       members={[jean, andry, soa]}
@@ -40,7 +40,8 @@ describe('HouseholdMembersTable', () => {
   it('affiche les colonnes demandées, par rang', () => {
     setup()
     const headers = screen.getAllByRole('columnheader').map((h) => h.textContent)
-    expect(headers.slice(0, 11)).toEqual([
+    // Pas de colonne Diacre dans un foyer (porteur, 2026-11-27)
+    expect(headers.slice(0, 10)).toEqual([
       'Matricule',
       'Rôle',
       'Nom',
@@ -50,7 +51,6 @@ describe('HouseholdMembersTable', () => {
       'Téléphone',
       'Adresse',
       'Secteur',
-      'Diacre',
       'Parrain'
     ])
     const rows = screen.getAllByRole('row').slice(1)
@@ -61,11 +61,10 @@ describe('HouseholdMembersTable', () => {
     ])
   })
 
-  it('calcule l’âge, montre le diacre et le parrain à désigner', () => {
+  it('calcule l’âge et montre le parrain à désigner', () => {
     setup()
-    const [jeanRow, andryRow] = screen.getAllByRole('row').slice(1)
+    const [, andryRow] = screen.getAllByRole('row').slice(1)
     expect(andryRow?.textContent).toContain('41 ans')
-    expect(jeanRow?.textContent).toContain('Diacre')
     expect(andryRow?.textContent).toContain('À désigner')
   })
 
@@ -80,12 +79,10 @@ describe('HouseholdMembersTable', () => {
     expect(onSwap).toHaveBeenCalledWith(soa, 'up')
   })
 
-  it('ouvre la fiche, déplace et supprime depuis le menu de la ligne', async () => {
-    const { onOpen, onMove, onDelete } = setup()
-    await userEvent.click(screen.getByRole('button', { name: 'Actions de RAKOTO Andry' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Déplacer RAKOTO Andry' }))
-    expect(onMove).toHaveBeenCalledWith(andry)
-    await userEvent.click(screen.getByRole('button', { name: 'Actions de RAKOTO Andry' }))
+  it('supprime avec la corbeille visible sur chaque ligne, sans menu ni Déplacer', async () => {
+    const { onOpen, onDelete } = setup()
+    expect(screen.queryByRole('button', { name: /^Actions de/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: /^Déplacer/ })).toBeNull()
     await userEvent.click(screen.getByRole('button', { name: 'Supprimer RAKOTO Andry' }))
     expect(onDelete).toHaveBeenCalledWith(andry)
     await userEvent.click(screen.getByRole('button', { name: 'RAKOTO Andry' }))
@@ -99,8 +96,5 @@ describe('HouseholdMembersTable', () => {
     }
     await userEvent.click(screen.getByRole('button', { name: 'Modifier RAKOTO Andry' }))
     expect(onOpen).toHaveBeenCalledWith(andry)
-    // Le menu « ⋯ » ne répète pas Modifier
-    await userEvent.click(screen.getByRole('button', { name: 'Actions de RAKOTO Andry' }))
-    expect(screen.getAllByRole('button', { name: 'Modifier RAKOTO Andry' })).toHaveLength(1)
   })
 })

@@ -89,10 +89,9 @@ describe('plans des requêtes SQL', () => {
     expect(costlySteps(plans)).toEqual([])
   })
 
-  it('fidèles : ajout, liste, recherche, modification, déplacement, suppression', () => {
-    const { handle, household, member, update, move, list, membersService } = setupMembers()
+  it('fidèles : ajout, liste, recherche, modification, échange, suppression', () => {
+    const { handle, household, member, update, list, membersService } = setupMembers()
     const one = household()
-    const two = household()
     const plans = plansOf(handle.sqlite, () => {
       const jean = member(one.id, { role: 'father', firstName: 'Jean', deacon: true })
       const andry = member(one.id, { firstName: 'Andry' })
@@ -105,7 +104,6 @@ describe('plans des requêtes SQL', () => {
         swapChildRankInputSchema.parse({ id: nirina.id, direction: 'up' })
       )
       update(jean, { deacon: false })
-      move({ id: andry.id, householdId: two.id, role: 'child' })
       membersService.delete(nirina.id)
     })
     expect(plans.length).toBeGreaterThan(5)

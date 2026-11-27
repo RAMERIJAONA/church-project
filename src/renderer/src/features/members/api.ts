@@ -7,7 +7,6 @@ import type {
 import type {
   CreateMemberInput,
   ListMembersInput,
-  MoveMemberInput,
   SwapChildRankInput,
   UpdateMemberInput
 } from '@shared/domain/members/members.types'
@@ -18,7 +17,6 @@ export const membersApi = {
   create: (input: CreateMemberInput) => invoke('members.create', input),
   update: (input: UpdateMemberInput) => invoke('members.update', input),
   remove: (id: number) => invoke('members.delete', { id }),
-  move: (input: MoveMemberInput) => invoke('members.move', input),
   swapChildRank: (input: SwapChildRankInput) => invoke('members.swapChildRank', input),
   sponsoredHouseholds: (id: number) => invoke('members.sponsoredHouseholds', { id })
 }

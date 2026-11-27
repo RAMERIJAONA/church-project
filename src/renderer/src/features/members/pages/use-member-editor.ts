@@ -1,24 +1,16 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@renderer/lib/error-messages'
-import type { MemberRole } from '@shared/domain/members/households.rules'
 import type { MemberDTO } from '@shared/domain/members/members.types'
 import type { MemberFormSubmit } from '../forms/member-form.schema'
 import { serverErrorOf, type MemberServerError } from '../members.utils'
-import {
-  useCreateMember,
-  useDeleteMember,
-  useMoveMember,
-  useSwapChildRank,
-  useUpdateMember
-} from '../queries'
+import { useCreateMember, useDeleteMember, useSwapChildRank, useUpdateMember } from '../queries'
 
-/** Boîte ouverte sur un fidèle : ajout, fiche, suppression, déplacement, échange de rangs. */
+/** Boîte ouverte sur un fidèle : ajout, fiche, suppression, échange de rangs. */
 export type MemberDialog =
   | { kind: 'add'; householdId: number }
   | { kind: 'edit'; member: MemberDTO }
   | { kind: 'delete'; member: MemberDTO }
-  | { kind: 'move'; member: MemberDTO }
   | { kind: 'swap'; member: MemberDTO; neighbour: MemberDTO; direction: 'up' | 'down' }
 
 export interface MemberEditor {
@@ -31,7 +23,6 @@ export interface MemberEditor {
   close: () => void
   save: (values: MemberFormSubmit, next: boolean) => void
   confirmDelete: () => void
-  move: (householdId: number, role: MemberRole) => void
   confirmSwap: () => void
 }
 
@@ -40,7 +31,6 @@ export function useMemberEditor(): MemberEditor {
   const create = useCreateMember()
   const update = useUpdateMember()
   const remove = useDeleteMember()
-  const moveMember = useMoveMember()
   const swap = useSwapChildRank()
   const [dialog, setDialog] = useState<MemberDialog | null>(null)
   const [serverError, setServerError] = useState<MemberServerError | null>(null)
@@ -57,7 +47,7 @@ export function useMemberEditor(): MemberEditor {
 
   return {
     dialog,
-    submitting: create.isPending || update.isPending || moveMember.isPending,
+    submitting: create.isPending || update.isPending,
     serverError,
     formKey,
     open,
@@ -97,20 +87,6 @@ export function useMemberEditor(): MemberEditor {
         onSuccess: () => toast.success('Fidèle supprimé'),
         onError: failed
       })
-    },
-    move: (householdId, role) => {
-      if (dialog?.kind !== 'move') return
-      setServerError(null)
-      moveMember.mutate(
-        { id: dialog.member.id, householdId, role },
-        {
-          onSuccess: (member) => {
-            toast.success(`Fidèle déplacé : ${member.matricule}`)
-            open(null)
-          },
-          onError: (err) => setServerError({ message: getErrorMessage(err) })
-        }
-      )
     },
     confirmSwap: () => {
       if (dialog?.kind !== 'swap') return

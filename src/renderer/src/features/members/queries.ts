@@ -7,7 +7,6 @@ import type {
 import type {
   CreateMemberInput,
   ListMembersInput,
-  MoveMemberInput,
   SwapChildRankInput,
   UpdateMemberInput
 } from '@shared/domain/members/members.types'
@@ -47,12 +46,11 @@ export function useSponsoredHouseholds(id: number | null) {
   })
 }
 
-export function useHouseholds(input: ListHouseholdsInput, enabled = true) {
+export function useHouseholds(input: ListHouseholdsInput) {
   return useQuery({
     queryKey: membersKeys.households(input),
     queryFn: () => householdsApi.list(input),
-    placeholderData: (previous) => previous,
-    enabled
+    placeholderData: (previous) => previous
   })
 }
 
@@ -96,10 +94,6 @@ export function useUpdateMember() {
 
 export function useDeleteMember() {
   return useRegistryMutation((id: number) => membersApi.remove(id))
-}
-
-export function useMoveMember() {
-  return useRegistryMutation((input: MoveMemberInput) => membersApi.move(input))
 }
 
 export function useSwapChildRank() {

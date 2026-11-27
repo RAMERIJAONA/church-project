@@ -75,6 +75,8 @@ Le module reste **indépendant de la comptabilité** (aucun lien de données, au
 | Sexe (après la livraison) | Père toujours masculin, Mère toujours féminine : le rôle impose le sexe, grisé |
 | Matricule (après la livraison) | **`M` seul pour un communiant** (d'office baptisé) : `1/2M-I`, plus jamais `MB` ; `B` si baptisé seulement |
 | Statuts (après la livraison) | **pas à pas** : Communiant grisé à Non tant que non baptisé, Diacre grisé à Non tant que non communiant ; Non en cascade : Baptisé Non remet Communiant et Diacre à Non, Communiant Non remet Diacre à Non (porteur) |
+| Page d'un foyer (après la livraison) | pas de colonne Diacre ; **Déplacer retiré** (fonctionnalité supprimée) ; Modifier et Supprimer en icônes visibles sur chaque ligne |
+| Curseur (après la livraison) | main (`cursor: pointer`) sur tout ce qui se clique, icônes comprises |
 
 ### 3.3 Conséquences proposées au porteur pendant la conception (non contestées)
 

@@ -75,10 +75,6 @@ export const updateMemberInputSchema = z
   .object({ id: idSchema, role: roleSchema, ...memberFields })
   .strict()
 export const memberIdInputSchema = z.object({ id: idSchema }).strict()
-/** Déplacer un fidèle dans un autre foyer, avec son rôle dans ce foyer */
-export const moveMemberInputSchema = z
-  .object({ id: idSchema, householdId: idSchema, role: roleSchema })
-  .strict()
 /** Échanger le rang d'un enfant avec l'enfant voisin */
 export const swapChildRankInputSchema = z
   .object({ id: idSchema, direction: z.enum(['up', 'down']) })
@@ -109,7 +105,5 @@ export type UpdateMemberInput = z.input<typeof updateMemberInputSchema>
 export type UpdateMemberParsed = z.output<typeof updateMemberInputSchema>
 export type ListMembersInput = z.input<typeof listMembersInputSchema>
 export type ListMembersParsed = z.output<typeof listMembersInputSchema>
-export type MoveMemberInput = z.input<typeof moveMemberInputSchema>
-export type MoveMemberParsed = z.output<typeof moveMemberInputSchema>
 export type SwapChildRankInput = z.input<typeof swapChildRankInputSchema>
 export type SwapChildRankParsed = z.output<typeof swapChildRankInputSchema>

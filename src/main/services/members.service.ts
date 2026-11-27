@@ -17,7 +17,6 @@ import type {
   CreateMemberParsed,
   ListMembersParsed,
   MemberDTO,
-  MoveMemberParsed,
   Paginated,
   SwapChildRankParsed,
   UpdateMemberParsed
@@ -194,27 +193,6 @@ export function createMembersService(deps: {
         return existing(tx, input.id)
       })
       deps.logger.info({ id: member.id }, 'fidèle modifié')
-      return member
-    },
-
-    /** Vers un autre foyer ; les rangs du foyer d'origine ne bougent pas. */
-    move(input: MoveMemberParsed): MemberDTO {
-      const member = written((tx) => {
-        const before = existing(tx, input.id)
-        if (before.householdId === input.householdId) {
-          throw new AppError('BUSINESS_RULE', 'Ce fidèle est déjà dans ce foyer.')
-        }
-        const target = householdOf(tx, input.householdId)
-        const rank = rankIn(tx, target, input.role, before.sex, input.id)
-        deps.members.update(tx, input.id, {
-          householdId: target.id,
-          role: input.role,
-          rank,
-          updatedAt: now()
-        })
-        return existing(tx, input.id)
-      })
-      deps.logger.info({ id: member.id, householdId: member.householdId }, 'fidèle déplacé')
       return member
     },
 

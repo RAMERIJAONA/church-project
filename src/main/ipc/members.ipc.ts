@@ -9,7 +9,6 @@ export function registerMembersIpc(handle: Handle, members: MembersService): voi
     members.delete(id)
     return null
   })
-  handle('members.move', (input) => members.move(input))
   handle('members.swapChildRank', (input) => {
     members.swapChildRank(input)
     return null

@@ -21,12 +21,10 @@ import {
 import {
   createMemberInputSchema,
   listMembersInputSchema,
-  moveMemberInputSchema,
   updateMemberInputSchema,
   type CreateMemberInput,
   type ListMembersInput,
-  type MemberDTO,
-  type MoveMemberInput
+  type MemberDTO
 } from '@shared/domain/members/members.types'
 import { createSectorInputSchema } from '@shared/domain/members/sectors.types'
 import { makeMemberInput } from '@tests/factories/members.factory'
@@ -89,9 +87,6 @@ export function setupMembers() {
   const update = (m: MemberDTO, changes: Partial<CreateMemberInput> = {}): MemberDTO =>
     membersService.update(updateMemberInputSchema.parse({ ...toInput(m), ...changes, id: m.id }))
 
-  const move = (input: MoveMemberInput): MemberDTO =>
-    membersService.move(moveMemberInputSchema.parse(input))
-
   const list = (input: ListMembersInput = {}) =>
     membersService.list(listMembersInputSchema.parse(input))
 
@@ -109,7 +104,6 @@ export function setupMembers() {
     listHouseholds,
     member,
     update,
-    move,
     list
   }
 }

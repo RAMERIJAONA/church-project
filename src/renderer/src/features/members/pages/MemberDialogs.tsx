@@ -1,10 +1,8 @@
-import { useState } from 'react'
 import type { HouseholdDTO } from '@shared/domain/members/households.types'
 import { ConfirmDeleteMemberDialog } from '../components/ConfirmDeleteMemberDialog'
 import { ConfirmSwapDialog } from '../components/ConfirmSwapDialog'
 import { MemberFormDialog } from '../components/MemberFormDialog'
-import { MoveMemberDialog } from '../components/MoveMemberDialog'
-import { useHouseholds, useSponsoredHouseholds } from '../queries'
+import { useSponsoredHouseholds } from '../queries'
 import type { MemberEditor } from './use-member-editor'
 
 export interface MemberDialogsProps {
@@ -21,15 +19,6 @@ export function MemberDialogs({ editor, household, today }: MemberDialogsProps):
   const sponsored = useSponsoredHouseholds(
     member?.deacon && (dialog?.kind === 'edit' || dialog?.kind === 'delete') ? member.id : null
   )
-  const [targetNumber, setTargetNumber] = useState<number | null>(null)
-  const targets = useHouseholds(
-    { search: targetNumber === null ? '' : String(targetNumber) },
-    dialog?.kind === 'move' && targetNumber !== null
-  )
-  const target =
-    targetNumber === null || targets.isFetching
-      ? undefined
-      : (targets.data?.items.find((h) => h.number === targetNumber) ?? null)
   const formOpen = (dialog?.kind === 'add' || dialog?.kind === 'edit') && household !== undefined
 
   return (
@@ -54,18 +43,6 @@ export function MemberDialogs({ editor, household, today }: MemberDialogsProps):
         sponsoredHouseholds={sponsored.data ?? []}
         onConfirm={editor.confirmDelete}
         onCancel={editor.close}
-      />
-      <MoveMemberDialog
-        member={dialog?.kind === 'move' ? dialog.member : null}
-        target={target}
-        onNumberChange={setTargetNumber}
-        submitting={editor.submitting}
-        serverError={editor.serverError?.message ?? null}
-        onSubmit={editor.move}
-        onCancel={() => {
-          setTargetNumber(null)
-          editor.close()
-        }}
       />
       <ConfirmSwapDialog
         pair={dialog?.kind === 'swap' ? dialog : null}

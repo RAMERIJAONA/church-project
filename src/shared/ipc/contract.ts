@@ -35,7 +35,6 @@ import {
   createMemberInputSchema,
   listMembersInputSchema,
   memberIdInputSchema,
-  moveMemberInputSchema,
   swapChildRankInputSchema,
   updateMemberInputSchema,
   type MemberDTO,
@@ -83,7 +82,6 @@ export const ipcInputs = {
   'members.create': createMemberInputSchema,
   'members.update': updateMemberInputSchema,
   'members.delete': memberIdInputSchema,
-  'members.move': moveMemberInputSchema,
   'members.swapChildRank': swapChildRankInputSchema,
   'members.sponsoredHouseholds': memberIdInputSchema,
   'sectors.list': z.undefined(),
@@ -149,7 +147,6 @@ export interface IpcOutputs {
   'members.create': MemberDTO
   'members.update': MemberDTO
   'members.delete': null
-  'members.move': MemberDTO
   'members.swapChildRank': null
   'members.sponsoredHouseholds': number[]
   'sectors.list': SectorDTO[]

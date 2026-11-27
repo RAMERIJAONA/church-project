@@ -34,7 +34,6 @@ export const CHANNELS = [
   'members.create',
   'members.update',
   'members.delete',
-  'members.move',
   'members.swapChildRank',
   'members.sponsoredHouseholds',
   'sectors.list',

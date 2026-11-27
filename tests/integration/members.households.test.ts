@@ -1,4 +1,4 @@
-/** Fidèles dans leur foyer : rangs selon le rôle, matricules, déplacements, parrains. */
+/** Fidèles dans leur foyer : rangs selon le rôle, matricules, parrains. */
 import { describe, expect, it } from 'vitest'
 import { swapChildRankInputSchema } from '@shared/domain/members/members.types'
 import { caught, setupMembers } from '@tests/helpers/members-context'
@@ -44,30 +44,6 @@ describe('MembersService : foyers, rangs et matricules', () => {
     expect([membersService.get(a!.id).rank, membersService.get(b!.id).rank]).toEqual([3, 4])
   })
 
-  it('déplace un enfant sans changer les rangs du foyer d’origine', () => {
-    const { household, member, move } = setupMembers()
-    const one = household()
-    const two = household()
-    member(one.id, { firstName: 'Andry' })
-    const nirina = member(one.id, { firstName: 'Nirina' })
-    member(two.id, { firstName: 'Fara' })
-    const moved = move({ id: nirina.id, householdId: two.id, role: 'child' })
-    expect(moved).toMatchObject({ householdNumber: 2, rank: 4, matricule: '2/4-I' })
-    expect(member(one.id, { firstName: 'Hery' }).rank).toBe(5)
-  })
-
-  it('déplace un enfant qui devient chef de son nouveau foyer', () => {
-    const { household, member, move } = setupMembers()
-    const one = household()
-    const two = household()
-    const andry = member(one.id, { firstName: 'Andry' })
-    expect(move({ id: andry.id, householdId: two.id, role: 'head' })).toMatchObject({
-      role: 'head',
-      rank: 1,
-      matricule: '2/1-I'
-    })
-  })
-
   it('refuse un deuxième rang 1', () => {
     const { household, member } = setupMembers()
     const h = household()
@@ -84,21 +60,6 @@ describe('MembersService : foyers, rangs et matricules', () => {
     expect(err.code).toBe('BUSINESS_RULE')
     expect(err.message).toBe('Le père est de sexe masculin.')
     expect(err.details).toEqual({ field: 'sex' })
-  })
-
-  it('refuse un déplacement vers le même foyer, ou vers un rang pris, sans rien écrire', () => {
-    const { household, member, move, membersService } = setupMembers()
-    const one = household()
-    const two = household()
-    const andry = member(one.id, { firstName: 'Andry' })
-    member(two.id, { role: 'father', firstName: 'Jean' })
-    expect(caught(() => move({ id: andry.id, householdId: one.id, role: 'child' })).code).toBe(
-      'BUSINESS_RULE'
-    )
-    expect(caught(() => move({ id: andry.id, householdId: two.id, role: 'father' })).code).toBe(
-      'CONFLICT'
-    )
-    expect(membersService.get(andry.id)).toMatchObject({ householdId: one.id, rank: 3 })
   })
 
   it('échange deux enfants voisins', () => {

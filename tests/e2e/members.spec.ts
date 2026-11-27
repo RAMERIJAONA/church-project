@@ -128,12 +128,18 @@ test('@smoke fidèles : secteurs, foyers, membres, matricules et liste globale',
       .toEqual(['1/1M-I', '1/2B-I', '1/3-I', '1/4-I'])
 
     // Le père devient diacre : son matricule ne change pas
-    await w.getByRole('button', { name: 'Modifier RAKOTO Jean' }).click()
+    // Icônes et liens avec la main (cursor: pointer), comme tout élément cliquable
+    const pencil = w.getByRole('button', { name: 'Modifier RAKOTO Jean' })
+    await expect(pencil).toHaveCSS('cursor', 'pointer')
+    await expect(w.getByRole('button', { name: 'Supprimer RAKOTO Jean' })).toHaveCSS(
+      'cursor',
+      'pointer'
+    )
+    await pencil.click()
     form = w.getByRole('dialog', { name: 'Modifier RAKOTO Jean' })
     await yes(form, 'Diacre').click()
     await form.getByRole('button', { name: 'Enregistrer', exact: true }).click()
     await expect(w.getByText('Modifications enregistrées')).toBeVisible()
-    await expect(w.getByRole('row', { name: /1\/1M-I/ })).toContainText('Diacre')
 
     // Foyer 2, secteur II, parrain : le diacre (seuls les diacres sont proposés)
     await createHousehold(w, 'II · Antanety Atsimo', 'RAKOTO Jean')
@@ -154,6 +160,7 @@ test('@smoke fidèles : secteurs, foyers, membres, matricules et liste globale',
     await expect(w.getByText('5 fidèles')).toBeVisible()
     const list = w.getByRole('region', { name: 'Liste des fidèles' })
     await expect(list.getByRole('row', { name: /RASOA/ })).toContainText('RAKOTO Jean')
+    await expect(list.getByRole('row', { name: /1\/1M-I/ })).toContainText('Diacre')
     await w
       .getByRole('group', { name: 'Filtres' })
       .getByRole('combobox', { name: 'Secteur' })
@@ -175,7 +182,6 @@ test('@smoke fidèles : secteurs, foyers, membres, matricules et liste globale',
     await expect.poll(() => matricules(w, 'Membres du foyer')).toContain('1/3B-I')
 
     // Suppression d'un enfant : les rangs des autres ne bougent pas
-    await w.getByRole('button', { name: 'Actions de RAKOTO Andry' }).click()
     await w.getByRole('button', { name: 'Supprimer RAKOTO Andry' }).click()
     await w
       .getByRole('alertdialog', { name: 'Supprimer RAKOTO Andry ?' })

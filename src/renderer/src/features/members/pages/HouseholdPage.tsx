@@ -96,7 +96,6 @@ export function HouseholdPage(): React.JSX.Element {
           sponsor={data.sponsor}
           today={today}
           onOpen={(member) => open({ kind: 'edit', member })}
-          onMove={(member) => open({ kind: 'move', member })}
           onDelete={(member) => open({ kind: 'delete', member })}
           onSwap={(member, direction) => {
             const neighbour = children[children.indexOf(member) + (direction === 'up' ? -1 : 1)]

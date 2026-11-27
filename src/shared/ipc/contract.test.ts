@@ -65,7 +65,7 @@ describe('contrat IPC : fidèles', () => {
     expect(schema.safeParse({ ...valid, registrationNumber: 'M-1' }).success).toBe(false)
   })
 
-  it('members.update exige un id et pas de foyer (déplacement : members.move)', () => {
+  it('members.update exige un id et ne change pas de foyer', () => {
     const fields = Object.fromEntries(Object.entries(valid).filter(([k]) => k !== 'householdId'))
     expect(ipcInputs['members.update'].safeParse(fields).success).toBe(false)
     expect(ipcInputs['members.update'].safeParse({ ...fields, id: 3 }).success).toBe(true)
@@ -81,5 +81,11 @@ describe('contrat IPC : fidèles', () => {
       order: 'asc'
     })
     expect(ipcInputs['members.list'].safeParse({ pageSize: 500 }).success).toBe(false)
+  })
+})
+
+describe('contrat IPC : déplacement retiré (porteur, 2026-11-27)', () => {
+  it('ne propose plus de déplacer un fidèle vers un autre foyer', () => {
+    expect(CHANNELS).not.toContain('members.move')
   })
 })

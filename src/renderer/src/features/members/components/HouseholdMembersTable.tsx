@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, Pencil } from 'lucide-react'
+import { ArrowDown, ArrowUp, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@renderer/components/ui/button'
 import { ROLE_LABELS } from '@shared/domain/members/households.rules'
 import type { SponsorDTO } from '@shared/domain/members/households.types'
@@ -10,10 +10,8 @@ import {
   memberDisplayName
 } from '@shared/domain/members/members.rules'
 import type { MemberDTO } from '@shared/domain/members/members.types'
-import { MemberRowActions } from './MemberRowActions'
 import {
   bodyCell,
-  deaconBadge,
   headCell,
   matriculeText,
   missingText,
@@ -30,7 +28,6 @@ export interface HouseholdMembersTableProps {
   /** « AAAA-MM-JJ » : calcul de l'âge */
   today: string
   onOpen: (member: MemberDTO) => void
-  onMove: (member: MemberDTO) => void
   onDelete: (member: MemberDTO) => void
   onSwap: (member: MemberDTO, direction: 'up' | 'down') => void
 }
@@ -45,11 +42,10 @@ const COLUMNS = [
   'Téléphone',
   'Adresse',
   'Secteur',
-  'Diacre',
   'Parrain'
 ]
 
-/** Membres d'un foyer, par rang ; les enfants changent de place avec ↑ et ↓. */
+/** Membres d'un foyer, par rang : Modifier, ↑ ↓ (enfants), Supprimer visibles sur chaque ligne. */
 export function HouseholdMembersTable(p: HouseholdMembersTableProps): React.JSX.Element {
   const children = p.members.filter((m) => m.role === 'child')
   return (
@@ -98,9 +94,6 @@ export function HouseholdMembersTable(p: HouseholdMembersTableProps): React.JSX.
                 <td className={bodyCell()}>{m.address}</td>
                 <td className={bodyCell({ numeric: true })}>{m.sector.numeral}</td>
                 <td className={bodyCell()}>
-                  {m.deacon && <span className={deaconBadge}>Diacre</span>}
-                </td>
-                <td className={bodyCell()}>
                   {p.sponsor ? (
                     memberDisplayName(p.sponsor)
                   ) : (
@@ -141,11 +134,16 @@ export function HouseholdMembersTable(p: HouseholdMembersTableProps): React.JSX.
                         <ArrowDown aria-hidden />
                       </Button>
                     )}
-                    <MemberRowActions
-                      name={name}
-                      onMove={() => p.onMove(m)}
-                      onDelete={() => p.onDelete(m)}
-                    />
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      aria-label={`Supprimer ${name}`}
+                      title="Supprimer"
+                      onClick={() => p.onDelete(m)}
+                    >
+                      <Trash2 aria-hidden />
+                    </Button>
                   </div>
                 </td>
               </tr>
