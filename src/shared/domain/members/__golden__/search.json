@@ -1,0 +1,26 @@
+{
+  "entries": [
+    { "id": 1, "lastName": "RAKOTO", "firstName": "Tiana", "registrationNumber": null },
+    { "id": 2, "lastName": "RAKOTOMALALA", "firstName": "Jean-Pierre", "registrationNumber": null },
+    { "id": 3, "lastName": "RASOA", "firstName": "Nirina", "registrationNumber": null },
+    { "id": 4, "lastName": "ANDRIAMAHEFA", "firstName": "Fanja", "registrationNumber": null },
+    { "id": 5, "lastName": "RAKOTO", "firstName": "Andry", "registrationNumber": "M-0042" },
+    { "id": 6, "lastName": "RABE", "firstName": "Hery", "registrationNumber": null },
+    { "id": 7, "lastName": "RANDRIA", "firstName": "Tiana", "registrationNumber": null },
+    { "id": 8, "lastName": "RAZAFY", "firstName": "Mamy", "registrationNumber": "M-0100" }
+  ],
+  "cases": [
+    { "query": "rakto", "ids": [5, 1, 2], "why": "une lettre oubliée" },
+    { "query": "tiana", "ids": [1, 7], "why": "prénom exact, ordre alphabétique" },
+    { "query": "rakoto tiana", "ids": [1], "why": "tous les mots tapés doivent correspondre" },
+    { "query": "andriamaehfa", "ids": [4], "why": "deux lettres inversées" },
+    { "query": "RÂKOTO", "ids": [5, 1, 2], "why": "majuscules et accents ignorés ; mot exact avant début de mot" },
+    { "query": "nirna", "ids": [3], "why": "une lettre oubliée dans le prénom" },
+    { "query": "pierre", "ids": [2], "why": "partie d'un prénom composé" },
+    { "query": "m-0042", "ids": [5], "why": "matricule complet" },
+    { "query": "0042", "ids": [5], "why": "partie du matricule" },
+    { "query": "ra", "ids": [6, 5, 1, 2, 7, 3, 8], "why": "moins de 4 lettres : débuts de mot seulement" },
+    { "query": "koto", "ids": [5, 1, 2], "why": "contenu dans le nom" },
+    { "query": "xyz", "ids": [], "why": "aucune correspondance" }
+  ]
+}
