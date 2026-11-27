@@ -24,6 +24,10 @@ export const CHANNELS = [
   'backup.export',
   'backup.restore',
   'backup.openFolder',
+  'members.list',
+  'members.create',
+  'members.update',
+  'members.delete',
   'settings.get',
   'settings.update'
 ] as const

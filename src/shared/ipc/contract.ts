@@ -21,6 +21,14 @@ import {
   type PeriodTotalDTO
 } from '../domain/accounting/accounting.types'
 import { exportSheetInputSchema } from '../domain/accounting/accounting.export'
+import {
+  createMemberInputSchema,
+  listMembersInputSchema,
+  memberIdInputSchema,
+  updateMemberInputSchema,
+  type MemberDTO,
+  type Paginated
+} from '../domain/members/members.types'
 import { appSettingsPatchSchema, type AppSettings } from '../domain/settings/settings.types'
 import type { Channel } from './channels'
 
@@ -48,6 +56,10 @@ export const ipcInputs = {
   'backup.export': z.undefined(),
   'backup.restore': z.undefined(),
   'backup.openFolder': z.undefined(),
+  'members.list': listMembersInputSchema,
+  'members.create': createMemberInputSchema,
+  'members.update': updateMemberInputSchema,
+  'members.delete': memberIdInputSchema,
   'settings.get': z.undefined(),
   'settings.update': appSettingsPatchSchema
 } satisfies Record<Channel, z.ZodType>
@@ -98,6 +110,10 @@ export interface IpcOutputs {
   'backup.export': ExportResultDTO
   'backup.restore': RestoreResultDTO
   'backup.openFolder': null
+  'members.list': Paginated<MemberDTO>
+  'members.create': MemberDTO
+  'members.update': MemberDTO
+  'members.delete': null
   'settings.get': AppSettings
   'settings.update': AppSettings
 }
