@@ -25,7 +25,8 @@ export const routes: RouteObject[] = [
         path: 'fideles',
         handle: {
           title: 'Fidèles',
-          description: 'Registre des fidèles : ajout, modification, recherche'
+          description: 'Registre des fidèles : ajout, modification, recherche',
+          fillHeight: true
         } satisfies RouteHandle,
         errorElement: <RouteErrorBoundary />,
         lazy: async () => ({

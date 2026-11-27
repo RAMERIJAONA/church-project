@@ -4,6 +4,12 @@ import { useMatches } from 'react-router'
 export interface RouteHandle {
   title: string
   description?: string
+  /**
+   * La page occupe exactement la hauteur visible et fait défiler elle-même une partie (Fidèles :
+   * seul le tableau défile). Sans cette option, une page plus haute fait défiler <main> et garde
+   * sa marge du bas (régression du 2026-11-27).
+   */
+  fillHeight?: boolean
 }
 
 function isRouteHandle(value: unknown): value is RouteHandle {
