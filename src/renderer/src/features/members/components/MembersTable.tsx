@@ -1,3 +1,5 @@
+import { Pencil } from 'lucide-react'
+import { Button } from '@renderer/components/ui/button'
 import {
   ageOn,
   formatAge,
@@ -113,12 +115,23 @@ export function MembersTable(p: MembersTableProps): React.JSX.Element {
                 </button>
               </td>
               <td className={bodyCell({ align: 'right' })}>
-                <MemberRowActions
-                  name={memberDisplayName(m)}
-                  onEdit={() => p.onEdit(m)}
-                  onOpenHousehold={() => p.onOpenHousehold(m)}
-                  onDelete={() => p.onDelete(m)}
-                />
+                <div className="flex items-center justify-end gap-0.5">
+                  {/* Modifier toujours visible : cliquer sur le nom n'est pas évident (porteur) */}
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={`Modifier ${memberDisplayName(m)}`}
+                    title="Modifier"
+                    onClick={() => p.onEdit(m)}
+                  >
+                    <Pencil aria-hidden />
+                  </Button>
+                  <MemberRowActions
+                    name={memberDisplayName(m)}
+                    onOpenHousehold={() => p.onOpenHousehold(m)}
+                    onDelete={() => p.onDelete(m)}
+                  />
+                </div>
               </td>
             </tr>
           ))}

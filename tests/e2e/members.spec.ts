@@ -165,7 +165,7 @@ test('@smoke fidèles : secteurs, foyers, membres, matricules et liste globale',
 
     // Baptême d'un enfant depuis la liste globale : matricule à jour dans les deux listes
     const andry = list.getByRole('row', { name: /Andry/ })
-    await andry.getByRole('button', { name: 'RAKOTO', exact: true }).click()
+    await andry.getByRole('button', { name: 'Modifier RAKOTO Andry' }).click()
     form = w.getByRole('dialog', { name: 'Modifier RAKOTO Andry' })
     await yes(form, 'Baptisé').click()
     await form.getByRole('button', { name: 'Enregistrer', exact: true }).click()

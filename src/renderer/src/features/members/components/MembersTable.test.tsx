@@ -94,11 +94,11 @@ describe('MembersTable', () => {
     expect(onSort).toHaveBeenCalledWith('household')
   })
 
-  it('ouvre le foyer du fidèle et propose Modifier, Voir le foyer, Supprimer', async () => {
+  it('ouvre le foyer du fidèle et propose le crayon Modifier, puis Voir le foyer et Supprimer dans le menu', async () => {
     const { onEdit, onDelete, onOpenHousehold } = setup()
     await userEvent.click(screen.getByRole('button', { name: 'Foyer 4' }))
     expect(onOpenHousehold).toHaveBeenCalledWith(nirina)
-    await userEvent.click(screen.getByRole('button', { name: 'Actions de RAKOTO Tiana' }))
+    // Crayon visible sur chaque ligne, sans ouvrir le menu
     await userEvent.click(screen.getByRole('button', { name: 'Modifier RAKOTO Tiana' }))
     expect(onEdit).toHaveBeenCalledWith(tiana)
     await userEvent.click(screen.getByRole('button', { name: 'Actions de RAKOTO Tiana' }))
@@ -107,5 +107,12 @@ describe('MembersTable', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Actions de RAKOTO Tiana' }))
     await userEvent.click(screen.getByRole('button', { name: 'Supprimer RAKOTO Tiana' }))
     expect(onDelete).toHaveBeenCalledWith(tiana)
+  })
+
+  it('ne répète pas Modifier dans le menu « ⋯ »', async () => {
+    setup()
+    expect(screen.getByRole('button', { name: 'Modifier RASOA Nirina' })).toBeTruthy()
+    await userEvent.click(screen.getByRole('button', { name: 'Actions de RASOA Nirina' }))
+    expect(screen.getAllByRole('button', { name: 'Modifier RASOA Nirina' })).toHaveLength(1)
   })
 })
