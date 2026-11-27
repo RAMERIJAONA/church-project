@@ -373,6 +373,7 @@ export async function invoke<C extends Channel>(channel: C, input: IpcInput<C>):
 - ❌ `backdrop-filter`, `filter: blur`, grosses `box-shadow`, dégradés animés, effet verre
 - ✅ transitions uniquement sur `transform` / `opacity`, ≤ 150 ms ; respecter `prefers-reduced-motion`
 - Virtualiser les listes, paginer côté SQL (jamais tout charger pour filtrer en JS)
+  - **Dérogation (fidèles, 2026-11-27)** : la recherche tolérante aux fautes garde un index compact (id, nom, prénom, matricule normalisés, environ 100 Ko pour 2 000 fidèles) **dans le process main** (`members.service.ts`, fonction pure `shared/domain/members/members.search.ts`) ; le renderer ne reçoit que la page affichée. Mesuré à 30 ms pour 10 000 fidèles sur le Mac ; prévu pour moins de 10 000 environ, à revoir au-delà.
 - Debounce des recherches (~200 ms), index SQL sur les colonnes filtrées / triées
 - `React.lazy` par feature, pas de micro-découpage (lecture disque lente)
 - Fenêtre : `show: false` + `ready-to-show` + `backgroundColor` du thème → pas de flash blanc
@@ -439,6 +440,7 @@ export async function invoke<C extends Channel>(channel: C, input: IpcInput<C>):
 - Pas de globals Vitest : `tests/setup/renderer.ts` appelle `cleanup()` de Testing Library. Pas de `@testing-library/jest-dom` (non listé) : on teste les propriétés DOM (`toHaveProperty('disabled', true)`).
 - Factories : `tests/factories/*.factory.ts` sans dépendance DB (utilisables côté renderer), `*.seed.ts` pour écrire en base.
 - **Base de démonstration** : `npm run seed:accounting` (projet Vitest `seed`, `scripts/seed-accounting.task.ts`, activé par `SEED_ACCOUNTING=1`) recrée `.dev-data/seed/data.db` (ignoré par git) avec un **grand jeu fictif en français** (demande du 2026-11-25) : plan `tests/fixtures/accounting/demo-plan.ts` (environ 165 rubriques, 4 niveaux, une lettre par rubrique principale, niveau 2 mélangé groupes / rubriques à montant (A2-I à A2-IV), rubrique principale à montants K1, très grands montants L1, description longue, section B2 des entrées supprimée puis lettres décalées), montants en Ariary générés de façon déterministe par `tests/factories/accounting.demo-seed.ts` sur 6 années (4 passées, l'année en cours jusqu'à aujourd'hui, l'année prochaine) : cases vides, simples, détaillées, modifiées, supprimées, saisies tardives, réalisations aujourd'hui et cette semaine. Passe par le service ; vérifié par `tests/integration/accounting.demo-seed.test.ts`. `npm run dev:seed` lance l'app sur cette base, sans toucher la base de dev habituelle. **Aucune donnée réelle de l'église dans le repo (public)** : le budget réel 2025 (montants, rémunérations) a été retiré de tout l'historique le 2026-11-26 avant la publication. Données de test toujours fictives.
+- **Fidèles de démonstration** : `npm run seed:members` (projet Vitest `seed-members`, `scripts/seed-members.task.ts`, activé par `SEED_MEMBERS=1`) vide **la seule table `members`** de `.dev-data/seed/data.db` (ou `SEED_DIR`) et y crée 500 fidèles fictifs déterministes par le service (`tests/factories/members.demo-seed.ts`, vérifié par `tests/integration/members.demo-seed.test.ts`) ; la comptabilité de cette base n'est pas touchée. À lancer après `seed:accounting` (qui recrée la base), app fermée.
 - `npm run fixture:snapshot` est un projet Vitest dédié (`scripts/fixture-snapshot.task.ts`, activé par `FIXTURE_SNAPSHOT=1`) : mêmes alias, même runtime. Il refuse d'écraser une fixture existante et écrit un manifeste `v<version>.json` (lignes par table) que lit le test de migrations.
 
 ### 9.3 Règles de non-régression (obligatoires)
@@ -447,6 +449,7 @@ export async function invoke<C extends Channel>(channel: C, input: IpcInput<C>):
 3. **Parcours critiques en E2E smoke** (liste à maintenir ici) :
    - [x] Démarrage à vide → migrations OK → écran d'accueil (`tests/e2e/startup.spec.ts`)
    - [ ] Créer un client → apparaît dans la liste → recherche le retrouve
+   - [x] Fidèles : créer (nom et prénom mis en forme) → apparaît dans la liste → la recherche avec une faute le retrouve → doublon averti → modifier (téléphone formaté) → supprimer (`tests/e2e/members.spec.ts`)
    - [ ] Créer une vente → stock décrémenté → total correct
    - [ ] Imprimer / générer le PDF d'une facture
    - [x] Impression : liste des imprimantes + PDF de la page de comptabilité (`tests/e2e/print.spec.ts`)
@@ -654,3 +657,25 @@ UI en français d'abord ; les termes malgaches sont gardés en glossaire (traduc
 - Migration `0002` (SQL de reprise écrit à la main dans le fichier généré) : anciennes rubriques → niveau 1, anciennes lignes → niveau 2, anciens montants → saisies « réalisation » sans libellé. Migration `0003` : date d'opération des réalisations existantes = date de saisie si elle tombe dans l'année de la case, sinon 31 décembre.
 - **Totaux** (demandés le 2026-11-24) : chaque groupe affiche, par colonne, la somme de toute sa descendance (lecture seule) ; ligne « Total général » (vue Année, 3 colonnes) ou « Total » (vues par période) en pied de tableau. Calcul pur `rollUp` (`accounting.totals.ts`), fait à l'écran pour suivre chaque saisie immédiatement ; `null` (case vide) si aucune rubrique concernée n'a de montant, 0 est un montant.
 - Tableau non virtualisé : un plan comptable reste sous 200 lignes. À virtualiser s'il dépasse (§2).
+
+### 16.2 Fidèles (`features/members`, reçue le 2026-11-27)
+
+- **Module indépendant de la comptabilité** (précision du porteur) : aucun lien de données, aucun import entre `members` et `accounting` (features, domain, main). Les helpers de date communs (`localDateOf`, `isCalendarDate`) sont dans `shared/utils/dates.ts`. Conception : `docs/superpowers/specs/2026-11-27-fideles-design.md`.
+- Menu « Fidèles » (`/fideles`) : liste paginée (50 par page, triée par nom puis prénom), ajout, modification, suppression douce confirmée (« Supprimer RAKOTO Tiana ? »).
+- **Champs** (table `members`, migration `0006`) :
+
+| Champ | Obligatoire | Règle |
+|---|---|---|
+| Nom | oui | toujours en MAJUSCULES (`normalizeLastName`) |
+| Prénom | oui | majuscule au début de chaque mot, après une espace, un trait d'union ou une apostrophe : `rAkoto TiaNa` → `Rakoto Tiana`, `jean-pierre` → `Jean-Pierre` (`normalizeFirstName`) |
+| Date de naissance | oui | calendrier (`DateField`, peut partir vide) ; « AAAA-MM-JJ », du 1er janvier 1900 à aujourd'hui (`birthDateError`) |
+| Adresse | oui | texte |
+| Téléphone | non | saisie `034 12 345 67`, `+261 34 12 345 67`, `341234567`, `034.12.345.67`… ; 9 chiffres significatifs commençant par 2 ou 3 ; stocké `+261341234567`, **affiché `034 12 345 67`**, formaté pendant la frappe (`parsePhone`, `formatPhone`, `formatPhoneTyping`) |
+| Secteur | non | texte libre ; deviendra une liste déroulante avec une section « Secteurs » (table `sectors` + `sector_id`, reprise d'une valeur par texte distinct) |
+| Baptême, Membre communiant | non | Oui / Non ; **un membre communiant est toujours baptisé** : formulaire (Communiant grisé), service (`BUSINESS_RULE`), CHECK SQL |
+| Matricule | non | texte ; **unique parmi les fidèles actifs**, insensible à la casse (`CONFLICT`, index unique partiel `COLLATE NOCASE`) ; libéré par une suppression |
+
+- **Doublon probable** (même nom, prénom normalisés et date de naissance qu'un fidèle actif, à l'ajout comme à la modification) : avertissement « Un fidèle RAKOTO Tiana né le 12/03/1985 existe déjà. Ajouter quand même ? » ; le service lève `CONFLICT` (`details.reason = 'possible-duplicate'`) tant que l'entrée n'a pas `confirmDuplicate: true`.
+- **Recherche en temps réel** (debounce 200 ms) sur nom, prénom, matricule : majuscules, accents et ponctuation ignorés ; chaque mot tapé doit correspondre ; classement mot identique, puis début de mot, puis contenu (3 lettres et plus), puis approché (Damerau-Levenshtein, 1 faute de 4 à 7 lettres, 2 à partir de 8) ; matricule jamais approché. Golden `shared/domain/members/__golden__/search.json`. Recherche faite seulement de ponctuation = pas de recherche.
+- Tests : `members.rules.test.ts`, `members.search.test.ts`, `tests/integration/members.schema.test.ts`, `members.service.test.ts`, composants `MembersTable`, `MemberFormDialog`, E2E `members.spec.ts`.
+

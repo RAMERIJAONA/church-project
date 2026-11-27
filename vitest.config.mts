@@ -14,6 +14,12 @@ const seedProject = {
   test: { name: 'seed', environment: 'node', include: ['scripts/seed-accounting.task.ts'] }
 }
 
+// `npm run seed:members` : fidèles fictifs dans .dev-data/seed (jamais lancé par `npm test`)
+const seedMembersProject = {
+  extends: true,
+  test: { name: 'seed-members', environment: 'node', include: ['scripts/seed-members.task.ts'] }
+}
+
 // `npm run fixture:snapshot` : projet dédié qui génère une fixture DB (jamais lancé par `npm test`)
 const fixtureProject = {
   extends: true,
@@ -50,7 +56,8 @@ export default defineConfig({
         }
       },
       ...(process.env['FIXTURE_SNAPSHOT'] === '1' ? [fixtureProject] : []),
-      ...(process.env['SEED_ACCOUNTING'] === '1' ? [seedProject] : [])
+      ...(process.env['SEED_ACCOUNTING'] === '1' ? [seedProject] : []),
+      ...(process.env['SEED_MEMBERS'] === '1' ? [seedMembersProject] : [])
     ],
     coverage: {
       provider: 'v8',
