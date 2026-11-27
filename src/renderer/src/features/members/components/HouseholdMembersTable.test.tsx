@@ -91,4 +91,16 @@ describe('HouseholdMembersTable', () => {
     await userEvent.click(screen.getByRole('button', { name: 'RAKOTO Andry' }))
     expect(onOpen).toHaveBeenCalledWith(andry)
   })
+
+  it('modifie un membre avec le crayon visible sur chaque ligne', async () => {
+    const { onOpen } = setup()
+    for (const name of ['RAKOTO Jean', 'RAKOTO Andry', 'RAKOTO Soa']) {
+      expect(screen.getByRole('button', { name: `Modifier ${name}` })).toBeTruthy()
+    }
+    await userEvent.click(screen.getByRole('button', { name: 'Modifier RAKOTO Andry' }))
+    expect(onOpen).toHaveBeenCalledWith(andry)
+    // Le menu « ⋯ » ne répète pas Modifier
+    await userEvent.click(screen.getByRole('button', { name: 'Actions de RAKOTO Andry' }))
+    expect(screen.getAllByRole('button', { name: 'Modifier RAKOTO Andry' })).toHaveLength(1)
+  })
 })

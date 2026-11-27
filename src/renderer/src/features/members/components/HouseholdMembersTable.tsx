@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp } from 'lucide-react'
+import { ArrowDown, ArrowUp, Pencil } from 'lucide-react'
 import { Button } from '@renderer/components/ui/button'
 import { ROLE_LABELS } from '@shared/domain/members/households.rules'
 import type { SponsorDTO } from '@shared/domain/members/households.types'
@@ -109,6 +109,16 @@ export function HouseholdMembersTable(p: HouseholdMembersTableProps): React.JSX.
                 </td>
                 <td className={bodyCell({ align: 'right' })}>
                   <div className="flex items-center justify-end gap-0.5">
+                    {/* Modifier toujours visible : cliquer sur le nom n'est pas évident (porteur) */}
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={`Modifier ${name}`}
+                      title="Modifier"
+                      onClick={() => p.onOpen(m)}
+                    >
+                      <Pencil aria-hidden />
+                    </Button>
                     {childIndex > 0 && (
                       <Button
                         variant="ghost"
@@ -133,7 +143,6 @@ export function HouseholdMembersTable(p: HouseholdMembersTableProps): React.JSX.
                     )}
                     <MemberRowActions
                       name={name}
-                      onEdit={() => p.onOpen(m)}
                       onMove={() => p.onMove(m)}
                       onDelete={() => p.onDelete(m)}
                     />

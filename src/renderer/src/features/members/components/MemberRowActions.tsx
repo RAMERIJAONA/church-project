@@ -7,7 +7,8 @@ import { menuItem, rowActions } from './members.styles'
 export interface MemberRowActionsProps {
   /** « RAKOTO Tiana », pour des libellés accessibles non ambigus */
   name: string
-  onEdit: () => void
+  /** Absent : la ligne a déjà son bouton Modifier visible (page d'un foyer) */
+  onEdit?: () => void
   onDelete: () => void
   /** Page d'un foyer : déplacer vers un autre foyer */
   onMove?: () => void
@@ -37,15 +38,17 @@ export function MemberRowActions({
           </Button>
         </PopoverTrigger>
         <PopoverContent align="end" className="flex w-44 flex-col gap-0.5 p-1">
-          <Button
-            variant="ghost"
-            className={menuItem}
-            aria-label={`Modifier ${name}`}
-            onClick={() => select(onEdit)}
-          >
-            <Pencil aria-hidden />
-            Modifier
-          </Button>
+          {onEdit && (
+            <Button
+              variant="ghost"
+              className={menuItem}
+              aria-label={`Modifier ${name}`}
+              onClick={() => select(onEdit)}
+            >
+              <Pencil aria-hidden />
+              Modifier
+            </Button>
+          )}
           {onOpenHousehold && (
             <Button
               variant="ghost"

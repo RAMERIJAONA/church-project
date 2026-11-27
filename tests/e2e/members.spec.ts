@@ -128,7 +128,7 @@ test('@smoke fidèles : secteurs, foyers, membres, matricules et liste globale',
       .toEqual(['1/1M-I', '1/2B-I', '1/3-I', '1/4-I'])
 
     // Le père devient diacre : son matricule ne change pas
-    await w.getByRole('button', { name: 'RAKOTO Jean', exact: true }).click()
+    await w.getByRole('button', { name: 'Modifier RAKOTO Jean' }).click()
     form = w.getByRole('dialog', { name: 'Modifier RAKOTO Jean' })
     await yes(form, 'Diacre').click()
     await form.getByRole('button', { name: 'Enregistrer', exact: true }).click()
