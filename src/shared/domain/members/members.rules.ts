@@ -118,6 +118,18 @@ export function applyStatusRules(s: Statuses): Statuses {
 }
 
 /**
+ * Un statut changé dans la fiche (porteur, 2026-11-27). Oui : active aussi ceux qu'il exige.
+ * Non : en cascade vers le bas (Baptisé Non → Communiant et Diacre Non ; Communiant Non →
+ * Diacre Non) ; jamais vers le haut (Diacre Non garde Communiant et Baptisé).
+ */
+export function withStatus(s: Statuses, key: keyof Statuses, on: boolean): Statuses {
+  if (on) return applyStatusRules({ ...s, [key]: true })
+  if (key === 'baptized') return { baptized: false, communicant: false, deacon: false }
+  if (key === 'communicant') return { ...s, communicant: false, deacon: false }
+  return { ...s, deacon: false }
+}
+
+/**
  * `1/3M-I` : foyer, rang, statut, numéro romain du secteur. Statut : `M` si communiant (d'office
  * baptisé, `B` inutile : porteur, 2026-11-27, remplace `MB`), `B` si baptisé seulement, rien sinon.
  */

@@ -3,6 +3,7 @@ import goldenMatricules from './__golden__/matricule.json'
 import {
   ageOn,
   applyStatusRules,
+  withStatus,
   birthDateError,
   communicantError,
   formatAge,
@@ -170,5 +171,38 @@ describe('âge', () => {
     expect(formatAge(0)).toBe('0 an')
     expect(formatAge(1)).toBe('1 an')
     expect(formatAge(42)).toBe('42 ans')
+  })
+})
+
+describe('changer un statut dans la fiche', () => {
+  const deacon = { baptized: true, communicant: true, deacon: true }
+
+  it('Baptisé Non remet Communiant et Diacre à Non', () => {
+    expect(withStatus(deacon, 'baptized', false)).toEqual({
+      baptized: false,
+      communicant: false,
+      deacon: false
+    })
+  })
+
+  it('Communiant Non remet Diacre à Non et garde le baptême', () => {
+    expect(withStatus(deacon, 'communicant', false)).toEqual({
+      baptized: true,
+      communicant: false,
+      deacon: false
+    })
+  })
+
+  it('Diacre Non garde Baptisé et Communiant', () => {
+    expect(withStatus(deacon, 'deacon', false)).toEqual({
+      baptized: true,
+      communicant: true,
+      deacon: false
+    })
+  })
+
+  it('activer un statut active ceux qu’il exige', () => {
+    const none = { baptized: false, communicant: false, deacon: false }
+    expect(withStatus(none, 'deacon', true)).toEqual(deacon)
   })
 })

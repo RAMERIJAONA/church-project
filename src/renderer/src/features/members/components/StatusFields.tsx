@@ -1,5 +1,5 @@
 import { SegmentedControl } from '@renderer/components/common/SegmentedControl'
-import { applyStatusRules, type Statuses } from '@shared/domain/members/members.rules'
+import { withStatus, type Statuses } from '@shared/domain/members/members.rules'
 import { FormField } from './FormField'
 
 export interface StatusFieldsProps {
@@ -18,28 +18,24 @@ type Key = keyof Statuses
 
 /**
  * Baptisé, Communiant, Diacre, pas à pas (porteur, 2026-11-27) : Communiant n'est possible
- * qu'une fois baptisé, Diacre qu'une fois communiant (grisés à Non sinon). Un statut exigé par
- * un autre reste verrouillé à Oui tant que celui-ci est actif : désactiver ne retire jamais rien.
+ * qu'une fois baptisé, Diacre qu'une fois communiant (grisés à Non sinon). Non en cascade :
+ * Baptisé Non remet Communiant et Diacre à Non, Communiant Non remet Diacre à Non (`withStatus`).
  */
 export function StatusFields({
   value,
   onChange,
   deaconWarning
 }: StatusFieldsProps): React.JSX.Element {
-  const set = (key: Key, on: boolean): void => onChange(applyStatusRules({ ...value, [key]: on }))
+  const set = (key: Key, on: boolean): void => onChange(withStatus(value, key, on))
   const locked: Record<Key, boolean> = {
-    baptized: value.communicant,
-    communicant: !value.baptized || value.deacon,
+    baptized: false,
+    communicant: !value.baptized,
     deacon: !value.communicant
   }
   const hints: Record<Key, string | undefined> = {
-    baptized: value.communicant ? 'Un communiant est toujours baptisé.' : undefined,
-    communicant: !value.baptized
-      ? 'Seul un fidèle baptisé peut être communiant.'
-      : value.deacon
-        ? 'Un diacre est toujours communiant.'
-        : undefined,
-    deacon: !value.communicant ? 'Seul un communiant peut être diacre.' : undefined
+    baptized: undefined,
+    communicant: locked.communicant ? 'Seul un fidèle baptisé peut être communiant.' : undefined,
+    deacon: locked.deacon ? 'Seul un communiant peut être diacre.' : undefined
   }
   const field = (key: Key, label: string, warning?: string): React.JSX.Element => (
     <FormField id={`member-${key}`} label={label} hint={warning ?? hints[key]}>

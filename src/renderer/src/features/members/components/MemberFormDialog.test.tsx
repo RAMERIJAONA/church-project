@@ -165,7 +165,7 @@ describe('MemberFormDialog : rôle, statuts et matricule', () => {
     )
   })
 
-  it('statuts pas à pas : Communiant exige Baptisé, Diacre exige Communiant', async () => {
+  it('statuts pas à pas : Communiant exige Baptisé, Diacre exige Communiant, Non en cascade', async () => {
     const { dialog } = setup()
     const disabled = (group: string) => radio(dialog, group, 'Oui').hasAttribute('disabled')
     // Non baptisé : Communiant et Diacre à Non, grisés
@@ -180,16 +180,22 @@ describe('MemberFormDialog : rôle, statuts et matricule', () => {
     await userEvent.click(radio(dialog, 'Baptisé', 'Oui'))
     expect([disabled('Communiant'), disabled('Diacre')]).toEqual([false, true])
     expect(within(dialog).getByText('Seul un communiant peut être diacre.')).toBeTruthy()
-    // Communiant : Diacre possible ; Baptisé verrouillé à Oui
+    // Communiant : Diacre possible ; Baptisé reste modifiable
     await userEvent.click(radio(dialog, 'Communiant', 'Oui'))
-    expect([disabled('Baptisé'), disabled('Diacre')]).toEqual([true, false])
-    // Diacre : Communiant verrouillé à Oui ; décocher Diacre ne retire rien
+    expect([disabled('Baptisé'), disabled('Diacre')]).toEqual([false, false])
     await userEvent.click(radio(dialog, 'Diacre', 'Oui'))
-    expect(disabled('Communiant')).toBe(true)
-    await userEvent.click(radio(dialog, 'Diacre', 'Non'))
-    expect(checked(radio(dialog, 'Communiant', 'Oui'))).toBe('true')
+    // Communiant Non : Diacre repasse à Non, grisé ; le baptême reste
+    await userEvent.click(radio(dialog, 'Communiant', 'Non'))
+    expect(checked(radio(dialog, 'Diacre', 'Non'))).toBe('true')
+    expect(disabled('Diacre')).toBe(true)
     expect(checked(radio(dialog, 'Baptisé', 'Oui'))).toBe('true')
-    expect(disabled('Communiant')).toBe(false)
+    // Baptisé Non : Communiant et Diacre à Non, grisés
+    await userEvent.click(radio(dialog, 'Communiant', 'Oui'))
+    await userEvent.click(radio(dialog, 'Diacre', 'Oui'))
+    await userEvent.click(radio(dialog, 'Baptisé', 'Non'))
+    expect(checked(radio(dialog, 'Communiant', 'Non'))).toBe('true')
+    expect(checked(radio(dialog, 'Diacre', 'Non'))).toBe('true')
+    expect([disabled('Communiant'), disabled('Diacre')]).toEqual([true, true])
   })
 
   it('recalcule le matricule pendant la saisie : B si baptisé, M seul si communiant', async () => {
