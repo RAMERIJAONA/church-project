@@ -26,8 +26,9 @@
     {
       "query": "ra",
       "ids": [6, 5, 1, 2, 7, 3, 8],
-      "why": "moins de 4 lettres : débuts de mot seulement"
+      "why": "moins de 4 lettres : pas d'approché ; débuts de mot avant contenu"
     },
+    { "query": "oa", "ids": [3], "why": "2 lettres au milieu d'un nom (RASOA)" },
     {
       "query": "rako",
       "ids": [5, 1, 2],

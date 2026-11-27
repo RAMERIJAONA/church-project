@@ -131,7 +131,7 @@ Nouvelle table sans reprise de données : migration générée par `drizzle-kit 
   - `normalizeForSearch(s)` : minuscules, accents retirés (NFD), ponctuation en espace.
   - `searchMembers(index, query)` → ids classés. Chaque mot tapé doit correspondre à au moins un
     mot du nom, du prénom ou du matricule (ET entre les mots tapés). Score par mot, du meilleur au
-    moins bon : mot identique, début de mot, contenu dans le mot, approché (distance de
+    moins bon : mot identique, début de mot, contenu dans le mot (2 lettres et plus, porteur 2026-11-27), approché (distance de
     Damerau-Levenshtein ≤ 1 pour un mot tapé de 4 à 7 lettres, ≤ 2 à partir de 8 ; aucun
     approché sous 4 lettres ; contre le début d'un mot plus long, seulement à partir de 5 lettres :
     « rakto » trouve RAKOTOMALALA, « rako » ne trouve pas RASOA ; ajouté après la relecture finale). Matricule : début et contenu seulement, pas d'approché.

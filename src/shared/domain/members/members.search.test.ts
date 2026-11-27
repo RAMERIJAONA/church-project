@@ -31,6 +31,23 @@ describe('searchMembers', () => {
     expect(searchMembers(index, '  - ')).toEqual([])
   })
 
+  it('trouve deux lettres au milieu d’un prénom (« oa » → Andry Soa)', () => {
+    const small = buildSearchIndex([
+      { id: 1, lastName: 'RAKOTO', firstName: 'Andry Soa', registrationNumber: null },
+      { id: 2, lastName: 'RABE', firstName: 'Hery', registrationNumber: null }
+    ])
+    expect(searchMembers(small, 'oa')).toEqual([1])
+  })
+
+  it('cherche une seule lettre au début des mots seulement', () => {
+    const small = buildSearchIndex([
+      { id: 1, lastName: 'RAKOTO', firstName: 'Andry Soa', registrationNumber: null },
+      { id: 2, lastName: 'RABE', firstName: 'Hery', registrationNumber: null }
+    ])
+    expect(searchMembers(small, 's')).toEqual([1])
+    expect(searchMembers(small, 'y')).toEqual([])
+  })
+
   it('ne tolère pas de faute sur un mot de moins de 4 lettres', () => {
     expect(searchMembers(index, 'hry')).toEqual([])
   })
