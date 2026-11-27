@@ -8,9 +8,16 @@ import { createHouseholdsRepository } from '@main/repositories/households.reposi
 import { createMembersRepository } from '@main/repositories/members.repository'
 import { createSectorsRepository } from '@main/repositories/sectors.repository'
 import { createMembersService } from '@main/services/members.service'
+import { createHouseholdsService } from '@main/services/households.service'
 import { createSectorsService } from '@main/services/sectors.service'
 import { AppError } from '@shared/domain/errors'
-import { nextNumber } from '@shared/domain/members/sectors.rules'
+import {
+  createHouseholdInputSchema,
+  listHouseholdsInputSchema,
+  updateHouseholdInputSchema,
+  type ListHouseholdsInput,
+  type UpdateHouseholdInput
+} from '@shared/domain/members/households.types'
 import {
   createMemberInputSchema,
   listMembersInputSchema,
@@ -48,21 +55,33 @@ export function setupMembers() {
     logger
   })
 
+  const householdsService = createHouseholdsService({
+    db: handle.db,
+    households: repos.households,
+    members: repos.members,
+    sectors: repos.sectors,
+    clock,
+    logger,
+    memberSearch: (q) => membersService.searchIds(q),
+    onChange: () => membersService.invalidate()
+  })
+
   const sector = (name = 'Ambodimanga') =>
     sectorsService.create(createSectorInputSchema.parse({ name }))
 
-  /** Foyer écrit par le repository (le service des foyers vient en Tâche 5). */
+  /** Foyer créé par le service ; secteur : le premier, créé au besoin. */
   const household = (opts: { sectorId?: number; sponsorId?: number | null } = {}) => {
     const sectorId = opts.sectorId ?? sectorsService.list()[0]?.id ?? sector().id
-    const number = nextNumber(repos.households.maxNumber(handle.db))
-    const id = repos.households.insert(handle.db, {
-      number,
-      sectorId,
-      sponsorId: opts.sponsorId ?? null,
-      createdAt: clock().toISOString()
-    })
-    return { id, number }
+    return householdsService.create(
+      createHouseholdInputSchema.parse({ sectorId, sponsorId: opts.sponsorId ?? null })
+    )
   }
+
+  const updateHousehold = (input: UpdateHouseholdInput) =>
+    householdsService.update(updateHouseholdInputSchema.parse(input))
+
+  const listHouseholds = (input: ListHouseholdsInput = {}) =>
+    householdsService.list(listHouseholdsInputSchema.parse(input))
 
   const member = (householdId: number, input: Partial<CreateMemberInput> = {}): MemberDTO =>
     membersService.create(createMemberInputSchema.parse(makeMemberInput({ householdId, ...input })))
@@ -83,8 +102,11 @@ export function setupMembers() {
     repos,
     sectorsService,
     membersService,
+    householdsService,
     sector,
     household,
+    updateHousehold,
+    listHouseholds,
     member,
     update,
     move,

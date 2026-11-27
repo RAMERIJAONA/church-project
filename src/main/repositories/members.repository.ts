@@ -253,6 +253,25 @@ export function createMembersRepository() {
       return row ? toDTO(row) : null
     },
 
+    /** Membres actifs du foyer, par rang (index `members_rank_unique_idx`). */
+    listByHousehold(db: DbOrTx, householdId: number): MemberDTO[] {
+      return readQuery(db)
+        .where(and(eq(members.householdId, householdId), active))
+        .orderBy(asc(members.rank))
+        .all()
+        .map(toDTO)
+    },
+
+    /** Diacres actifs, par nom (choix du parrain d'un foyer). */
+    deacons(db: DbOrTx, limit: number): MemberDTO[] {
+      return readQuery(db)
+        .where(and(eq(members.deacon, true), active))
+        .orderBy(asc(members.lastName), asc(members.firstName))
+        .limit(limit)
+        .all()
+        .map(toDTO)
+    },
+
     /** Enfants actifs du foyer, par rang croissant. */
     childrenOf(db: DbOrTx, householdId: number): Array<{ id: number; rank: number }> {
       return db
