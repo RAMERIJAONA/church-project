@@ -58,7 +58,7 @@ it('remplit les fidèles de la base de démonstration', { timeout: 120_000 }, ()
     ...repos,
     clock,
     logger,
-    memberSearch: (q) => members.searchIds(q),
+    memberSearch: (q) => members.searchEntries(q),
     onChange: () => members.invalidate()
   })
   const sectors = createSectorsService({ db: handle.db, sectors: repos.sectors, clock, logger })

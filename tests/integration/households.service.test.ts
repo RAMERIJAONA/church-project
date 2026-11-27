@@ -141,3 +141,38 @@ describe('HouseholdsService', () => {
     expect(page2.items.map((h) => h.number)).toEqual([51, 52, 53, 54, 55])
   })
 })
+
+describe('HouseholdsService : recherche sans tout charger', () => {
+  /** Plus grand nombre de paramètres liés dans une requête préparée pendant `run`. */
+  function maxParams(
+    sqlite: ReturnType<typeof setupMembers>['handle']['sqlite'],
+    run: () => void
+  ): number {
+    const original = sqlite.prepare.bind(sqlite)
+    let max = 0
+    sqlite.prepare = ((sql: string) => {
+      max = Math.max(max, sql.split('?').length - 1)
+      return original(sql)
+    }) as typeof sqlite.prepare
+    try {
+      run()
+    } finally {
+      sqlite.prepare = original
+    }
+    return max
+  }
+
+  it('ne lit en base que les foyers et les diacres à afficher', () => {
+    const { handle, household, member, householdsService, listHouseholds } = setupMembers()
+    const h = household()
+    for (let i = 0; i < 300; i++) {
+      member(h.id, { lastName: `RAKOTO${String(i).padStart(3, '0')}`, deacon: i % 100 === 0 })
+    }
+    const params = maxParams(handle.sqlite, () => {
+      expect(householdsService.sponsorCandidates('rakoto')).toHaveLength(3)
+      expect(listHouseholds({ search: 'rakoto' }).total).toBe(1)
+    })
+    // Les 300 fidèles trouvés ne passent jamais en paramètres d'une requête
+    expect(params).toBeLessThan(60)
+  })
+})

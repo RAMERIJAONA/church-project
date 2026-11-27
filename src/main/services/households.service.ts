@@ -19,7 +19,7 @@ import type {
 } from '@shared/domain/members/households.types'
 import { nextNumber } from '@shared/domain/members/sectors.rules'
 import type { MemberDTO, Paginated } from '@shared/domain/members/members.types'
-import { isBlankQuery } from '@shared/domain/members/members.search'
+import { isBlankQuery, type SearchEntry } from '@shared/domain/members/members.search'
 import { toRoman } from '@shared/utils/roman'
 
 const SPONSOR_CANDIDATES_LIMIT = 50
@@ -43,7 +43,7 @@ export function createHouseholdsService(deps: {
   sectors: SectorsRepository
   clock: Clock
   logger: Logger
-  memberSearch: (query: string) => number[]
+  memberSearch: (query: string) => SearchEntry[]
   onChange: () => void
 }) {
   const notFound = (id: number): AppError => new AppError('NOT_FOUND', 'Foyer introuvable.', { id })
@@ -100,8 +100,7 @@ export function createHouseholdsService(deps: {
     const search = input.search.trim()
     if (/^\d+$/.test(search)) return { ...base, number: Number(search) }
     if (isBlankQuery(search)) return base
-    const members = deps.members.findByIds(deps.db, deps.memberSearch(search))
-    return { ...base, ids: [...new Set(members.map((m) => m.householdId))] }
+    return { ...base, ids: [...new Set(deps.memberSearch(search).map((m) => m.householdId))] }
   }
 
   return {
@@ -167,14 +166,17 @@ export function createHouseholdsService(deps: {
       if (isBlankQuery(search)) {
         return deps.members.deacons(deps.db, SPONSOR_CANDIDATES_LIMIT).map(sponsorOf)
       }
-      const ids = deps.memberSearch(search)
-      const byId = new Map(deps.members.findByIds(deps.db, ids).map((m) => [m.id, m]))
-      return ids
-        .flatMap((id) => {
-          const m = byId.get(id)
-          return m?.deacon ? [sponsorOf(m)] : []
-        })
+      // Diacres choisis dans l'index en mémoire : seuls ceux affichés sont lus en base
+      const ids = deps
+        .memberSearch(search)
+        .filter((m) => m.deacon)
         .slice(0, SPONSOR_CANDIDATES_LIMIT)
+        .map((m) => m.id)
+      const byId = new Map(deps.members.findByIds(deps.db, ids).map((m) => [m.id, m]))
+      return ids.flatMap((id) => {
+        const m = byId.get(id)
+        return m ? [sponsorOf(m)] : []
+      })
     }
   }
 }

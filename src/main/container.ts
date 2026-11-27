@@ -142,7 +142,7 @@ export async function createContainer(paths: AppPaths, logger: Logger, platform:
     ...memberRepos,
     clock: systemClock,
     logger: logger.child({ module: 'households' }),
-    memberSearch: (query) => members.searchIds(query),
+    memberSearch: (query) => members.searchEntries(query),
     onChange: () => members.invalidate()
   })
   const sectors = createSectorsService({

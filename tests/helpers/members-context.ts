@@ -62,7 +62,7 @@ export function setupMembers() {
     sectors: repos.sectors,
     clock,
     logger,
-    memberSearch: (q) => membersService.searchIds(q),
+    memberSearch: (q) => membersService.searchEntries(q),
     onChange: () => membersService.invalidate()
   })
 

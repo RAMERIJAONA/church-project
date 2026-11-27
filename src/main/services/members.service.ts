@@ -10,6 +10,7 @@ import {
   buildSearchIndex,
   isBlankQuery,
   searchMembers,
+  type SearchEntry,
   type SearchIndex
 } from '@shared/domain/members/members.search'
 import type {
@@ -135,9 +136,20 @@ export function createMembersService(deps: {
       return { ...page, items, total: ids.length }
     },
 
-    /** Ids des fidèles trouvés, par pertinence (recherche des foyers par nom d'un membre). */
+    /** Ids des fidèles trouvés, par pertinence. */
     searchIds(query: string): number[] {
       return isBlankQuery(query) ? [] : searchMembers(searchIndex(), query)
+    },
+
+    /**
+     * Fidèles trouvés, par pertinence, tels que l'index les garde (foyer, diacre…) : la liste
+     * des foyers et le choix du parrain filtrent sans relire en base tous les fidèles trouvés.
+     */
+    searchEntries(query: string): SearchEntry[] {
+      if (isBlankQuery(query)) return []
+      const idx = searchIndex()
+      const byId = new Map(idx.entries.map((e) => [e.id, e]))
+      return searchMembers(idx, query).flatMap((id) => byId.get(id) ?? [])
     },
 
     /** L'index est à reconstruire (secteur ou parrain d'un foyer changé). */
