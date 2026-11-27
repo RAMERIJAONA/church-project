@@ -83,11 +83,23 @@ export const moveMemberInputSchema = z
 export const swapChildRankInputSchema = z
   .object({ id: idSchema, direction: z.enum(['up', 'down']) })
   .strict()
+export const MEMBER_SORTS = ['name', 'matricule', 'birthDate', 'sector', 'household'] as const
+export type MemberSort = (typeof MEMBER_SORTS)[number]
+
+/** Liste globale : recherche, filtres (absents : tous), tri (nom par défaut). */
 export const listMembersInputSchema = z
   .object({
     search: z.string().max(100).default(''),
     page: z.number().int().min(1).default(1),
-    pageSize: z.number().int().min(1).max(100).default(MEMBERS_PAGE_SIZE)
+    pageSize: z.number().int().min(1).max(100).default(MEMBERS_PAGE_SIZE),
+    sectorId: idSchema.optional(),
+    householdNumber: z.number().int().min(1).optional(),
+    sex: z.enum(SEXES).optional(),
+    baptized: z.boolean().optional(),
+    communicant: z.boolean().optional(),
+    deacon: z.boolean().optional(),
+    sort: z.enum(MEMBER_SORTS).default('name'),
+    order: z.enum(['asc', 'desc']).default('asc')
   })
   .strict()
 

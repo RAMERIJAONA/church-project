@@ -156,4 +156,19 @@ describe('MembersService : liste et recherche', () => {
     member(h.id, { lastName: 'RASOA', firstName: 'Nirina' })
     expect(membersService.searchIds('rakoto')).toEqual([m.id])
   })
+
+  it('filtre la liste globale par foyer et trie par matricule', () => {
+    const { household, member, list } = setupMembers()
+    const foyers = [household(), household(), household(), household()]
+    member(foyers[3]!.id, { firstName: 'Andry' })
+    member(foyers[1]!.id, { firstName: 'Nirina', baptized: true })
+    member(foyers[3]!.id, { role: 'father', firstName: 'Jean' })
+    expect(list({ householdNumber: 4 }).items.map((m) => m.matricule)).toEqual(['4/3-I', '4/1-I'])
+    expect(list({ sort: 'matricule' }).items.map((m) => m.matricule)).toEqual([
+      '2/3B-I',
+      '4/1-I',
+      '4/3-I'
+    ])
+    expect(list({ baptized: true, sort: 'matricule' }).total).toBe(1)
+  })
 })

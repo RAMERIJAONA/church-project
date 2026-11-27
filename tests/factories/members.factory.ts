@@ -1,3 +1,4 @@
+import type { SearchEntry } from '@shared/domain/members/members.search'
 import type { CreateMemberInput, MemberDTO } from '@shared/domain/members/members.types'
 
 /** Utilisables côté renderer comme côté main (aucune dépendance DB). Données fictives. */
@@ -36,6 +37,28 @@ export function makeMemberDTO(overrides: Partial<MemberDTO> = {}): MemberDTO {
     matricule: '1/3B-I',
     createdAt: '2026-11-27T09:00:00.000Z',
     updatedAt: '2026-11-27T09:00:00.000Z',
+    ...overrides
+  }
+}
+
+/** Entrée de l'index de recherche de la liste globale. */
+export function makeSearchEntry(
+  overrides: Partial<SearchEntry> & Pick<SearchEntry, 'id'>
+): SearchEntry {
+  return {
+    lastName: 'RAKOTO',
+    firstName: 'Tiana',
+    matricule: '1/3-I',
+    householdId: 1,
+    householdNumber: 1,
+    rank: 3,
+    sectorId: 1,
+    sectorNumber: 1,
+    sex: 'M',
+    baptized: false,
+    communicant: false,
+    deacon: false,
+    birthDate: '1985-03-12',
     ...overrides
   }
 }

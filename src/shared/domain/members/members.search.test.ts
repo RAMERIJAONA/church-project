@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { makeSearchEntry } from '@tests/factories/members.factory'
 import golden from './__golden__/search.json'
 import {
   buildSearchIndex,
@@ -8,7 +9,7 @@ import {
   type SearchEntry
 } from './members.search'
 
-const index = buildSearchIndex(golden.entries)
+const index = buildSearchIndex(golden.entries.map((e) => makeSearchEntry(e)))
 
 describe('normalizeForSearch', () => {
   it('retire majuscules, accents et ponctuation', () => {
@@ -33,16 +34,16 @@ describe('searchMembers', () => {
 
   it('trouve deux lettres au milieu d’un prénom (« oa » → Andry Soa)', () => {
     const small = buildSearchIndex([
-      { id: 1, lastName: 'RAKOTO', firstName: 'Andry Soa', registrationNumber: null },
-      { id: 2, lastName: 'RABE', firstName: 'Hery', registrationNumber: null }
+      makeSearchEntry({ id: 1, lastName: 'RAKOTO', firstName: 'Andry Soa' }),
+      makeSearchEntry({ id: 2, lastName: 'RABE', firstName: 'Hery' })
     ])
     expect(searchMembers(small, 'oa')).toEqual([1])
   })
 
   it('cherche une seule lettre au début des mots seulement', () => {
     const small = buildSearchIndex([
-      { id: 1, lastName: 'RAKOTO', firstName: 'Andry Soa', registrationNumber: null },
-      { id: 2, lastName: 'RABE', firstName: 'Hery', registrationNumber: null }
+      makeSearchEntry({ id: 1, lastName: 'RAKOTO', firstName: 'Andry Soa' }),
+      makeSearchEntry({ id: 2, lastName: 'RABE', firstName: 'Hery' })
     ])
     expect(searchMembers(small, 's')).toEqual([1])
     expect(searchMembers(small, 'y')).toEqual([])
@@ -60,12 +61,14 @@ describe('searchMembers', () => {
     const syllables = ['ra', 'ko', 'to', 'ma', 'la', 'na', 'ri', 'zo', 'fy', 'he', 'ry', 'ti']
     const word = (n: number, len: number): string =>
       Array.from({ length: len }, (_, k) => syllables[(n * 7 + k * 5) % syllables.length]).join('')
-    const entries: SearchEntry[] = Array.from({ length: 10_000 }, (_, i) => ({
-      id: i + 1,
-      lastName: word(i, 3 + (i % 4)).toUpperCase(),
-      firstName: `${word(i + 3, 2)} ${word(i + 11, 3)}`,
-      registrationNumber: i % 3 === 0 ? `M-${i}` : null
-    }))
+    const entries: SearchEntry[] = Array.from({ length: 10_000 }, (_, i) =>
+      makeSearchEntry({
+        id: i + 1,
+        lastName: word(i, 3 + (i % 4)).toUpperCase(),
+        firstName: `${word(i + 3, 2)} ${word(i + 11, 3)}`,
+        matricule: `${i + 1}/3MB-II`
+      })
+    )
     const big = buildSearchIndex(entries)
     const start = performance.now()
     searchMembers(big, 'rakotomalal')

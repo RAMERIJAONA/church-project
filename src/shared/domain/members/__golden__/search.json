@@ -1,41 +1,144 @@
 {
   "entries": [
-    { "id": 1, "lastName": "RAKOTO", "firstName": "Tiana", "registrationNumber": null },
-    { "id": 2, "lastName": "RAKOTOMALALA", "firstName": "Jean-Pierre", "registrationNumber": null },
-    { "id": 3, "lastName": "RASOA", "firstName": "Nirina", "registrationNumber": null },
-    { "id": 4, "lastName": "ANDRIAMAHEFA", "firstName": "Fanja", "registrationNumber": null },
-    { "id": 5, "lastName": "RAKOTO", "firstName": "Andry", "registrationNumber": "M-0042" },
-    { "id": 6, "lastName": "RABE", "firstName": "Hery", "registrationNumber": null },
-    { "id": 7, "lastName": "RANDRIA", "firstName": "Tiana", "registrationNumber": null },
-    { "id": 8, "lastName": "RAZAFY", "firstName": "Mamy", "registrationNumber": "M-0100" }
+    {
+      "id": 1,
+      "lastName": "RAKOTO",
+      "firstName": "Tiana",
+      "matricule": "1/1-I"
+    },
+    {
+      "id": 2,
+      "lastName": "RAKOTOMALALA",
+      "firstName": "Jean-Pierre",
+      "matricule": "2/1MB-I"
+    },
+    {
+      "id": 3,
+      "lastName": "RASOA",
+      "firstName": "Nirina",
+      "matricule": "3/2B-II"
+    },
+    {
+      "id": 4,
+      "lastName": "ANDRIAMAHEFA",
+      "firstName": "Fanja",
+      "matricule": "13/1-II"
+    },
+    {
+      "id": 5,
+      "lastName": "RAKOTO",
+      "firstName": "Andry",
+      "matricule": "1/3MB-I"
+    },
+    {
+      "id": 6,
+      "lastName": "RABE",
+      "firstName": "Hery",
+      "matricule": "21/3-III"
+    },
+    {
+      "id": 7,
+      "lastName": "RANDRIA",
+      "firstName": "Tiana",
+      "matricule": "12/1B-I"
+    },
+    {
+      "id": 8,
+      "lastName": "RAZAFY",
+      "firstName": "Mamy",
+      "matricule": "12/4-I"
+    }
   ],
   "cases": [
-    { "query": "rakto", "ids": [5, 1, 2], "why": "une lettre oubliée" },
-    { "query": "tiana", "ids": [1, 7], "why": "prénom exact, ordre alphabétique" },
-    { "query": "rakoto tiana", "ids": [1], "why": "tous les mots tapés doivent correspondre" },
-    { "query": "andriamaehfa", "ids": [4], "why": "deux lettres inversées" },
+    {
+      "query": "rakto",
+      "ids": [5, 1, 2],
+      "why": "une lettre oubliée"
+    },
+    {
+      "query": "tiana",
+      "ids": [1, 7],
+      "why": "prénom exact, ordre alphabétique"
+    },
+    {
+      "query": "rakoto tiana",
+      "ids": [1],
+      "why": "tous les mots tapés doivent correspondre"
+    },
+    {
+      "query": "andriamaehfa",
+      "ids": [4],
+      "why": "deux lettres inversées"
+    },
     {
       "query": "RÂKOTO",
       "ids": [5, 1, 2],
       "why": "majuscules et accents ignorés ; mot exact avant début de mot"
     },
-    { "query": "nirna", "ids": [3], "why": "une lettre oubliée dans le prénom" },
-    { "query": "pierre", "ids": [2], "why": "partie d'un prénom composé" },
-    { "query": "m-0042", "ids": [5], "why": "matricule complet" },
-    { "query": "0042", "ids": [5], "why": "partie du matricule" },
+    {
+      "query": "nirna",
+      "ids": [3],
+      "why": "une lettre oubliée dans le prénom"
+    },
+    {
+      "query": "pierre",
+      "ids": [2],
+      "why": "partie d'un prénom composé"
+    },
+    {
+      "query": "1/3MB-I",
+      "ids": [5],
+      "why": "matricule complet"
+    },
+    {
+      "query": "3mb",
+      "ids": [5],
+      "why": "partie du matricule"
+    },
     {
       "query": "ra",
       "ids": [6, 5, 1, 2, 7, 3, 8],
       "why": "moins de 4 lettres : pas d'approché ; débuts de mot avant contenu"
     },
-    { "query": "oa", "ids": [3], "why": "2 lettres au milieu d'un nom (RASOA)" },
+    {
+      "query": "oa",
+      "ids": [3],
+      "why": "2 lettres au milieu d'un nom (RASOA)"
+    },
     {
       "query": "rako",
       "ids": [5, 1, 2],
       "why": "4 lettres : pas d'approché sur un début de mot (RASOA exclu)"
     },
-    { "query": "nirin", "ids": [3], "why": "5 lettres : début de mot exact" },
-    { "query": "koto", "ids": [5, 1, 2], "why": "contenu dans le nom" },
-    { "query": "xyz", "ids": [], "why": "aucune correspondance" }
+    {
+      "query": "nirin",
+      "ids": [3],
+      "why": "5 lettres : début de mot exact"
+    },
+    {
+      "query": "koto",
+      "ids": [5, 1, 2],
+      "why": "contenu dans le nom"
+    },
+    {
+      "query": "xyz",
+      "ids": [],
+      "why": "aucune correspondance"
+    },
+    {
+      "query": "1/3",
+      "ids": [5],
+      "why": "matricule partiel : foyer 1, rang 3 (ni 13/1 ni 21/3)"
+    },
+    {
+      "query": "12/",
+      "ids": [7, 8],
+      "why": "membres du foyer 12, ordre alphabétique"
+    },
+    {
+      "query": "1/3mb-i rakoto",
+      "ids": [5],
+      "why": "matricule et nom ensemble"
+    }
   ]
 }

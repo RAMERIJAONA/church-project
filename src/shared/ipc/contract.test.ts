@@ -73,7 +73,13 @@ describe('contrat IPC : fidèles', () => {
   })
 
   it('members.list applique page 1, 50 par page, recherche vide', () => {
-    expect(ipcInputs['members.list'].parse({})).toEqual({ search: '', page: 1, pageSize: 50 })
+    expect(ipcInputs['members.list'].parse({})).toEqual({
+      search: '',
+      page: 1,
+      pageSize: 50,
+      sort: 'name',
+      order: 'asc'
+    })
     expect(ipcInputs['members.list'].safeParse({ pageSize: 500 }).success).toBe(false)
   })
 })

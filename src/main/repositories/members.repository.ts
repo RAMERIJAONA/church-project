@@ -3,11 +3,9 @@ import { alias } from 'drizzle-orm/sqlite-core'
 import type { DbOrTx } from '@main/db/client'
 import { households, members, sectors } from '@main/db/schema'
 import type { MemberRole, Sex } from '@shared/domain/members/households.rules'
-import { matricule } from '@shared/domain/members/members.rules'
 import type { SearchEntry } from '@shared/domain/members/members.search'
-import type { SponsorDTO } from '@shared/domain/members/households.types'
 import type { MemberDTO } from '@shared/domain/members/members.types'
-import { toRoman } from '@shared/utils/roman'
+import { toDTO, toSearchEntry } from './members.rows'
 
 /** Fidèle tel qu'il est écrit : champs déjà normalisés par le service. */
 export interface MemberWriteRow {
@@ -57,76 +55,6 @@ const readCols = {
   sponsorCommunicant: sponsor.communicant,
   sponsorHouseholdNumber: sponsorHousehold.number,
   sponsorSectorNumber: sponsorSector.number
-}
-
-type ReadRow = ReturnType<ReturnType<typeof readQuery>['all']>[number]
-
-/** Parrain du foyer (joint seulement s'il est actif), avec son matricule. */
-function sponsorOf(r: ReadRow): SponsorDTO | null {
-  const {
-    sponsorId: id,
-    sponsorLastName: lastName,
-    sponsorFirstName: firstName,
-    sponsorRank: rank,
-    sponsorHouseholdNumber: householdNumber,
-    sponsorSectorNumber: sectorNumber
-  } = r
-  if (
-    id === null ||
-    lastName === null ||
-    firstName === null ||
-    rank === null ||
-    householdNumber === null ||
-    sectorNumber === null
-  ) {
-    return null
-  }
-  const statuses = {
-    baptized: r.sponsorBaptized ?? false,
-    communicant: r.sponsorCommunicant ?? false
-  }
-  return {
-    id,
-    lastName,
-    firstName,
-    matricule: matricule({ householdNumber, rank, sectorNumber, ...statuses })
-  }
-}
-
-/** Ligne lue → DTO : secteur du foyer, parrain du foyer et matricules calculés. */
-function toDTO(r: ReadRow): MemberDTO {
-  return {
-    id: r.id,
-    householdId: r.householdId,
-    householdNumber: r.householdNumber,
-    role: r.role,
-    rank: r.rank,
-    sex: r.sex,
-    lastName: r.lastName,
-    firstName: r.firstName,
-    birthDate: r.birthDate,
-    address: r.address,
-    phone: r.phone,
-    baptized: r.baptized,
-    communicant: r.communicant,
-    deacon: r.deacon,
-    sector: {
-      id: r.sectorId,
-      number: r.sectorNumber,
-      name: r.sectorName,
-      numeral: toRoman(r.sectorNumber)
-    },
-    sponsor: sponsorOf(r),
-    matricule: matricule({
-      householdNumber: r.householdNumber,
-      rank: r.rank,
-      baptized: r.baptized,
-      communicant: r.communicant,
-      sectorNumber: r.sectorNumber
-    }),
-    createdAt: r.createdAt,
-    updatedAt: r.updatedAt
-  }
 }
 
 const active = isNull(members.deletedAt)
@@ -205,18 +133,12 @@ export function createMembersRepository() {
       return db.select({ n: count() }).from(members).where(active).get()?.n ?? 0
     },
 
-    /** Lignes de l'index de recherche en mémoire. */
+    /** Lignes de l'index en mémoire (recherche, filtres et tri de la liste globale). */
     searchEntries(db: DbOrTx): SearchEntry[] {
       return readQuery(db)
         .where(active)
         .all()
-        .map(toDTO)
-        .map((m) => ({
-          id: m.id,
-          lastName: m.lastName,
-          firstName: m.firstName,
-          registrationNumber: m.matricule
-        }))
+        .map((r) => toSearchEntry(toDTO(r)))
     },
 
     /** Fidèle actif de même nom et prénom (normalisés) : unique, index `members_name_unique_idx`. */

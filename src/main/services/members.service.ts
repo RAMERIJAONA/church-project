@@ -5,6 +5,7 @@ import type { HouseholdRow, HouseholdsRepository } from '@main/repositories/hous
 import type { MembersRepository } from '@main/repositories/members.repository'
 import { AppError } from '@shared/domain/errors'
 import type { MemberRole, Sex } from '@shared/domain/members/households.rules'
+import { filterAndSort } from '@shared/domain/members/members.list'
 import {
   buildSearchIndex,
   isBlankQuery,
@@ -33,6 +34,14 @@ import {
  * L'index de recherche est gardé en mémoire (dérogation du CLAUDE.md par. 6) et reconstruit au
  * besoin après chaque écriture qui change un nom ou un matricule.
  */
+/** Liste par nom croissant, sans filtre : servie par SQL. */
+const isPlainList = (f: ListMembersParsed): boolean =>
+  f.sort === 'name' &&
+  f.order === 'asc' &&
+  [f.sectorId, f.householdNumber, f.sex, f.baptized, f.communicant, f.deacon].every(
+    (v) => v === undefined
+  )
+
 export function createMembersService(deps: {
   db: Db
   members: MembersRepository
@@ -108,14 +117,18 @@ export function createMembersService(deps: {
     list(input: ListMembersParsed): Paginated<MemberDTO> {
       const offset = (input.page - 1) * input.pageSize
       const page = { page: input.page, pageSize: input.pageSize }
-      if (isBlankQuery(input.search)) {
+      const blank = isBlankQuery(input.search)
+      if (blank && isPlainList(input)) {
+        // Cas le plus courant : pagination SQL par nom, sans l'index en mémoire
         return {
           ...page,
           items: deps.members.listPage(deps.db, offset, input.pageSize),
           total: deps.members.count(deps.db)
         }
       }
-      const ids = searchMembers(searchIndex(), input.search)
+      const { entries } = searchIndex()
+      const matched = blank ? null : searchMembers(searchIndex(), input.search)
+      const ids = filterAndSort(entries, input, matched)
       const pageIds = ids.slice(offset, offset + input.pageSize)
       const byId = new Map(deps.members.findByIds(deps.db, pageIds).map((m) => [m.id, m]))
       const items = pageIds.flatMap((id) => byId.get(id) ?? [])
