@@ -1,4 +1,11 @@
-import { ArrowDownToLine, ArrowUpFromLine, House, Settings, type LucideIcon } from 'lucide-react'
+import {
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  House,
+  Settings,
+  Users,
+  type LucideIcon
+} from 'lucide-react'
 
 export interface NavItem {
   to: string
@@ -14,6 +21,7 @@ export interface NavItem {
 /** Les modules métier s'ajouteront ici (un item par feature). */
 export const MAIN_NAV: readonly NavItem[] = [
   { to: '/', label: 'Accueil', icon: House },
+  { to: '/fideles', label: 'Fidèles', icon: Users },
   // Libellés courts sous un titre « Comptabilité » : une ligne chacun (2026-11-25)
   {
     to: '/comptabilite/entrees',
