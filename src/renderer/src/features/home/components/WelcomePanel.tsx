@@ -20,9 +20,9 @@ import { APP_NAME } from '@shared/domain/identity'
 /** Modules, dans l'ordre du menu : fidèles, puis les deux comptabilités (entrées A2, sorties A1). */
 const MODULE_LINKS = [
   {
-    to: '/fideles',
+    to: '/foyers',
     title: 'Fidèles',
-    text: 'Registre des fidèles de l’église : ajout, modification et recherche.',
+    text: 'Foyers, secteurs et fidèles de l’église : matricules, parrains, liste et recherche.',
     icon: Users
   },
   {

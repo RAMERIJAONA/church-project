@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router'
 import {
   AlertDialog,
@@ -42,10 +42,14 @@ export function HouseholdPage(): React.JSX.Element {
   const data = household.data
   const { open } = editor
 
-  // Foyer tout juste créé : fiche du premier membre ouverte une fois, puis l'adresse est nettoyée
+  // Foyer tout juste créé : fiche du premier membre ouverte UNE fois, puis l'adresse est
+  // nettoyée. Sans le garde, l'effet (relancé à chaque rendu tant que l'adresse n'a pas changé)
+  // rouvrait la fiche en boucle, même après le dernier « Enregistrer » (E2E members.spec.ts).
   const adding = search.get('ajout') === '1'
+  const openedFor = useRef<number | null>(null)
   useEffect(() => {
-    if (!adding || !data) return
+    if (!adding || !data || openedFor.current === data.id) return
+    openedFor.current = data.id
     open({ kind: 'add', householdId: data.id })
     setSearch({}, { replace: true })
   }, [adding, data, open, setSearch])

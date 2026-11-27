@@ -15,7 +15,7 @@ describe('WelcomePanel', () => {
       .filter((a) => a.getAttribute('href') !== '/parametres')
       .map((a) => [a.querySelector('.font-medium')?.textContent, a.getAttribute('href')])
     expect(links).toEqual([
-      ['Fidèles', '/fideles'],
+      ['Fidèles', '/foyers'],
       ['Comptabilité des entrées', '/comptabilite/entrees'],
       ['Comptabilité des sorties', '/comptabilite/sorties']
     ])
