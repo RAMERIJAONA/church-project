@@ -25,7 +25,7 @@ describe('HouseholdsTable', () => {
       within(row)
         .getAllByRole('cell')
         .map((c) => c.textContent)
-    ).toEqual(['1', 'RAKOTO', 'I · Ambodimanga', 'RABE Jean', '4'])
+    ).toEqual(['1', 'RAKOTO', 'I · Ambodimanga', 'RABE Jean', '4', ''])
   })
 
   it('signale le parrain à désigner et le foyer sans membre', () => {
@@ -35,10 +35,18 @@ describe('HouseholdsTable', () => {
     expect(row.textContent).toContain('Parrain à désigner')
   })
 
-  it('ouvre un foyer', async () => {
+  it('ouvre un foyer avec l’œil visible sur chaque ligne', async () => {
     const onOpen = vi.fn()
     render(<HouseholdsTable households={households} onOpen={onOpen} />)
-    await userEvent.click(screen.getByRole('button', { name: 'Ouvrir le foyer 2' }))
+    expect(screen.getByRole('button', { name: 'Voir le foyer 1' })).toBeTruthy()
+    await userEvent.click(screen.getByRole('button', { name: 'Voir le foyer 2' }))
     expect(onOpen).toHaveBeenCalledWith(households[1])
+  })
+
+  it('ouvre aussi un foyer en cliquant sur son nom', async () => {
+    const onOpen = vi.fn()
+    render(<HouseholdsTable households={households} onOpen={onOpen} />)
+    await userEvent.click(screen.getByRole('button', { name: 'RAKOTO' }))
+    expect(onOpen).toHaveBeenCalledWith(households[0])
   })
 })

@@ -1,3 +1,5 @@
+import { Eye } from 'lucide-react'
+import { Button } from '@renderer/components/ui/button'
 import type { HouseholdSummaryDTO } from '@shared/domain/members/households.types'
 import { memberDisplayName } from '@shared/domain/members/members.rules'
 import {
@@ -37,6 +39,9 @@ export function HouseholdsTable({ households, onOpen }: HouseholdsTableProps): R
             <th scope="col" className={headCell({ align: 'right' })}>
               Membres
             </th>
+            <th scope="col" className={headCell({ align: 'right' })}>
+              <span className="sr-only">Actions</span>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -44,12 +49,7 @@ export function HouseholdsTable({ households, onOpen }: HouseholdsTableProps): R
             <tr key={h.id} className={row}>
               <td className={bodyCell({ numeric: true })}>{h.number}</td>
               <td className={bodyCell()}>
-                <button
-                  type="button"
-                  className={openButton}
-                  aria-label={`Ouvrir le foyer ${h.number}`}
-                  onClick={() => onOpen(h)}
-                >
+                <button type="button" className={openButton} onClick={() => onOpen(h)}>
                   {h.mainLastName ?? <span className={missingText}>Aucun membre</span>}
                 </button>
               </td>
@@ -62,6 +62,18 @@ export function HouseholdsTable({ households, onOpen }: HouseholdsTableProps): R
                 )}
               </td>
               <td className={bodyCell({ align: 'right', numeric: true })}>{h.memberCount}</td>
+              <td className={bodyCell({ align: 'right' })}>
+                {/* Ouvrir toujours visible : cliquer sur le nom n'est pas évident (porteur) */}
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={`Voir le foyer ${h.number}`}
+                  title="Voir le foyer"
+                  onClick={() => onOpen(h)}
+                >
+                  <Eye aria-hidden />
+                </Button>
+              </td>
             </tr>
           ))}
         </tbody>
