@@ -50,7 +50,10 @@ const KEY_STEPS: Record<string, number> = {
  * Clavier : flèches (jour / semaine), Page préc. / suiv. (mois), Entrée ou Espace pour choisir.
  */
 export function Calendar({ value, today, min, max, onSelect }: CalendarProps): React.JSX.Element {
-  const [focused, setFocused] = useState(value)
+  // Sans date choisie : aujourd'hui, ramené dans les bornes
+  const [focused, setFocused] = useState(
+    () => value || (max && today > max ? max : min && today < min ? min : today)
+  )
   const gridRef = useRef<HTMLTableElement>(null)
   const month = periodRange('month', focused)
   const [year, monthIndex] = [Number(focused.slice(0, 4)), Number(focused.slice(5, 7)) - 1]

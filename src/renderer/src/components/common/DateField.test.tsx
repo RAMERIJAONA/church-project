@@ -79,3 +79,30 @@ describe('DateField : calendrier en français', () => {
     expect(onChange).toHaveBeenCalledWith('2026-12-02')
   })
 })
+
+describe('DateField : date vide', () => {
+  it("affiche l'invite quand aucune date n'est choisie", () => {
+    const { trigger } = setup({ value: '' })
+    expect(trigger.textContent).toContain('Choisir une date')
+  })
+
+  it('ouvre sur le mois de la borne max et choisit une date', async () => {
+    const { trigger, onChange } = setup({
+      value: '',
+      max: '1990-06-15',
+      placeholder: 'Naissance ?'
+    })
+    expect(trigger.textContent).toContain('Naissance ?')
+    const cal = await open(trigger)
+    expect(within(cal).getByLabelText<HTMLSelectElement>('Mois').value).toBe('5')
+    expect(within(cal).getByLabelText<HTMLSelectElement>('Année').value).toBe('1990')
+    expect(within(cal).queryByRole('gridcell', { selected: true })).toBeNull()
+    await userEvent.click(within(cal).getByRole('button', { name: 'mardi 12 juin 1990' }))
+    expect(onChange).toHaveBeenCalledWith('1990-06-12')
+  })
+
+  it('signale un champ invalide', () => {
+    const { trigger } = setup({ value: '', invalid: true })
+    expect(trigger.getAttribute('aria-invalid')).toBe('true')
+  })
+})

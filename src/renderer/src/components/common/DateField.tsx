@@ -8,11 +8,15 @@ import { Calendar } from './Calendar'
 export interface DateFieldProps {
   /** Id de l'élément qui nomme le champ (ex. un <Label> « Du ») */
   labelId: string
-  /** Date « AAAA-MM-JJ » */
+  /** Date « AAAA-MM-JJ », ou '' tant qu'aucune n'est choisie */
   value: string
   min?: string
   max?: string
   disabled?: boolean
+  /** Texte affiché sans date choisie */
+  placeholder?: string
+  /** Champ en erreur (lu par les lecteurs d'écran) */
+  invalid?: boolean
   onChange: (date: string) => void
 }
 
@@ -29,6 +33,8 @@ export function DateField({
   min,
   max,
   disabled,
+  placeholder = 'Choisir une date',
+  invalid,
   onChange
 }: DateFieldProps): React.JSX.Element {
   const [open, setOpen] = useState(false)
@@ -40,10 +46,13 @@ export function DateField({
           variant="outline"
           disabled={disabled}
           aria-labelledby={`${labelId} ${valueId}`}
+          aria-invalid={invalid || undefined}
           className="w-40 justify-start gap-2 font-normal tabular-nums"
         >
           <CalendarDays aria-hidden className="text-muted-foreground" />
-          <span id={valueId}>{display(value)}</span>
+          <span id={valueId} className={value === '' ? 'text-muted-foreground' : undefined}>
+            {value === '' ? placeholder : display(value)}
+          </span>
         </Button>
       </PopoverTrigger>
       <PopoverContent aria-label="Choisir une date" role="dialog">
