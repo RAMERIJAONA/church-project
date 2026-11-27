@@ -43,6 +43,13 @@
       "when": 1795610349567,
       "tag": "0005_accounting_root_letter",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1795762081949,
+      "tag": "0006_members",
+      "breakpoints": true
     }
   ]
 }

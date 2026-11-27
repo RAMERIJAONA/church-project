@@ -107,3 +107,42 @@ export const accountingEntries = sqliteTable(
     )
   ]
 )
+
+/*
+ * Fidèles (porteur, 2026-11-27). Indépendant de la comptabilité. Nom et prénom stockés déjà
+ * normalisés (shared/domain/members/members.rules.ts). Suppression douce (`deleted_at`).
+ */
+export const members = sqliteTable(
+  'members',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    /** MAJUSCULES : « RAKOTO » */
+    lastName: text('last_name').notNull(),
+    /** « Rakoto Tiana » */
+    firstName: text('first_name').notNull(),
+    /** « AAAA-MM-JJ », date du calendrier sans fuseau */
+    birthDate: text('birth_date').notNull(),
+    address: text('address').notNull(),
+    /** « +261341234567 » */
+    phone: text('phone'),
+    /** Texte libre ; deviendra une référence à une table des secteurs */
+    sector: text('sector'),
+    baptized: integer('baptized', { mode: 'boolean' }).notNull().default(false),
+    communicant: integer('communicant', { mode: 'boolean' }).notNull().default(false),
+    registrationNumber: text('registration_number'),
+    createdAt: text('created_at').notNull(),
+    updatedAt: text('updated_at').notNull(),
+    deletedAt: text('deleted_at')
+  },
+  (t) => [
+    index('members_name_idx').on(t.lastName, t.firstName),
+    /** Matricule unique parmi les fidèles actifs, insensible à la casse (porteur, 2026-11-27) */
+    uniqueIndex('members_registration_number_idx')
+      .on(sql`${t.registrationNumber} COLLATE NOCASE`)
+      .where(sql`${t.registrationNumber} IS NOT NULL AND ${t.deletedAt} IS NULL`),
+    check('members_baptized_check', sql`${t.baptized} IN (0, 1)`),
+    check('members_communicant_check', sql`${t.communicant} IN (0, 1)`),
+    /** Un membre communiant est toujours baptisé (porteur, 2026-11-27) */
+    check('members_communicant_baptized_check', sql`${t.communicant} = 0 OR ${t.baptized} = 1`)
+  ]
+)
