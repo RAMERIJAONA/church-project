@@ -36,7 +36,7 @@ export function SectorsTable({ sectors, onRename }: SectorsTableProps): React.JS
           {sectors.map((s) => (
             <tr key={s.id} className={row}>
               <td className={bodyCell({ numeric: true })}>{s.numeral}</td>
-              <td className={bodyCell()}>{s.name}</td>
+              <td className={bodyCell({ nowrap: true })}>{s.name}</td>
               <td className={bodyCell({ align: 'right', numeric: true })}>{s.householdCount}</td>
               <td className={bodyCell({ align: 'right', numeric: true })}>{s.memberCount}</td>
               <td className={`${bodyCell({ align: 'right' })} ${actionsCell}`}>

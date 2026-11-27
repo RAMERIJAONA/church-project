@@ -25,9 +25,11 @@ export const headCell = cva(
 export const bodyCell = cva('border-b px-3 py-2 align-top group-last:border-b-0', {
   variants: {
     align: { left: 'text-left', center: 'text-center', right: 'text-right' },
-    numeric: { true: 'whitespace-nowrap tabular-nums', false: '' }
+    numeric: { true: 'whitespace-nowrap tabular-nums', false: '' },
+    /** Toujours sur une ligne : le secteur (porteur, 2026-11-27) */
+    nowrap: { true: 'whitespace-nowrap', false: '' }
   },
-  defaultVariants: { align: 'left', numeric: false }
+  defaultVariants: { align: 'left', numeric: false, nowrap: false }
 })
 
 export const row = 'group hover:bg-muted/50'

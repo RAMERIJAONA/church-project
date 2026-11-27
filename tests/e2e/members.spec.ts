@@ -180,6 +180,11 @@ test('@smoke fidèles : secteurs, foyers, membres, matricules et liste globale',
     await expect(list.getByRole('row', { name: /RASOA/ })).toContainText('RAKOTO Jean')
     await expect(list.getByRole('row', { name: /1\/1M-I/ })).toContainText('Diacre')
     await expect.poll(() => fitsWidth(w, 'Liste des fidèles')).toBe(true)
+    // Le secteur tient toujours sur une ligne (porteur, 2026-11-27)
+    await expect(list.getByRole('cell', { name: 'II · Antanety Atsimo' })).toHaveCSS(
+      'white-space',
+      'nowrap'
+    )
     await w
       .getByRole('group', { name: 'Filtres' })
       .getByRole('combobox', { name: 'Secteur' })
@@ -213,6 +218,11 @@ test('@smoke fidèles : secteurs, foyers, membres, matricules et liste globale',
 
     // Suppression d'un foyer depuis la liste : ses membres disparaissent avec lui
     await navLink(w, 'Foyers').click()
+    await expect(
+      w
+        .getByRole('region', { name: 'Liste des foyers' })
+        .getByRole('cell', { name: 'I · Ambodimanga' })
+    ).toHaveCSS('white-space', 'nowrap')
     await w.getByRole('button', { name: 'Supprimer le foyer 2' }).click()
     await w
       .getByRole('alertdialog', { name: 'Supprimer le foyer 2 (RASOA Nirina) ?' })

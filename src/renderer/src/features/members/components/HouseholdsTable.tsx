@@ -59,7 +59,9 @@ export function HouseholdsTable({
                   {h.mainName ?? <span className={missingText}>Aucun membre</span>}
                 </button>
               </td>
-              <td className={bodyCell()}>{`${h.sector.numeral} · ${h.sector.name}`}</td>
+              <td
+                className={bodyCell({ nowrap: true })}
+              >{`${h.sector.numeral} · ${h.sector.name}`}</td>
               <td className={bodyCell()}>
                 {h.sponsor ? (
                   memberDisplayName(h.sponsor)

@@ -84,7 +84,9 @@ export function MembersTable(p: MembersTableProps): React.JSX.Element {
                 <BirthCell birthDate={m.birthDate} today={p.today} />
               </td>
               <td className={bodyCell({ numeric: true })}>{m.phone ? formatPhone(m.phone) : ''}</td>
-              <td className={bodyCell()}>{`${m.sector.numeral} · ${m.sector.name}`}</td>
+              <td
+                className={bodyCell({ nowrap: true })}
+              >{`${m.sector.numeral} · ${m.sector.name}`}</td>
               <td className={bodyCell()}>
                 {m.sponsor ? (
                   memberDisplayName(m.sponsor)
