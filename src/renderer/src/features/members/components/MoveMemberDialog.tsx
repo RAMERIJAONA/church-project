@@ -10,7 +10,12 @@ import {
 } from '@renderer/components/ui/dialog'
 import { Input } from '@renderer/components/ui/input'
 import { NativeSelect, NativeSelectOption } from '@renderer/components/ui/native-select'
-import { MEMBER_ROLES, ROLE_LABELS, type MemberRole } from '@shared/domain/members/households.rules'
+import {
+  MEMBER_ROLES,
+  ROLE_LABELS,
+  sexForRole,
+  type MemberRole
+} from '@shared/domain/members/households.rules'
 import type { HouseholdSummaryDTO } from '@shared/domain/members/households.types'
 import { memberDisplayName } from '@shared/domain/members/members.rules'
 import type { MemberDTO } from '@shared/domain/members/members.types'
@@ -108,11 +113,17 @@ function MoveForm({
             setRole(MEMBER_ROLES.find((r) => r === v) ?? 'child')
           }}
         >
-          {MEMBER_ROLES.map((r) => (
-            <NativeSelectOption key={r} value={r}>
-              {ROLE_LABELS[r]}
-            </NativeSelectOption>
-          ))}
+          {MEMBER_ROLES.map((r) => {
+            // Père masculin, mère féminine : rôle impossible pour ce fidèle grisé
+            const imposed = sexForRole(r)
+            const impossible = imposed !== null && imposed !== member.sex
+            const suffix = imposed === 'M' ? ' (sexe masculin)' : ' (sexe féminin)'
+            return (
+              <NativeSelectOption key={r} value={r} disabled={impossible}>
+                {impossible ? `${ROLE_LABELS[r]}${suffix}` : ROLE_LABELS[r]}
+              </NativeSelectOption>
+            )
+          })}
         </NativeSelect>
       </FormField>
       <DialogFooter>

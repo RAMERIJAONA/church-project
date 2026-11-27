@@ -22,6 +22,13 @@ export const SEX_LABELS: Record<Sex, string> = { M: 'Masculin', F: 'Féminin' }
 export const HEAD_RANK = 1
 export const MOTHER_RANK = 2
 
+/** Sexe imposé par le rôle (porteur, 2026-11-27) : père masculin, mère féminine ; sinon au choix. */
+export function sexForRole(role: MemberRole): Sex | null {
+  if (role === 'father') return 'M'
+  if (role === 'mother') return 'F'
+  return null
+}
+
 /** Rang d'un rôle ; un enfant prend le rang qui suit le plus haut jamais attribué au foyer. */
 export function rankForRole(role: MemberRole, lastChildRank: number): number {
   if (role === 'mother') return MOTHER_RANK

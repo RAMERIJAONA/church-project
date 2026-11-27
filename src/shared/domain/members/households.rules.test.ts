@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { rankForRole, roleError, ROLE_LABELS } from './households.rules'
+import { rankForRole, roleError, ROLE_LABELS, sexForRole } from './households.rules'
 
 describe('rang selon le rôle', () => {
   it('donne le rang 1 au père et au chef de foyer, 2 à la mère', () => {
@@ -43,5 +43,14 @@ describe('contrôle du rôle', () => {
     expect(roleError('child', 'F', new Set([1, 2]))).toBeNull()
     expect(roleError('child', 'M', new Set([1, 2, 3]))).toBeNull()
     expect(roleError('head', 'F', new Set([2]))).toBeNull()
+  })
+})
+
+describe('sexe imposé par le rôle', () => {
+  it('un père est masculin, une mère féminine, les autres rôles au choix', () => {
+    expect(sexForRole('father')).toBe('M')
+    expect(sexForRole('mother')).toBe('F')
+    expect(sexForRole('head')).toBeNull()
+    expect(sexForRole('child')).toBeNull()
   })
 })

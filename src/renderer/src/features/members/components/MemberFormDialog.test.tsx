@@ -224,4 +224,26 @@ describe('MemberFormDialog : rôle, statuts et matricule', () => {
     expect(summary.textContent).toContain('RABE Jean')
     expect(summary.textContent).toContain('41 ans')
   })
+
+  it('choisir Père impose Masculin et grise le sexe ; Mère impose Féminin', async () => {
+    const { dialog } = setup()
+    const role = within(dialog).getByRole('combobox', { name: /Rôle/ })
+    await userEvent.click(radio(dialog, 'Sexe', 'Féminin'))
+    await userEvent.selectOptions(role, 'father')
+    expect(checked(radio(dialog, 'Sexe', 'Masculin'))).toBe('true')
+    expect(radio(dialog, 'Sexe', 'Féminin')).toHaveProperty('disabled', true)
+    expect(within(dialog).getByText('Un père est toujours de sexe masculin.')).toBeTruthy()
+    await userEvent.selectOptions(role, 'mother')
+    expect(checked(radio(dialog, 'Sexe', 'Féminin'))).toBe('true')
+    expect(radio(dialog, 'Sexe', 'Masculin')).toHaveProperty('disabled', true)
+    await userEvent.selectOptions(role, 'child')
+    expect(radio(dialog, 'Sexe', 'Masculin')).toHaveProperty('disabled', false)
+    expect(checked(radio(dialog, 'Sexe', 'Féminin'))).toBe('true')
+  })
+
+  it('grise le sexe d’un père déjà enregistré', () => {
+    const { dialog } = setup({ initial: jean, household: makeHouseholdDTO({ members: [jean] }) })
+    expect(checked(radio(dialog, 'Sexe', 'Masculin'))).toBe('true')
+    expect(radio(dialog, 'Sexe', 'Féminin')).toHaveProperty('disabled', true)
+  })
 })

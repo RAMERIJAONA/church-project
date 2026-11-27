@@ -30,7 +30,12 @@ interface NewMember {
 async function fillMember(w: Page, householdNumber: number, m: NewMember): Promise<Locator> {
   const form = w.getByRole('dialog', { name: `Ajouter un membre au foyer ${householdNumber}` })
   if (m.role) await form.getByRole('combobox', { name: 'Rôle' }).selectOption(m.role)
-  await form.getByRole('radiogroup', { name: 'Sexe' }).getByRole('radio', { name: m.sex }).click()
+  const sex = form.getByRole('radiogroup', { name: 'Sexe' }).getByRole('radio', { name: m.sex })
+  // Père et Mère imposent le sexe, grisé (porteur, 2026-11-27)
+  if (m.role === 'father' || m.role === 'mother') {
+    await expect(sex).toHaveAttribute('aria-checked', 'true')
+    await expect(sex).toBeDisabled()
+  } else await sex.click()
   await form.getByRole('textbox', { name: 'Nom', exact: true }).fill(m.lastName)
   await form.getByRole('textbox', { name: 'Prénom' }).fill(m.firstName)
   await pickBirthDate(w)
