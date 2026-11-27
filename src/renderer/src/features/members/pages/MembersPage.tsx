@@ -5,7 +5,6 @@ import { localDateOf } from '@shared/utils/dates'
 import { isBlankQuery } from '@shared/domain/members/members.search'
 import { MEMBERS_PAGE_SIZE } from '@shared/domain/members/members.types'
 import { ConfirmDeleteMemberDialog } from '../components/ConfirmDeleteMemberDialog'
-import { DuplicateMemberDialog } from '../components/DuplicateMemberDialog'
 import { MemberFormDialog } from '../components/MemberFormDialog'
 import { MembersEmptyState } from '../components/MembersEmptyState'
 import { MembersPagination } from '../components/MembersPagination'
@@ -31,7 +30,8 @@ export function MembersPage(): React.JSX.Element {
   const searching = !isBlankQuery(list.query)
 
   return (
-    <div className="flex flex-col gap-4">
+    // Hauteur de la zone visible : seul le tableau défile, recherche et pagination restent fixes
+    <div className="flex h-full flex-col gap-4">
       <MembersToolbar
         search={list.search}
         onSearchChange={list.setSearch}
@@ -78,12 +78,6 @@ export function MembersPage(): React.JSX.Element {
         serverError={editor.serverError}
         onSubmit={editor.save}
         onCancel={editor.close}
-      />
-      <DuplicateMemberDialog
-        existing={editor.duplicate}
-        mode={dialog?.kind === 'edit' ? 'edit' : 'create'}
-        onConfirm={editor.confirmDuplicate}
-        onCancel={editor.cancelDuplicate}
       />
       <ConfirmDeleteMemberDialog
         member={dialog?.kind === 'delete' ? dialog.member : null}

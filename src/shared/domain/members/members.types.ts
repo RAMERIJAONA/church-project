@@ -32,7 +32,7 @@ export const MEMBERS_PAGE_SIZE = 50
 
 /** `details` d'une erreur `CONFLICT` des fidèles, lu par l'UI. */
 export type MemberConflictDetails =
-  | { reason: 'possible-duplicate'; existing: MemberDTO }
+  | { reason: 'name-taken'; existing: MemberDTO }
   | { reason: 'registration-number-taken'; existing: MemberDTO }
 
 const idSchema = z.number().int().positive()
@@ -51,9 +51,7 @@ const memberFields = {
   sector: z.string().trim().max(80).nullable().default(null).transform(nullIfEmpty),
   registrationNumber: z.string().trim().max(40).nullable().default(null).transform(nullIfEmpty),
   baptized: z.boolean().default(false),
-  communicant: z.boolean().default(false),
-  /** `true` : enregistrer malgré un fidèle de même nom, prénom et date de naissance */
-  confirmDuplicate: z.boolean().default(false)
+  communicant: z.boolean().default(false)
 }
 
 export const createMemberInputSchema = z.object(memberFields).strict()

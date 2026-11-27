@@ -37,8 +37,8 @@ describe('resultLabel', () => {
 describe('conflictDetails', () => {
   it('lit le détail d’un conflit de fidèle', () => {
     const existing = makeMemberDTO()
-    const err = new IpcError('CONFLICT', 'existe déjà', { reason: 'possible-duplicate', existing })
-    expect(conflictDetails(err)).toEqual({ reason: 'possible-duplicate', existing })
+    const err = new IpcError('CONFLICT', 'existe déjà', { reason: 'name-taken', existing })
+    expect(conflictDetails(err)).toEqual({ reason: 'name-taken', existing })
   })
 
   it('ignore les autres erreurs', () => {
@@ -68,6 +68,15 @@ describe('serverErrorOf', () => {
       field: 'registrationNumber',
       message: 'Le matricule M-1 est déjà attribué à RAKOTO Tiana.'
     })
+  })
+
+  it('place un nom et prénom déjà pris sous le prénom', () => {
+    const message = 'Un fidèle RAKOTO Tiana existe déjà (né le 12/03/1985, matricule M-0042).'
+    const err = new IpcError('CONFLICT', message, {
+      reason: 'name-taken',
+      existing: makeMemberDTO()
+    })
+    expect(serverErrorOf(err)).toEqual({ field: 'firstName', message })
   })
 
   it('garde le message d’une règle métier, sans champ', () => {

@@ -135,7 +135,13 @@ export const members = sqliteTable(
     deletedAt: text('deleted_at')
   },
   (t) => [
-    index('members_name_idx').on(t.lastName, t.firstName),
+    /**
+     * Nom et prénom uniques parmi les fidèles actifs (porteur, 2026-11-27) ; sert aussi au tri de
+     * la liste. Remplace `members_name_idx` (migration 0007).
+     */
+    uniqueIndex('members_name_unique_idx')
+      .on(t.lastName, t.firstName)
+      .where(sql`${t.deletedAt} IS NULL`),
     /** Matricule unique parmi les fidèles actifs, insensible à la casse (porteur, 2026-11-27) */
     uniqueIndex('members_registration_number_idx')
       .on(sql`${t.registrationNumber} COLLATE NOCASE`)

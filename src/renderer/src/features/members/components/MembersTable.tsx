@@ -26,7 +26,13 @@ const yesNo = (value: boolean): string => (value ? 'Oui' : 'Non')
 /** Liste des fidèles (une page). L'adresse est rappelée en petit sous le nom. */
 export function MembersTable({ members, onEdit, onDelete }: MembersTableProps): React.JSX.Element {
   return (
-    <div className={tableFrame}>
+    <div
+      role="region"
+      aria-label="Liste des fidèles"
+      // Zone qui défile : atteignable au clavier (flèches, Page suiv.)
+      tabIndex={0}
+      className={tableFrame}
+    >
       <table className={table}>
         <thead>
           <tr>

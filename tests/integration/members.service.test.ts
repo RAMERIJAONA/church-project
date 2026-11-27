@@ -91,9 +91,7 @@ describe('MembersService : enregistrement', () => {
   it('refuse un matricule déjà attribué, casse comprise', () => {
     const { create } = setup()
     create({ registrationNumber: 'M-0042' })
-    const err = caught(() =>
-      create({ firstName: 'Andry', registrationNumber: 'm-0042', confirmDuplicate: true })
-    )
+    const err = caught(() => create({ firstName: 'Andry', registrationNumber: 'm-0042' }))
     expect(err.code).toBe('CONFLICT')
     expect(err.message).toBe('Le matricule m-0042 est déjà attribué à RAKOTO Tiana.')
     expect(err.details).toMatchObject({ reason: 'registration-number-taken' })
@@ -108,17 +106,32 @@ describe('MembersService : enregistrement', () => {
     )
   })
 
-  it("signale un doublon probable puis l'accepte avec confirmation", () => {
+  it('refuse un fidèle de même nom et prénom, même né un autre jour', () => {
     const { create, list } = setup()
-    const first = create()
-    const err = caught(() => create({ lastName: 'rakoto', firstName: 'tiana' }))
+    const first = create({ registrationNumber: 'M-0042' })
+    const err = caught(() =>
+      create({ lastName: 'rakoto', firstName: 'tiana', birthDate: '1990-01-01' })
+    )
     expect(err.code).toBe('CONFLICT')
-    expect(err.message).toBe('Un fidèle RAKOTO Tiana né le 12/03/1985 existe déjà.')
-    expect(err.details).toEqual({ reason: 'possible-duplicate', existing: first })
+    expect(err.message).toBe(
+      'Un fidèle RAKOTO Tiana existe déjà (né le 12/03/1985, matricule M-0042).'
+    )
+    expect(err.details).toEqual({ reason: 'name-taken', existing: first })
     expect(list().total).toBe(1)
+  })
 
-    create({ confirmDuplicate: true })
+  it('accepte le même nom avec un autre prénom', () => {
+    const { create, list } = setup()
+    create()
+    create({ firstName: 'Andry' })
     expect(list().total).toBe(2)
+  })
+
+  it("libère le nom et le prénom d'un fidèle supprimé", () => {
+    const { create, service, list } = setup()
+    service.delete(create().id)
+    create()
+    expect(list().total).toBe(1)
   })
 
   it('modifier un fidèle sans changer son matricule ni son identité ne crée pas de conflit', () => {
@@ -127,19 +140,13 @@ describe('MembersService : enregistrement', () => {
     expect(update(m, { address: 'Ambohitsara' }).address).toBe('Ambohitsara')
   })
 
-  it("ne redemande pas pour un homonyme déjà accepté dont l'identité ne change pas", () => {
-    const { create, update } = setup()
-    create()
-    const twin = create({ confirmDuplicate: true })
-    expect(update(twin, { phone: '034 12 345 67' }).phone).toBe('+261341234567')
-  })
-
-  it('avertit aussi quand une modification crée un doublon', () => {
+  it('refuse une modification qui donne le nom et le prénom d’un autre fidèle', () => {
     const { create, update } = setup()
     create()
     const other = create({ firstName: 'Andry' })
-    const err = caught(() => update(other, { firstName: 'Tiana' }))
-    expect(err.details).toMatchObject({ reason: 'possible-duplicate' })
+    const err = caught(() => update(other, { firstName: 'tiana' }))
+    expect(err.code).toBe('CONFLICT')
+    expect(err.details).toMatchObject({ reason: 'name-taken' })
   })
 
   it('horodate la modification avec l’horloge injectée', () => {

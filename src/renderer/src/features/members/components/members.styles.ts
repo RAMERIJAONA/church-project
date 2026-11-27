@@ -1,12 +1,16 @@
 import { cva } from 'class-variance-authority'
 
-/** Cadre du tableau ; fenêtre trop étroite : défilement horizontal plutôt que coupure. */
-export const tableFrame = 'overflow-x-auto rounded-xl border bg-card text-sm'
+/**
+ * Cadre du tableau : seul élément qui défile (demande du porteur, 2026-11-27) ; il rétrécit
+ * jusqu'à la hauteur disponible (min-h-0 dans la page en colonne), défilement horizontal aussi
+ * si la fenêtre est trop étroite.
+ */
+export const tableFrame = 'min-h-0 overflow-auto rounded-xl border bg-card text-sm'
 
 export const table = 'w-full min-w-[56rem] border-collapse'
 
 export const headCell = cva(
-  'border-b px-3 py-2.5 text-xs font-medium tracking-wide text-muted-foreground uppercase',
+  'sticky top-0 z-10 border-b bg-card px-3 py-2.5 text-xs font-medium tracking-wide text-muted-foreground uppercase',
   {
     variants: { align: { left: 'text-left', center: 'text-center', right: 'text-right' } },
     defaultVariants: { align: 'left' }

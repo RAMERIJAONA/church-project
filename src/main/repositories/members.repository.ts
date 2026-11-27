@@ -115,25 +115,26 @@ export function createMembersRepository() {
       )
     },
 
-    /** Fidèles de même nom, prénom (normalisés) et date de naissance. */
-    findSameIdentity(
+    /** Fidèle actif de même nom et prénom (normalisés) : unique, index `members_name_unique_idx`. */
+    findByName(
       db: DbOrTx,
-      key: Pick<MemberDTO, 'lastName' | 'firstName' | 'birthDate'>,
+      key: Pick<MemberDTO, 'lastName' | 'firstName'>,
       exceptId?: number
-    ): MemberDTO[] {
-      return db
-        .select(cols)
-        .from(members)
-        .where(
-          and(
-            eq(members.lastName, key.lastName),
-            eq(members.firstName, key.firstName),
-            eq(members.birthDate, key.birthDate),
-            active,
-            exceptId === undefined ? undefined : ne(members.id, exceptId)
+    ): MemberDTO | null {
+      return (
+        db
+          .select(cols)
+          .from(members)
+          .where(
+            and(
+              eq(members.lastName, key.lastName),
+              eq(members.firstName, key.firstName),
+              active,
+              exceptId === undefined ? undefined : ne(members.id, exceptId)
+            )
           )
-        )
-        .all()
+          .get() ?? null
+      )
     }
   }
 }

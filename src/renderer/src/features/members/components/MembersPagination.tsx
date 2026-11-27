@@ -15,7 +15,7 @@ export function MembersPagination({
 }: MembersPaginationProps): React.JSX.Element | null {
   if (pageCount <= 1) return null
   return (
-    <nav aria-label="Pages" className="flex items-center justify-center gap-3 text-sm">
+    <nav aria-label="Pages" className="flex shrink-0 items-center justify-center gap-3 text-sm">
       <Button variant="outline" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
         <ChevronLeft aria-hidden />
         Précédent

@@ -1,5 +1,5 @@
 /**
- * `npm run seed:members` : 500 fidèles FICTIFS (`tests/factories/members.demo-seed.ts`) dans la
+ * `npm run seed:members` : 10 000 fidèles FICTIFS (`tests/factories/members.demo-seed.ts`) dans la
  * base de démonstration `.dev-data/seed/` (ou `SEED_DIR`). Ne touche QUE la table `members` :
  * les données de comptabilité de cette base (`npm run seed:accounting`) restent intactes.
  * Ensuite : `npm run dev:seed` ouvre l'application sur cette base.
@@ -15,18 +15,24 @@ import { runMigrations } from '@main/db/migrate'
 import { createLogger, createMemorySink } from '@main/logging/logger'
 import { createMembersRepository } from '@main/repositories/members.repository'
 import { createMembersService } from '@main/services/members.service'
-import { seedMembers } from '@tests/factories/members.demo-seed'
+import { DEMO_MEMBERS_COUNT, seedMembers } from '@tests/factories/members.demo-seed'
 import { MIGRATIONS_FOLDER } from '@tests/helpers/test-db'
 
 const SEED_DIR = resolve(process.env['SEED_DIR'] ?? resolve(__dirname, '../.dev-data/seed'))
-const COUNT = 500
+const COUNT = DEMO_MEMBERS_COUNT
 
 it('remplit les fidèles de la base de démonstration', () => {
   mkdirSync(SEED_DIR, { recursive: true })
   const dbFile = join(SEED_DIR, 'data.db')
   const handle = openDatabase(dbFile)
+  // Seule la table des fidèles est vidée (base réservée à la démonstration), AVANT les
+  // migrations : d'anciens fidèles de démonstration homonymes feraient échouer l'index unique
+  // nom + prénom (migration 0007)
+  const hasMembers = handle.sqlite
+    .prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'members'")
+    .get()
+  if (hasMembers) handle.sqlite.exec('DELETE FROM members')
   runMigrations(handle, MIGRATIONS_FOLDER)
-  // Seule la table des fidèles est vidée (base réservée à la démonstration)
   handle.sqlite.exec('DELETE FROM members')
   const service = createMembersService({
     db: handle.db,

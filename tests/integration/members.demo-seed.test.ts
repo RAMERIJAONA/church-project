@@ -4,7 +4,11 @@ import { createLogger, createMemorySink } from '@main/logging/logger'
 import { createMembersRepository } from '@main/repositories/members.repository'
 import { createMembersService } from '@main/services/members.service'
 import { listMembersInputSchema } from '@shared/domain/members/members.types'
-import { seedMembers } from '@tests/factories/members.demo-seed'
+import {
+  DEMO_MEMBERS_COUNT,
+  demoMemberInput,
+  seedMembers
+} from '@tests/factories/members.demo-seed'
 import { createTestDb } from '@tests/helpers/test-db'
 
 function setup() {
@@ -19,6 +23,17 @@ function setup() {
 }
 
 describe('fidèles de démonstration', () => {
+  it('prévoit 10 000 fidèles aux noms et prénoms tous différents', () => {
+    expect(DEMO_MEMBERS_COUNT).toBe(10_000)
+    const names = new Set(
+      Array.from({ length: DEMO_MEMBERS_COUNT }, (_, i) => {
+        const m = demoMemberInput(i)
+        return `${m.lastName.toUpperCase()}|${m.firstName.toLowerCase()}`
+      })
+    )
+    expect(names.size).toBe(DEMO_MEMBERS_COUNT)
+  })
+
   it('crée le nombre demandé de fidèles fictifs, par le service', () => {
     const { service, handle } = setup()
     expect(seedMembers(service, 120)).toBe(120)

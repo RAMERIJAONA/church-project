@@ -43,8 +43,7 @@ describe('contrat IPC : fidèles', () => {
       sector: null,
       registrationNumber: null,
       baptized: false,
-      communicant: false,
-      confirmDuplicate: false
+      communicant: false
     })
   })
 

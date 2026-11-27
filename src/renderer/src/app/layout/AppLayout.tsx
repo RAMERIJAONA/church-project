@@ -10,7 +10,9 @@ export function AppLayout(): React.JSX.Element {
       <div className="flex min-w-0 flex-1 flex-col">
         <AppHeader />
         <main className="flex-1 overflow-y-auto print:overflow-visible">
-          <div className="mx-auto w-full max-w-6xl px-8 py-8 print:max-w-none print:p-0">
+          {/* h-full : une page peut occuper exactement la hauteur visible et ne faire défiler
+              qu'une partie (Fidèles) ; une page plus haute fait toujours défiler <main> */}
+          <div className="mx-auto h-full w-full max-w-6xl px-8 py-8 print:h-auto print:max-w-none print:p-0">
             <Outlet />
           </div>
         </main>

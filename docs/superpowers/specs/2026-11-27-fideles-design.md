@@ -55,7 +55,12 @@ Règles complémentaires (porteur, 2026-11-27) :
 
 - **Un membre communiant est toujours baptisé** : « Communiant : Oui » impossible avec
   « Baptême : Non ».
-- **Doublon probable** : même nom, même prénom et même date de naissance qu'un fidèle actif →
+- **Nom et prénom uniques** (porteur, 2026-11-27, après la première version) : deux fidèles actifs
+  ne portent jamais exactement le même nom et prénom, quelle que soit la date de naissance ;
+  refus bloquant (`CONFLICT`, `name-taken`), qui **remplace** l'avertissement ci-dessous.
+- **Seul le tableau de la liste défile** (porteur, 2026-11-27) : titre, recherche et nombre de
+  fidèles restent fixes.
+- *(Remplacé)* **Doublon probable** : même nom, même prénom et même date de naissance qu'un fidèle actif →
   avertir (« Un fidèle RAKOTO Tiana né le 12/03/1985 existe déjà. Ajouter quand même ? »),
   sans bloquer.
 
@@ -98,7 +103,8 @@ ne reçoit que la page affichée.
 | `deleted_at` | TEXT NULL | suppression douce |
 
 Index :
-- `members_name_idx` sur (`last_name`, `first_name`) : tri de la liste.
+- `members_name_idx` sur (`last_name`, `first_name`) : tri de la liste. Remplacé en `0007` par
+  `members_name_unique_idx` (unique, fidèles actifs) : nom et prénom uniques, et tri.
 - `members_registration_number_idx` : index **unique partiel** sur `registration_number`
   insensible à la casse (`COLLATE NOCASE`), `WHERE registration_number IS NOT NULL AND
   deleted_at IS NULL`. Le matricule d'un fidèle supprimé redevient disponible.
@@ -208,7 +214,8 @@ Fidèles                                          [ + Ajouter un fidèle ]
 - E2E smoke `tests/e2e/members.spec.ts` : créer un fidèle → il apparaît dans la liste → la
   recherche avec une faute le retrouve → modifier → supprimer.
 - Données fictives : `tests/factories/members.factory.ts` ; quelques centaines de fidèles fictifs
-  par une commande à part, `npm run seed:members` (ne touche pas aux données de comptabilité).
+  par une commande à part, `npm run seed:members` (ne touche pas aux données de comptabilité) ;
+  10 000 depuis le 2026-11-27, aux noms et prénoms tous différents.
 
 ### 4.7 CLAUDE.md à mettre à jour
 

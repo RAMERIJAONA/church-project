@@ -62,10 +62,9 @@ export function createMembersService(deps: {
   function prepare(
     tx: Tx,
     input: CreateMemberParsed,
-    /** Fidèle modifié (`null` : ajout) */
-    current: MemberDTO | null
+    /** Fidèle modifié, exclu des contrôles d'unicité (absent : ajout) */
+    exceptId?: number
   ): Omit<MemberRow, 'createdAt' | 'updatedAt'> {
-    const exceptId = current?.id
     const lastName = normalizeLastName(input.lastName)
     const firstName = normalizeFirstName(input.firstName)
 
@@ -88,22 +87,16 @@ export function createMembersService(deps: {
       }
     }
 
-    // En modification, seulement si nom, prénom ou date de naissance changent : un homonyme
-    // déjà accepté n'est pas redemandé à chaque modification (téléphone, adresse…)
-    const identityChanged =
-      current === null ||
-      current.lastName !== lastName ||
-      current.firstName !== firstName ||
-      current.birthDate !== input.birthDate
-    if (!input.confirmDuplicate && identityChanged) {
-      const key = { lastName, firstName, birthDate: input.birthDate }
-      const [same] = deps.members.findSameIdentity(tx, key, exceptId)
-      if (same) {
-        throw conflict(
-          `Un fidèle ${memberDisplayName(same)} né le ${formatBirthDate(same.birthDate)} existe déjà.`,
-          { reason: 'possible-duplicate', existing: same }
-        )
-      }
+    // Deux fidèles actifs ne portent jamais le même nom et prénom (porteur, 2026-11-27)
+    const homonym = deps.members.findByName(tx, { lastName, firstName }, exceptId)
+    if (homonym) {
+      const matricule = homonym.registrationNumber
+        ? `, matricule ${homonym.registrationNumber}`
+        : ''
+      throw conflict(
+        `Un fidèle ${memberDisplayName(homonym)} existe déjà (né le ${formatBirthDate(homonym.birthDate)}${matricule}).`,
+        { reason: 'name-taken', existing: homonym }
+      )
     }
 
     return {
@@ -145,21 +138,20 @@ export function createMembersService(deps: {
       const member = deps.db.transaction((tx) => {
         const now = deps.clock().toISOString()
         return deps.members.insert(tx, {
-          ...prepare(tx, input, null),
+          ...prepare(tx, input),
           createdAt: now,
           updatedAt: now
         })
       })
       index = null
-      deps.logger.info({ id: member.id, duplicate: input.confirmDuplicate }, 'fidèle ajouté')
+      deps.logger.info({ id: member.id }, 'fidèle ajouté')
       return member
     },
 
     update(input: UpdateMemberParsed): MemberDTO {
       const member = deps.db.transaction((tx) => {
-        const current = deps.members.findById(tx, input.id)
-        if (!current) throw notFound(input.id)
-        const row = prepare(tx, input, current)
+        if (!deps.members.findById(tx, input.id)) throw notFound(input.id)
+        const row = prepare(tx, input, input.id)
         deps.members.update(tx, input.id, { ...row, updatedAt: deps.clock().toISOString() })
         const updated = deps.members.findById(tx, input.id)
         if (!updated) throw notFound(input.id)

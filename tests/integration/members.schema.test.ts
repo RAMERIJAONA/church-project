@@ -14,15 +14,17 @@ function insert(
     baptized?: 0 | 1
     communicant?: 0 | 1
     deletedAt?: string | null
+    firstName?: string
   }
 ): void {
   sqlite
     .prepare(
       `INSERT INTO members (last_name, first_name, birth_date, address, baptized, communicant,
          registration_number, created_at, updated_at, deleted_at)
-       VALUES ('RAKOTO', 'Tiana', '1985-03-12', 'Ambatondrazaka', ?, ?, ?, ?, ?, ?)`
+       VALUES ('RAKOTO', ?, '1985-03-12', 'Ambatondrazaka', ?, ?, ?, ?, ?, ?)`
     )
     .run(
+      values.firstName ?? 'Tiana',
       values.baptized ?? 0,
       values.communicant ?? 0,
       values.registration ?? null,
@@ -47,18 +49,32 @@ describe('table members', () => {
   it('refuse deux matricules identiques à la casse près parmi les fidèles actifs', () => {
     const { sqlite } = createTestDb()
     insert(sqlite, { registration: 'm-1' })
-    expect(() => insert(sqlite, { registration: 'M-1' })).toThrow(/UNIQUE constraint failed/)
+    expect(() => insert(sqlite, { registration: 'M-1', firstName: 'Andry' })).toThrow(
+      /UNIQUE constraint failed/
+    )
   })
 
   it("réutilise le matricule d'un fidèle supprimé", () => {
     const { sqlite } = createTestDb()
     insert(sqlite, { registration: 'M-1', deletedAt: NOW })
-    expect(() => insert(sqlite, { registration: 'M-1' })).not.toThrow()
+    expect(() => insert(sqlite, { registration: 'M-1', firstName: 'Andry' })).not.toThrow()
   })
 
   it('accepte plusieurs fidèles sans matricule', () => {
     const { sqlite } = createTestDb()
     insert(sqlite, {})
+    expect(() => insert(sqlite, { firstName: 'Andry' })).not.toThrow()
+  })
+
+  it('refuse deux fidèles actifs de même nom et prénom', () => {
+    const { sqlite } = createTestDb()
+    insert(sqlite, {})
+    expect(() => insert(sqlite, {})).toThrow(/UNIQUE constraint failed/)
+  })
+
+  it("réutilise le nom et le prénom d'un fidèle supprimé", () => {
+    const { sqlite } = createTestDb()
+    insert(sqlite, { deletedAt: NOW })
     expect(() => insert(sqlite, {})).not.toThrow()
   })
 })

@@ -20,7 +20,7 @@ export function MembersToolbar({
 }: MembersToolbarProps): React.JSX.Element {
   const labelId = useId()
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex shrink-0 flex-col gap-2">
       <div className="flex items-center gap-3">
         <div className="relative flex-1">
           <Search
