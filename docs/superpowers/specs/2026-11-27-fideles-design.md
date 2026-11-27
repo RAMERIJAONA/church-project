@@ -127,7 +127,8 @@ Nouvelle table sans reprise de données : migration générée par `drizzle-kit 
     mot du nom, du prénom ou du matricule (ET entre les mots tapés). Score par mot, du meilleur au
     moins bon : mot identique, début de mot, contenu dans le mot, approché (distance de
     Damerau-Levenshtein ≤ 1 pour un mot tapé de 4 à 7 lettres, ≤ 2 à partir de 8 ; aucun
-    approché sous 4 lettres). Matricule : début et contenu seulement, pas d'approché.
+    approché sous 4 lettres ; contre le début d'un mot plus long, seulement à partir de 5 lettres :
+    « rakto » trouve RAKOTOMALALA, « rako » ne trouve pas RASOA ; ajouté après la relecture finale). Matricule : début et contenu seulement, pas d'approché.
     Ex æquo : tri par nom puis prénom.
 
 Les mêmes fonctions de normalisation servent au formulaire (aperçu à la sortie du champ) et au
@@ -147,7 +148,8 @@ service (vérité), conformément au par. 5.2 du CLAUDE.md.
     confirmation, le service lève `CONFLICT` avec `details: { reason: 'possible-duplicate',
     existing: MemberDTO }` et n'écrit rien ; l'UI demande confirmation puis renvoie avec
     `confirmDuplicate: true`. Vaut à l'ajout **et** à la modification (mon choix : une
-    modification peut aussi créer un doublon). Le matricule en double reste, lui, bloquant
+    modification peut aussi créer un doublon), mais en modification seulement si le nom, le prénom
+    ou la date de naissance changent (un homonyme déjà accepté n'est pas redemandé). Le matricule en double reste, lui, bloquant
     (`details.reason: 'registration-number-taken'`).
   - `delete` : suppression douce ; fidèle introuvable → `NOT_FOUND`.
   - `list({ search, page, pageSize })` : sans recherche, page SQL triée ; avec recherche,

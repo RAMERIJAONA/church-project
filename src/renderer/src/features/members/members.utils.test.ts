@@ -24,6 +24,10 @@ describe('resultLabel', () => {
     expect(resultLabel(1248, '')).toBe(`${(1248).toLocaleString('fr-FR')} fidèles`)
   })
 
+  it('traite une recherche faite de ponctuation comme pas de recherche', () => {
+    expect(resultLabel(120, ' - ')).toBe('120 fidèles')
+  })
+
   it('compte les résultats d’une recherche', () => {
     expect(resultLabel(1, 'rakto')).toBe('1 résultat pour « rakto »')
     expect(resultLabel(3, ' rakto ')).toBe('3 résultats pour « rakto »')

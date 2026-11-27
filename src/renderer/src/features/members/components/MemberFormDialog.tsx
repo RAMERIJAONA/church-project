@@ -49,7 +49,9 @@ const YES_NO = [
 export function MemberFormDialog(props: MemberFormDialogProps): React.JSX.Element {
   return (
     <Dialog open={props.open} onOpenChange={(open) => !open && props.onCancel()}>
-      <DialogContent className="sm:max-w-2xl">
+      {/* Un clic à côté ne ferme pas : 9 champs saisis ne doivent pas se perdre (Échap et
+          « Annuler » ferment toujours) */}
+      <DialogContent className="sm:max-w-2xl" onInteractOutside={(e) => e.preventDefault()}>
         <MemberForm {...props} />
       </DialogContent>
     </Dialog>

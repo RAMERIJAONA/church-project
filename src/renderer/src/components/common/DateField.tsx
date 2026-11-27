@@ -2,7 +2,7 @@ import { CalendarDays } from 'lucide-react'
 import { useId, useState } from 'react'
 import { Button } from '@renderer/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@renderer/components/ui/popover'
-import { localDateOf } from '@shared/domain/accounting/accounting.periods'
+import { localDateOf } from '@shared/utils/dates'
 import { Calendar } from './Calendar'
 
 export interface DateFieldProps {

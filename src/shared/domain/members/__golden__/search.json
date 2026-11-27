@@ -14,12 +14,26 @@
     { "query": "tiana", "ids": [1, 7], "why": "prénom exact, ordre alphabétique" },
     { "query": "rakoto tiana", "ids": [1], "why": "tous les mots tapés doivent correspondre" },
     { "query": "andriamaehfa", "ids": [4], "why": "deux lettres inversées" },
-    { "query": "RÂKOTO", "ids": [5, 1, 2], "why": "majuscules et accents ignorés ; mot exact avant début de mot" },
+    {
+      "query": "RÂKOTO",
+      "ids": [5, 1, 2],
+      "why": "majuscules et accents ignorés ; mot exact avant début de mot"
+    },
     { "query": "nirna", "ids": [3], "why": "une lettre oubliée dans le prénom" },
     { "query": "pierre", "ids": [2], "why": "partie d'un prénom composé" },
     { "query": "m-0042", "ids": [5], "why": "matricule complet" },
     { "query": "0042", "ids": [5], "why": "partie du matricule" },
-    { "query": "ra", "ids": [6, 5, 1, 2, 7, 3, 8], "why": "moins de 4 lettres : débuts de mot seulement" },
+    {
+      "query": "ra",
+      "ids": [6, 5, 1, 2, 7, 3, 8],
+      "why": "moins de 4 lettres : débuts de mot seulement"
+    },
+    {
+      "query": "rako",
+      "ids": [5, 1, 2],
+      "why": "4 lettres : pas d'approché sur un début de mot (RASOA exclu)"
+    },
+    { "query": "nirin", "ids": [3], "why": "5 lettres : début de mot exact" },
     { "query": "koto", "ids": [5, 1, 2], "why": "contenu dans le nom" },
     { "query": "xyz", "ids": [], "why": "aucune correspondance" }
   ]

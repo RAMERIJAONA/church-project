@@ -5,7 +5,8 @@
  * Chaque mot tapé doit correspondre à un mot du nom ou du prénom, ou au matricule. Score par
  * mot tapé (plus petit = meilleur) : mot identique 0, début de mot 1, contenu dans un mot 2
  * (3 lettres et plus), approché 3 + distance (4 lettres et plus : 1 faute jusqu'à 7 lettres,
- * 2 à partir de 8). Matricule : identique, début ou contenu, jamais approché.
+ * 2 à partir de 8 ; sur le début d'un mot plus long, seulement à partir de 5 lettres).
+ * Matricule : identique, début ou contenu, jamais approché.
  * Ex æquo : ordre alphabétique (nom, prénom).
  */
 
@@ -100,10 +101,11 @@ function wordScore(token: string, word: string): number {
   if (token.length >= 3 && word.includes(token)) return 2
   if (token.length < 4) return NO_MATCH
   const max = token.length >= 8 ? 2 : 1
-  const d = Math.min(
-    boundedDistance(token, word, max),
-    boundedDistance(token, word.slice(0, token.length), max)
-  )
+  // Début de mot approché (« rakto » → RAKOTOMALALA) seulement à partir de 5 lettres : à 4,
+  // les débuts « ra… » des noms malgaches se ressemblent tous (« rako » → RASOA)
+  const prefix =
+    token.length >= 5 ? boundedDistance(token, word.slice(0, token.length), max) : max + 1
+  const d = Math.min(boundedDistance(token, word, max), prefix)
   return d <= max ? 3 + d : NO_MATCH
 }
 

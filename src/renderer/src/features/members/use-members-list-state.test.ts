@@ -32,4 +32,14 @@ describe('useMembersListState', () => {
     rerender({ total: 100 })
     expect(result.current.page).toBe(2)
   })
+
+  it('reste sur la page ramenée quand un fidèle est ajouté ensuite', () => {
+    const { result, rerender } = renderHook(({ total }) => useMembersListState(total), {
+      initialProps: { total: 101 as number | undefined }
+    })
+    act(() => result.current.setPage(3))
+    rerender({ total: 100 })
+    rerender({ total: 101 })
+    expect(result.current.page).toBe(2)
+  })
 })

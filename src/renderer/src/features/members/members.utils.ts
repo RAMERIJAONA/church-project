@@ -1,5 +1,6 @@
 import { getErrorMessage } from '@renderer/lib/error-messages'
 import { IpcError } from '@renderer/lib/ipc-client'
+import { isBlankQuery } from '@shared/domain/members/members.search'
 import type { MemberConflictDetails } from '@shared/domain/members/members.types'
 
 /** Nombre de pages de la liste (au moins 1, même vide). */
@@ -18,7 +19,8 @@ const count = new Intl.NumberFormat('fr-FR')
 export function resultLabel(total: number, query: string): string {
   const q = query.trim()
   const n = count.format(total)
-  if (q === '') return `${n} ${total > 1 ? 'fidèles' : 'fidèle'}`
+  // Même règle que le service : sans lettre ni chiffre, ce n'est pas une recherche
+  if (isBlankQuery(q)) return `${n} ${total > 1 ? 'fidèles' : 'fidèle'}`
   return `${n} ${total > 1 ? 'résultats' : 'résultat'} pour « ${q} »`
 }
 

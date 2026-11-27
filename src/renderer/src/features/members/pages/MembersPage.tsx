@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Button } from '@renderer/components/ui/button'
 import { getErrorMessage } from '@renderer/lib/error-messages'
 import { localDateOf } from '@shared/utils/dates'
+import { isBlankQuery } from '@shared/domain/members/members.search'
 import { MEMBERS_PAGE_SIZE } from '@shared/domain/members/members.types'
 import { ConfirmDeleteMemberDialog } from '../components/ConfirmDeleteMemberDialog'
 import { DuplicateMemberDialog } from '../components/DuplicateMemberDialog'
@@ -27,7 +28,7 @@ export function MembersPage(): React.JSX.Element {
   // Total de la dernière réponse, pour ramener la page sur la dernière existante (mise à jour
   // pendant le rendu : motif React « valeur dérivée du rendu précédent », sans effet)
   if (data && data.total !== total) setTotal(data.total)
-  const searching = list.query.trim() !== ''
+  const searching = !isBlankQuery(list.query)
 
   return (
     <div className="flex flex-col gap-4">

@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { makeMemberDTO } from '@tests/factories/members.factory'
@@ -103,6 +103,18 @@ describe('MemberFormDialog', () => {
       within(dialog).getByText('Numéro invalide : 10 chiffres attendus, ex. 034 12 345 67.')
     ).toBeTruthy()
     expect(onSubmit).not.toHaveBeenCalled()
+  })
+
+  it('ne se ferme pas sur un clic à côté du formulaire (saisie conservée)', async () => {
+    const { onCancel, dialog } = setup()
+    await userEvent.type(field(dialog, 'Adresse'), 'Ambohitsara')
+    // Clic sur le fond : la fenêtre modale y bloque user-event, on émet l'événement que Radix écoute
+    const overlay = document.querySelector('[data-slot="dialog-overlay"]')
+    if (!overlay) throw new Error('fond de la fenêtre introuvable')
+    fireEvent.pointerDown(overlay, { button: 0, pointerType: 'mouse' })
+    fireEvent.click(overlay)
+    expect(onCancel).not.toHaveBeenCalled()
+    expect(field(dialog, 'Adresse').value).toBe('Ambohitsara')
   })
 
   it('affiche l’erreur du matricule sous le champ', () => {

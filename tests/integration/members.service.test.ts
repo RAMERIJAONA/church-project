@@ -127,6 +127,13 @@ describe('MembersService : enregistrement', () => {
     expect(update(m, { address: 'Ambohitsara' }).address).toBe('Ambohitsara')
   })
 
+  it("ne redemande pas pour un homonyme déjà accepté dont l'identité ne change pas", () => {
+    const { create, update } = setup()
+    create()
+    const twin = create({ confirmDuplicate: true })
+    expect(update(twin, { phone: '034 12 345 67' }).phone).toBe('+261341234567')
+  })
+
   it('avertit aussi quand une modification crée un doublon', () => {
     const { create, update } = setup()
     create()

@@ -32,6 +32,17 @@ export function PhoneInput({ value, onValueChange, ...props }: PhoneInputProps):
         }
         onValueChange(formatted)
       }}
+      onKeyDown={(e) => {
+        // Retour arrière / Suppr sur une espace : efface le chiffre voisin (comme les montants)
+        const el = e.currentTarget
+        const start = el.selectionStart
+        if (start === null || start !== el.selectionEnd) return
+        if (e.key === 'Backspace' && start > 0 && el.value.charAt(start - 1) === ' ') {
+          el.setSelectionRange(start - 1, start - 1)
+        } else if (e.key === 'Delete' && el.value.charAt(start) === ' ') {
+          el.setSelectionRange(start + 1, start + 1)
+        }
+      }}
     />
   )
 }

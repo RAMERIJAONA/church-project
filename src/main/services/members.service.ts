@@ -62,8 +62,10 @@ export function createMembersService(deps: {
   function prepare(
     tx: Tx,
     input: CreateMemberParsed,
-    exceptId?: number
+    /** Fidèle modifié (`null` : ajout) */
+    current: MemberDTO | null
   ): Omit<MemberRow, 'createdAt' | 'updatedAt'> {
+    const exceptId = current?.id
     const lastName = normalizeLastName(input.lastName)
     const firstName = normalizeFirstName(input.firstName)
 
@@ -86,7 +88,14 @@ export function createMembersService(deps: {
       }
     }
 
-    if (!input.confirmDuplicate) {
+    // En modification, seulement si nom, prénom ou date de naissance changent : un homonyme
+    // déjà accepté n'est pas redemandé à chaque modification (téléphone, adresse…)
+    const identityChanged =
+      current === null ||
+      current.lastName !== lastName ||
+      current.firstName !== firstName ||
+      current.birthDate !== input.birthDate
+    if (!input.confirmDuplicate && identityChanged) {
       const key = { lastName, firstName, birthDate: input.birthDate }
       const [same] = deps.members.findSameIdentity(tx, key, exceptId)
       if (same) {
@@ -135,7 +144,11 @@ export function createMembersService(deps: {
     create(input: CreateMemberParsed): MemberDTO {
       const member = deps.db.transaction((tx) => {
         const now = deps.clock().toISOString()
-        return deps.members.insert(tx, { ...prepare(tx, input), createdAt: now, updatedAt: now })
+        return deps.members.insert(tx, {
+          ...prepare(tx, input, null),
+          createdAt: now,
+          updatedAt: now
+        })
       })
       index = null
       deps.logger.info({ id: member.id, duplicate: input.confirmDuplicate }, 'fidèle ajouté')
@@ -144,8 +157,9 @@ export function createMembersService(deps: {
 
     update(input: UpdateMemberParsed): MemberDTO {
       const member = deps.db.transaction((tx) => {
-        if (!deps.members.findById(tx, input.id)) throw notFound(input.id)
-        const row = prepare(tx, input, input.id)
+        const current = deps.members.findById(tx, input.id)
+        if (!current) throw notFound(input.id)
+        const row = prepare(tx, input, current)
         deps.members.update(tx, input.id, { ...row, updatedAt: deps.clock().toISOString() })
         const updated = deps.members.findById(tx, input.id)
         if (!updated) throw notFound(input.id)

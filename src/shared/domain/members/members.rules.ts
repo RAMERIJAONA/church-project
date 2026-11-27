@@ -34,12 +34,22 @@ export function memberDisplayName(m: { lastName: string; firstName: string }): s
 
 export type ParsedPhone = { ok: true; value: string | null } | { ok: false }
 
+/**
+ * Chiffres saisis ramenés à la forme locale « 0XXXXXXXXX » (complète ou en cours de frappe) :
+ * indicatif « +261 », « 261 » ou « 00261 » remplacé par « 0 » (« +261 034… » aussi), « 0 »
+ * ajouté devant un numéro tapé sans (« 34… », « 20… »).
+ */
+function toLocalDigits(input: string): string {
+  const digits = input.replace(/\D/g, '').replace(/^00(?=261)/, '')
+  if (digits.startsWith('261')) return `0${digits.slice(3).replace(/^0/, '')}`
+  if (digits.startsWith('3') || digits.startsWith('20')) return `0${digits}`
+  return digits
+}
+
 /** Les 9 chiffres significatifs d'un numéro malgache saisi, ou `null` s'il n'en est pas un. */
 function significantDigits(input: string): string | null {
-  let digits = input.replace(/\D/g, '')
-  if (digits.length === 12 && digits.startsWith('261')) digits = digits.slice(3)
-  else if (digits.length === 10 && digits.startsWith('0')) digits = digits.slice(1)
-  return /^[23]\d{8}$/.test(digits) ? digits : null
+  const local = toLocalDigits(input)
+  return /^0[23]\d{8}$/.test(local) ? local.slice(1) : null
 }
 
 /**
@@ -69,10 +79,7 @@ export function formatPhone(canonical: string): string {
  * « 034 12 3 », « 3412 » → « 034 12 ».
  */
 export function formatPhoneTyping(text: string): string {
-  let digits = text.replace(/\D/g, '')
-  if (digits.startsWith('261')) digits = `0${digits.slice(3)}`
-  else if (digits.startsWith('3') || digits.startsWith('20')) digits = `0${digits}`
-  return groupLocal(digits.slice(0, 10))
+  return groupLocal(toLocalDigits(text).slice(0, 10))
 }
 
 /** Message d'erreur de la date de naissance (« AAAA-MM-JJ »), `null` si elle est valide. */

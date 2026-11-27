@@ -38,7 +38,9 @@ describe('téléphone', () => {
     ['341234567', '+261341234567'],
     ['034.12.345.67', '+261341234567'],
     ['034-12-345-67', '+261341234567'],
-    ['020 22 123 45', '+261202212345']
+    ['020 22 123 45', '+261202212345'],
+    ['+261 034 12 345 67', '+261341234567'],
+    ['00261 34 12 345 67', '+261341234567']
   ])('accepte %s', (input, value) => {
     expect(parsePhone(input)).toEqual({ ok: true, value })
   })
@@ -67,6 +69,8 @@ describe('téléphone', () => {
     expect(formatPhoneTyping('03412345678999')).toBe('034 12 345 67')
     expect(formatPhoneTyping('341234567')).toBe('034 12 345 67')
     expect(formatPhoneTyping('034 12 345 67')).toBe('034 12 345 67')
+    expect(formatPhoneTyping('+261 034 12 345 67')).toBe('034 12 345 67')
+    expect(formatPhoneTyping('00261341234567')).toBe('034 12 345 67')
   })
 })
 

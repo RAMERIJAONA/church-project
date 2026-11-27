@@ -25,6 +25,9 @@ export function useMembersListState(total: number | undefined): MembersListState
   const query = useDebouncedValue(search, SEARCH_DEBOUNCE_MS)
   const page =
     total === undefined ? requestedPage : clampPage(requestedPage, total, MEMBERS_PAGE_SIZE)
+  // La page ramenée devient la page demandée : un ajout ultérieur ne fait pas revenir en arrière
+  // (mise à jour pendant le rendu, gardée par la comparaison)
+  if (page !== requestedPage) setPage(page)
 
   const setSearch = (value: string): void => {
     setSearchText(value)
