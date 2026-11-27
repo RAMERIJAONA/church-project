@@ -1,7 +1,11 @@
 import { useState } from 'react'
 import { Button } from '@renderer/components/ui/button'
 import { getErrorMessage } from '@renderer/lib/error-messages'
-import { MEMBERS_PAGE_SIZE, type MemberDTO } from '@shared/domain/members/members.types'
+import { localDateOf } from '@shared/utils/dates'
+import { MEMBERS_PAGE_SIZE } from '@shared/domain/members/members.types'
+import { ConfirmDeleteMemberDialog } from '../components/ConfirmDeleteMemberDialog'
+import { DuplicateMemberDialog } from '../components/DuplicateMemberDialog'
+import { MemberFormDialog } from '../components/MemberFormDialog'
 import { MembersEmptyState } from '../components/MembersEmptyState'
 import { MembersPagination } from '../components/MembersPagination'
 import { MembersTable } from '../components/MembersTable'
@@ -9,31 +13,28 @@ import { MembersToolbar } from '../components/MembersToolbar'
 import { pageCount, resultLabel } from '../members.utils'
 import { useMembers } from '../queries'
 import { useMembersListState } from '../use-members-list-state'
-
-/** Boîte ouverte : ajout, modification ou confirmation de suppression. */
-export type MemberDialog =
-  { kind: 'create' } | { kind: 'edit'; member: MemberDTO } | { kind: 'delete'; member: MemberDTO }
+import { useMemberEditor } from './use-member-editor'
 
 /** Fidèles : liste paginée, recherche en temps réel, ajout / modification / suppression. */
 export function MembersPage(): React.JSX.Element {
   const [total, setTotal] = useState<number | undefined>(undefined)
   const list = useMembersListState(total)
   const members = useMembers(list.query, list.page)
-  const [, setDialog] = useState<MemberDialog | null>(null)
+  const editor = useMemberEditor()
+  const { dialog } = editor
 
   const data = members.data
   // Total de la dernière réponse, pour ramener la page sur la dernière existante (mise à jour
   // pendant le rendu : motif React « valeur dérivée du rendu précédent », sans effet)
   if (data && data.total !== total) setTotal(data.total)
   const searching = list.query.trim() !== ''
-  const openCreate = (): void => setDialog({ kind: 'create' })
 
   return (
     <div className="flex flex-col gap-4">
       <MembersToolbar
         search={list.search}
         onSearchChange={list.setSearch}
-        onAdd={openCreate}
+        onAdd={editor.openCreate}
         resultLabel={data ? resultLabel(data.total, list.query) : ''}
       />
 
@@ -47,7 +48,7 @@ export function MembersPage(): React.JSX.Element {
         </div>
       )}
 
-      {data && data.total === 0 && !searching && <MembersEmptyState onAdd={openCreate} />}
+      {data && data.total === 0 && !searching && <MembersEmptyState onAdd={editor.openCreate} />}
       {data && data.total === 0 && searching && (
         <p className="text-sm text-muted-foreground">
           Aucun fidèle ne correspond à « {list.query.trim()} ».
@@ -57,8 +58,8 @@ export function MembersPage(): React.JSX.Element {
         <>
           <MembersTable
             members={data.items}
-            onEdit={(member) => setDialog({ kind: 'edit', member })}
-            onDelete={(member) => setDialog({ kind: 'delete', member })}
+            onEdit={editor.openEdit}
+            onDelete={editor.openDelete}
           />
           <MembersPagination
             page={list.page}
@@ -67,6 +68,27 @@ export function MembersPage(): React.JSX.Element {
           />
         </>
       )}
+
+      <MemberFormDialog
+        open={dialog?.kind === 'create' || dialog?.kind === 'edit'}
+        initial={dialog?.kind === 'edit' ? dialog.member : null}
+        today={localDateOf(new Date())}
+        submitting={editor.submitting}
+        serverError={editor.serverError}
+        onSubmit={editor.save}
+        onCancel={editor.close}
+      />
+      <DuplicateMemberDialog
+        existing={editor.duplicate}
+        mode={dialog?.kind === 'edit' ? 'edit' : 'create'}
+        onConfirm={editor.confirmDuplicate}
+        onCancel={editor.cancelDuplicate}
+      />
+      <ConfirmDeleteMemberDialog
+        member={dialog?.kind === 'delete' ? dialog.member : null}
+        onConfirm={editor.confirmDelete}
+        onCancel={editor.close}
+      />
     </div>
   )
 }

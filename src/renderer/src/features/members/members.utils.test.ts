@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { IpcError } from '@renderer/lib/ipc-client'
 import { makeMemberDTO } from '@tests/factories/members.factory'
-import { clampPage, conflictDetails, pageCount, resultLabel } from './members.utils'
+import { clampPage, conflictDetails, pageCount, resultLabel, serverErrorOf } from './members.utils'
 
 describe('pagination', () => {
   it('compte au moins une page', () => {
@@ -41,5 +41,37 @@ describe('conflictDetails', () => {
     expect(conflictDetails(new IpcError('VALIDATION', 'x', { field: 'phone' }))).toBeNull()
     expect(conflictDetails(new IpcError('CONFLICT', 'x', { reason: 'autre' }))).toBeNull()
     expect(conflictDetails(new Error('x'))).toBeNull()
+  })
+})
+
+describe('serverErrorOf', () => {
+  it('place une erreur de champ sous le champ', () => {
+    const err = new IpcError('VALIDATION', 'La date de naissance ne peut pas être dans le futur.', {
+      field: 'birthDate'
+    })
+    expect(serverErrorOf(err)).toEqual({
+      field: 'birthDate',
+      message: 'La date de naissance ne peut pas être dans le futur.'
+    })
+  })
+
+  it('place un matricule déjà attribué sous le matricule', () => {
+    const err = new IpcError('CONFLICT', 'Le matricule M-1 est déjà attribué à RAKOTO Tiana.', {
+      reason: 'registration-number-taken',
+      existing: makeMemberDTO()
+    })
+    expect(serverErrorOf(err)).toEqual({
+      field: 'registrationNumber',
+      message: 'Le matricule M-1 est déjà attribué à RAKOTO Tiana.'
+    })
+  })
+
+  it('garde le message d’une règle métier, sans champ', () => {
+    const err = new IpcError('BUSINESS_RULE', 'Un membre communiant est toujours baptisé.')
+    expect(serverErrorOf(err)).toEqual({ message: 'Un membre communiant est toujours baptisé.' })
+  })
+
+  it('affiche le message générique d’une erreur inattendue', () => {
+    expect(serverErrorOf(new Error('boom')).message).toMatch(/erreur inattendue/)
   })
 })

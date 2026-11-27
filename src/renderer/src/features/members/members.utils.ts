@@ -1,3 +1,4 @@
+import { getErrorMessage } from '@renderer/lib/error-messages'
 import { IpcError } from '@renderer/lib/ipc-client'
 import type { MemberConflictDetails } from '@shared/domain/members/members.types'
 
@@ -28,4 +29,24 @@ export function conflictDetails(err: unknown): MemberConflictDetails | null {
   return details?.reason === 'possible-duplicate' || details?.reason === 'registration-number-taken'
     ? (details as MemberConflictDetails)
     : null
+}
+
+/** Erreur du service à afficher dans le formulaire : sous un champ, ou en tête. */
+export interface MemberServerError {
+  field?: 'registrationNumber' | 'birthDate' | 'phone'
+  message: string
+}
+
+const FIELDS = ['birthDate', 'phone'] as const
+
+export function serverErrorOf(err: unknown): MemberServerError {
+  if (conflictDetails(err)?.reason === 'registration-number-taken' && err instanceof IpcError) {
+    return { field: 'registrationNumber', message: err.message }
+  }
+  if (err instanceof IpcError && err.code === 'VALIDATION') {
+    const field = (err.details as { field?: unknown } | undefined)?.field
+    const known = FIELDS.find((f) => f === field)
+    if (known) return { field: known, message: err.message }
+  }
+  return { message: getErrorMessage(err) }
 }
