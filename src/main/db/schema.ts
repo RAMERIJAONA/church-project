@@ -99,6 +99,13 @@ export const accountingEntries = sqliteTable(
   (t) => [
     index('accounting_entries_year_item_idx').on(t.year, t.itemId),
     index('accounting_entries_operated_on_idx').on(t.operatedOn),
+    /**
+     * Saisies d'une rubrique (migration 0008, 2026-11-27) : sert la clé étrangère `item_id`
+     * (SQLite la vérifie à chaque écriture d'une rubrique) et la liste des rubriques ayant des
+     * saisies, lue dans l'index seul. Index complet (pas partiel) : une clé étrangère ne peut
+     * pas s'appuyer sur un index partiel.
+     */
+    index('accounting_entries_item_idx').on(t.itemId, t.deletedAt),
     check('accounting_entries_type_check', sql`${t.type} IN ('estimate', 'actual')`),
     check('accounting_entries_amount_check', sql`${t.amount} >= 0`),
     check(

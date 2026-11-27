@@ -1,0 +1,1 @@
+CREATE INDEX `accounting_entries_item_idx` ON `accounting_entries` (`item_id`,`deleted_at`);
