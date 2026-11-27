@@ -35,3 +35,14 @@ export const rowActions =
   'flex items-center justify-end opacity-40 transition-opacity duration-100 group-hover:opacity-100 group-focus-within:opacity-100'
 
 export const menuItem = 'w-full justify-start'
+
+/** Valeur absente mise en évidence sans alarmer : « Parrain à désigner », « Aucun membre » */
+export const missingText = 'text-muted-foreground italic'
+
+/** Nom cliquable qui ouvre un foyer ou une fiche */
+export const openButton =
+  'cursor-pointer text-left font-semibold underline-offset-2 hover:underline focus-visible:underline focus-visible:outline-none'
+
+/** Liste de choix d'un parrain (dans un Popover) */
+export const pickerOption =
+  'flex w-full cursor-pointer flex-col items-start rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted aria-selected:bg-accent aria-selected:text-accent-foreground'

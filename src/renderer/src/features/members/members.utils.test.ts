@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { IpcError } from '@renderer/lib/ipc-client'
 import { makeMemberDTO } from '@tests/factories/members.factory'
-import { clampPage, conflictDetails, pageCount, resultLabel, serverErrorOf } from './members.utils'
+import {
+  clampPage,
+  conflictDetails,
+  countLabel,
+  pageCount,
+  resultLabel,
+  serverErrorOf
+} from './members.utils'
 
 describe('pagination', () => {
   it('compte au moins une page', () => {
@@ -84,5 +91,12 @@ describe('serverErrorOf', () => {
 
   it('affiche le message générique d’une erreur inattendue', () => {
     expect(serverErrorOf(new Error('boom')).message).toMatch(/erreur inattendue/)
+  })
+})
+
+describe('countLabel', () => {
+  it('accorde et groupe les milliers', () => {
+    expect(countLabel(1, 'foyer', 'foyers')).toBe('1 foyer')
+    expect(countLabel(2275, 'foyer', 'foyers')).toBe('2 275 foyers')
   })
 })

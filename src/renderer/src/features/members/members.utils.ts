@@ -15,6 +15,11 @@ export function clampPage(page: number, total: number, pageSize: number): number
 
 const count = new Intl.NumberFormat('fr-FR')
 
+/** « 1 foyer », « 2 275 foyers » */
+export function countLabel(total: number, one: string, many: string): string {
+  return `${count.format(total)} ${total > 1 ? many : one}`
+}
+
 /** « 1 248 fidèles », « 3 résultats pour « rakto » » */
 export function resultLabel(total: number, query: string): string {
   const q = query.trim()

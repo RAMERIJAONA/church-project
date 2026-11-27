@@ -34,6 +34,19 @@ export const routes: RouteObject[] = [
         })
       },
       {
+        path: 'foyers',
+        handle: {
+          title: 'Foyers',
+          description: 'Foyers de l’église : numéro, secteur, parrain et membres',
+          fillHeight: true
+        } satisfies RouteHandle,
+        errorElement: <RouteErrorBoundary />,
+        lazy: async () => ({
+          Component: (await import('@renderer/features/members/pages/HouseholdsPage'))
+            .HouseholdsPage
+        })
+      },
+      {
         path: 'secteurs',
         handle: {
           title: 'Secteurs',
