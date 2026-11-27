@@ -47,6 +47,18 @@ export const routes: RouteObject[] = [
         })
       },
       {
+        path: 'foyers/:id',
+        handle: {
+          title: 'Foyer',
+          description: 'Membres du foyer, par rang : matricules, statuts, parrain',
+          fillHeight: true
+        } satisfies RouteHandle,
+        errorElement: <RouteErrorBoundary />,
+        lazy: async () => ({
+          Component: (await import('@renderer/features/members/pages/HouseholdPage')).HouseholdPage
+        })
+      },
+      {
         path: 'secteurs',
         handle: {
           title: 'Secteurs',

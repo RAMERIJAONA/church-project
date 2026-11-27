@@ -1,68 +1,125 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@renderer/lib/error-messages'
+import type { MemberRole } from '@shared/domain/members/households.rules'
 import type { MemberDTO } from '@shared/domain/members/members.types'
-import type { MemberFormValues } from '../forms/member-form.schema'
+import type { MemberFormSubmit } from '../forms/member-form.schema'
 import { serverErrorOf, type MemberServerError } from '../members.utils'
-import { useDeleteMember, useUpdateMember } from '../queries'
+import {
+  useCreateMember,
+  useDeleteMember,
+  useMoveMember,
+  useSwapChildRank,
+  useUpdateMember
+} from '../queries'
 
-/** Boîte ouverte : modification ou confirmation de suppression. */
+/** Boîte ouverte sur un fidèle : ajout, fiche, suppression, déplacement, échange de rangs. */
 export type MemberDialog =
-  { kind: 'edit'; member: MemberDTO } | { kind: 'delete'; member: MemberDTO }
+  | { kind: 'add'; householdId: number }
+  | { kind: 'edit'; member: MemberDTO }
+  | { kind: 'delete'; member: MemberDTO }
+  | { kind: 'move'; member: MemberDTO }
+  | { kind: 'swap'; member: MemberDTO; neighbour: MemberDTO; direction: 'up' | 'down' }
 
 export interface MemberEditor {
   dialog: MemberDialog | null
   submitting: boolean
   serverError: MemberServerError | null
-  openEdit: (member: MemberDTO) => void
-  openDelete: (member: MemberDTO) => void
+  /** Change à chaque « Enregistrer et ajouter un autre » : la fiche repart vide */
+  formKey: number
+  open: (dialog: MemberDialog) => void
   close: () => void
-  save: (values: MemberFormValues) => void
-  confirmDelete: (member: MemberDTO) => void
+  save: (values: MemberFormSubmit, next: boolean) => void
+  confirmDelete: () => void
+  move: (householdId: number, role: MemberRole) => void
+  confirmSwap: () => void
 }
 
-/** Modification, suppression : mutations, erreurs sous les champs, toasts. */
+/** Écritures sur un fidèle : mutations, erreurs sous les champs, toasts. */
 export function useMemberEditor(): MemberEditor {
+  const create = useCreateMember()
   const update = useUpdateMember()
   const remove = useDeleteMember()
+  const moveMember = useMoveMember()
+  const swap = useSwapChildRank()
   const [dialog, setDialog] = useState<MemberDialog | null>(null)
   const [serverError, setServerError] = useState<MemberServerError | null>(null)
+  const [formKey, setFormKey] = useState(0)
 
   const open = (next: MemberDialog | null): void => {
     setServerError(null)
     setDialog(next)
   }
-
-  const save = (values: MemberFormValues): void => {
-    if (dialog?.kind !== 'edit') return
-    const { member } = dialog
-    setServerError(null)
-    update.mutate(
-      { ...values, id: member.id, role: member.role, sex: member.sex, deacon: member.deacon },
-      {
-        onSuccess: () => {
-          toast.success('Modifications enregistrées')
-          open(null)
-        },
-        onError: (err: unknown) => setServerError(serverErrorOf(err))
-      }
-    )
+  const onError = (err: unknown): void => setServerError(serverErrorOf(err))
+  const failed = (err: unknown): void => {
+    toast.error(getErrorMessage(err))
   }
 
   return {
     dialog,
-    submitting: update.isPending,
+    submitting: create.isPending || update.isPending || moveMember.isPending,
     serverError,
-    openEdit: (member) => open({ kind: 'edit', member }),
-    openDelete: (member) => open({ kind: 'delete', member }),
+    formKey,
+    open,
     close: () => open(null),
-    save,
-    confirmDelete: (member) => {
+    save: (values, next) => {
+      setServerError(null)
+      if (dialog?.kind === 'edit') {
+        update.mutate(
+          { ...values, id: dialog.member.id },
+          {
+            onSuccess: () => {
+              toast.success('Modifications enregistrées')
+              open(null)
+            },
+            onError
+          }
+        )
+      } else if (dialog?.kind === 'add') {
+        create.mutate(
+          { ...values, householdId: dialog.householdId },
+          {
+            onSuccess: (member) => {
+              toast.success(`Membre ajouté : ${member.matricule}`)
+              if (next) setFormKey((k) => k + 1)
+              else open(null)
+            },
+            onError
+          }
+        )
+      }
+    },
+    confirmDelete: () => {
+      if (dialog?.kind !== 'delete') return
+      const { member } = dialog
       open(null)
       remove.mutate(member.id, {
         onSuccess: () => toast.success('Fidèle supprimé'),
-        onError: (err) => toast.error(getErrorMessage(err))
+        onError: failed
       })
+    },
+    move: (householdId, role) => {
+      if (dialog?.kind !== 'move') return
+      setServerError(null)
+      moveMember.mutate(
+        { id: dialog.member.id, householdId, role },
+        {
+          onSuccess: (member) => {
+            toast.success(`Fidèle déplacé : ${member.matricule}`)
+            open(null)
+          },
+          onError: (err) => setServerError({ message: getErrorMessage(err) })
+        }
+      )
+    },
+    confirmSwap: () => {
+      if (dialog?.kind !== 'swap') return
+      const { member, direction } = dialog
+      open(null)
+      swap.mutate(
+        { id: member.id, direction },
+        { onSuccess: () => toast.success('Places échangées'), onError: failed }
+      )
     }
   }
 }

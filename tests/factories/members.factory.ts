@@ -1,3 +1,4 @@
+import type { HouseholdDTO } from '@shared/domain/members/households.types'
 import type { SearchEntry } from '@shared/domain/members/members.search'
 import type { CreateMemberInput, MemberDTO } from '@shared/domain/members/members.types'
 
@@ -59,6 +60,23 @@ export function makeSearchEntry(
     communicant: false,
     deacon: false,
     birthDate: '1985-03-12',
+    ...overrides
+  }
+}
+
+/** Foyer ouvert (renderer) : foyer 1, secteur I Ambodimanga, sans parrain ni membre. */
+export function makeHouseholdDTO(overrides: Partial<HouseholdDTO> = {}): HouseholdDTO {
+  const members = overrides.members ?? []
+  return {
+    id: 1,
+    number: 1,
+    sector: { id: 1, number: 1, name: 'Ambodimanga', numeral: 'I' },
+    sponsor: null,
+    memberCount: members.length,
+    mainLastName: members[0]?.lastName ?? null,
+    members,
+    takenRanks: members.map((m) => m.rank),
+    lastChildRank: Math.max(2, ...members.filter((m) => m.role === 'child').map((m) => m.rank)),
     ...overrides
   }
 }

@@ -4,15 +4,14 @@ import { getErrorMessage } from '@renderer/lib/error-messages'
 import { localDateOf } from '@shared/utils/dates'
 import { isBlankQuery } from '@shared/domain/members/members.search'
 import { MEMBERS_PAGE_SIZE } from '@shared/domain/members/members.types'
-import { ConfirmDeleteMemberDialog } from '../components/ConfirmDeleteMemberDialog'
-import { MemberFormDialog } from '../components/MemberFormDialog'
 import { MembersEmptyState } from '../components/MembersEmptyState'
 import { MembersPagination } from '../components/MembersPagination'
 import { MembersTable } from '../components/MembersTable'
 import { MembersToolbar } from '../components/MembersToolbar'
 import { pageCount, resultLabel } from '../members.utils'
-import { useMembers } from '../queries'
+import { useHousehold, useMembers } from '../queries'
 import { useMembersListState } from '../use-members-list-state'
+import { MemberDialogs } from './MemberDialogs'
 import { useMemberEditor } from './use-member-editor'
 
 /** Fidèles : liste paginée, recherche en temps réel, modification / suppression. */
@@ -22,6 +21,8 @@ export function MembersPage(): React.JSX.Element {
   const members = useMembers({ search: list.query, page: list.page })
   const editor = useMemberEditor()
   const { dialog } = editor
+  // Fiche ouverte depuis la liste : même fiche que dans le foyer (rôles, parrain, matricule)
+  const household = useHousehold(dialog && dialog.kind !== 'add' ? dialog.member.householdId : null)
 
   const data = members.data
   // Total de la dernière réponse, pour ramener la page sur la dernière existante (mise à jour
@@ -58,8 +59,8 @@ export function MembersPage(): React.JSX.Element {
         <>
           <MembersTable
             members={data.items}
-            onEdit={editor.openEdit}
-            onDelete={editor.openDelete}
+            onEdit={(member) => editor.open({ kind: 'edit', member })}
+            onDelete={(member) => editor.open({ kind: 'delete', member })}
           />
           <MembersPagination
             page={list.page}
@@ -69,20 +70,7 @@ export function MembersPage(): React.JSX.Element {
         </>
       )}
 
-      <MemberFormDialog
-        open={dialog?.kind === 'edit'}
-        initial={dialog?.kind === 'edit' ? dialog.member : null}
-        today={localDateOf(new Date())}
-        submitting={editor.submitting}
-        serverError={editor.serverError}
-        onSubmit={editor.save}
-        onCancel={editor.close}
-      />
-      <ConfirmDeleteMemberDialog
-        member={dialog?.kind === 'delete' ? dialog.member : null}
-        onConfirm={editor.confirmDelete}
-        onCancel={editor.close}
-      />
+      <MemberDialogs editor={editor} household={household.data} today={localDateOf(new Date())} />
     </div>
   )
 }

@@ -5,6 +5,7 @@ import {
   clampPage,
   conflictDetails,
   countLabel,
+  householdNumbersLabel,
   pageCount,
   resultLabel,
   serverErrorOf
@@ -66,13 +67,18 @@ describe('serverErrorOf', () => {
     })
   })
 
-  it('affiche en tête un rang déjà pris dans le foyer', () => {
+  it('affiche sous le rôle un rang déjà pris dans le foyer', () => {
     const message = 'Ce foyer a déjà un rang 1 (Père ou Chef de foyer) : RAKOTO Jean.'
     const err = new IpcError('CONFLICT', message, {
       reason: 'rank-taken',
       existing: makeMemberDTO()
     })
-    expect(serverErrorOf(err)).toEqual({ message })
+    expect(serverErrorOf(err)).toEqual({ field: 'role', message })
+  })
+
+  it('affiche sous le sexe un père de sexe féminin', () => {
+    const err = new IpcError('BUSINESS_RULE', 'Le père est de sexe masculin.', { field: 'sex' })
+    expect(serverErrorOf(err)).toEqual({ field: 'sex', message: 'Le père est de sexe masculin.' })
   })
 
   it('place un nom et prénom déjà pris sous le prénom', () => {
@@ -98,5 +104,13 @@ describe('countLabel', () => {
   it('accorde et groupe les milliers', () => {
     expect(countLabel(1, 'foyer', 'foyers')).toBe('1 foyer')
     expect(countLabel(2275, 'foyer', 'foyers')).toBe('2 275 foyers')
+  })
+})
+
+describe('householdNumbersLabel', () => {
+  it('énumère les foyers en français', () => {
+    expect(householdNumbersLabel([3])).toBe('3')
+    expect(householdNumbersLabel([3, 7])).toBe('3 et 7')
+    expect(householdNumbersLabel([3, 5, 7])).toBe('3, 5 et 7')
   })
 })

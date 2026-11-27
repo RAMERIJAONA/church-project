@@ -1,4 +1,4 @@
-import { Ellipsis, Pencil, Trash2 } from 'lucide-react'
+import { ArrowRightLeft, Ellipsis, House, Pencil, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@renderer/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@renderer/components/ui/popover'
@@ -9,13 +9,19 @@ export interface MemberRowActionsProps {
   name: string
   onEdit: () => void
   onDelete: () => void
+  /** Page d'un foyer : déplacer vers un autre foyer */
+  onMove?: () => void
+  /** Liste globale : ouvrir le foyer du fidèle */
+  onOpenHousehold?: () => void
 }
 
-/** Menu « ⋯ » d'une ligne : Modifier, Supprimer. */
+/** Menu « ⋯ » d'une ligne : Modifier, Voir le foyer ou Déplacer, Supprimer. */
 export function MemberRowActions({
   name,
   onEdit,
-  onDelete
+  onDelete,
+  onMove,
+  onOpenHousehold
 }: MemberRowActionsProps): React.JSX.Element {
   const [open, setOpen] = useState(false)
   const select = (action: () => void): void => {
@@ -40,6 +46,28 @@ export function MemberRowActions({
             <Pencil aria-hidden />
             Modifier
           </Button>
+          {onOpenHousehold && (
+            <Button
+              variant="ghost"
+              className={menuItem}
+              aria-label={`Voir le foyer de ${name}`}
+              onClick={() => select(onOpenHousehold)}
+            >
+              <House aria-hidden />
+              Voir le foyer
+            </Button>
+          )}
+          {onMove && (
+            <Button
+              variant="ghost"
+              className={menuItem}
+              aria-label={`Déplacer ${name}`}
+              onClick={() => select(onMove)}
+            >
+              <ArrowRightLeft aria-hidden />
+              Déplacer
+            </Button>
+          )}
           <Button
             variant="ghost"
             className={`${menuItem} text-destructive hover:bg-destructive/10 hover:text-destructive`}

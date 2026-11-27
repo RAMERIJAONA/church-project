@@ -1,36 +1,62 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import { makeMemberDTO } from '@tests/factories/members.factory'
+import { makeHouseholdDTO, makeMemberDTO } from '@tests/factories/members.factory'
 import { MemberFormDialog, type MemberFormDialogProps } from './MemberFormDialog'
+
+const jean = makeMemberDTO({
+  id: 7,
+  role: 'father',
+  rank: 1,
+  firstName: 'Jean',
+  baptized: true,
+  communicant: true,
+  matricule: '1/1MB-I'
+})
+const andry = makeMemberDTO({
+  id: 8,
+  firstName: 'Andry',
+  rank: 3,
+  baptized: false,
+  matricule: '1/3-I'
+})
 
 function setup(props: Partial<MemberFormDialogProps> = {}) {
   const onSubmit = vi.fn()
+  const onSubmitAndNext = vi.fn()
   const onCancel = vi.fn()
   render(
     <MemberFormDialog
       open
       initial={null}
+      household={makeHouseholdDTO()}
       today="2026-11-27"
+      sponsoredHouseholds={[]}
       submitting={false}
       serverError={null}
       onSubmit={onSubmit}
+      onSubmitAndNext={onSubmitAndNext}
       onCancel={onCancel}
       {...props}
     />
   )
   const dialog = screen.getByRole('dialog')
-  return { onSubmit, onCancel, dialog }
+  return { onSubmit, onSubmitAndNext, onCancel, dialog }
 }
 
 const field = (dialog: HTMLElement, name: string) =>
   within(dialog).getByRole<HTMLInputElement>('textbox', { name })
+const radio = (dialog: HTMLElement, group: string, name: 'Oui' | 'Non' | 'Masculin' | 'Féminin') =>
+  within(within(dialog).getByRole('radiogroup', { name: group })).getByRole('radio', { name })
+const checked = (el: HTMLElement): string | null => el.getAttribute('aria-checked')
 
-describe('MemberFormDialog', () => {
-  it('signale les quatre champs obligatoires et n’envoie rien', async () => {
+describe('MemberFormDialog : saisie', () => {
+  it('signale les champs obligatoires, rôle et sexe compris, et n’envoie rien', async () => {
     const { onSubmit, dialog } = setup()
     await userEvent.click(within(dialog).getByRole('button', { name: 'Enregistrer' }))
     for (const message of [
+      'Choisissez un rôle.',
+      'Choisissez le sexe.',
       'Le nom est obligatoire.',
       'Le prénom est obligatoire.',
       'La date de naissance est obligatoire.',
@@ -50,52 +76,14 @@ describe('MemberFormDialog', () => {
     expect(field(dialog, 'Prénom').value).toBe('Rakoto Tiana')
   })
 
-  it('formate le téléphone pendant la frappe', async () => {
-    const { dialog } = setup()
-    await userEvent.type(field(dialog, 'Téléphone'), '0341234567')
-    expect(field(dialog, 'Téléphone').value).toBe('034 12 345 67')
-  })
-
-  it('grise Communiant tant que Baptême vaut Non, et le remet à Non', async () => {
-    const { dialog } = setup()
-    const communicant = within(dialog).getByRole('radiogroup', { name: 'Membre communiant' })
-    const baptism = within(dialog).getByRole('radiogroup', { name: 'Baptême' })
-    expect(within(communicant).getByRole('radio', { name: 'Oui' })).toHaveProperty('disabled', true)
-    expect(within(dialog).getByText('Un membre communiant est toujours baptisé.')).toBeTruthy()
-
-    await userEvent.click(within(baptism).getByRole('radio', { name: 'Oui' }))
-    await userEvent.click(within(communicant).getByRole('radio', { name: 'Oui' }))
-    expect(
-      within(communicant).getByRole('radio', { name: 'Oui' }).getAttribute('aria-checked')
-    ).toBe('true')
-    await userEvent.click(within(baptism).getByRole('radio', { name: 'Non' }))
-    expect(
-      within(communicant).getByRole('radio', { name: 'Non' }).getAttribute('aria-checked')
-    ).toBe('true')
-  })
-
-  it('envoie la saisie complète', async () => {
-    const { onSubmit, dialog } = setup({ initial: makeMemberDTO() })
-    expect(within(dialog).getByRole('heading', { name: 'Modifier RAKOTO Tiana' })).toBeTruthy()
-    expect(field(dialog, 'Téléphone').value).toBe('034 12 345 67')
-    await userEvent.clear(field(dialog, 'Adresse'))
-    await userEvent.type(field(dialog, 'Adresse'), 'Ambohitsara')
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Enregistrer' }))
-    expect(onSubmit).toHaveBeenCalledWith({
-      lastName: 'RAKOTO',
-      firstName: 'Tiana',
-      birthDate: '1985-03-12',
-      address: 'Ambohitsara',
-      phone: '034 12 345 67',
-      baptized: true,
-      communicant: false
+  it('formate le téléphone pendant la frappe et refuse un numéro non malgache', async () => {
+    const { dialog, onSubmit } = setup({
+      initial: andry,
+      household: makeHouseholdDTO({ members: [andry] })
     })
-  })
-
-  it('refuse un téléphone qui n’est pas malgache', async () => {
-    const { onSubmit, dialog } = setup({ initial: makeMemberDTO() })
     await userEvent.clear(field(dialog, 'Téléphone'))
     await userEvent.type(field(dialog, 'Téléphone'), '0441234567')
+    expect(field(dialog, 'Téléphone').value).toBe('044 12 345 67')
     await userEvent.click(within(dialog).getByRole('button', { name: 'Enregistrer' }))
     expect(
       within(dialog).getByText('Numéro invalide : 10 chiffres attendus, ex. 034 12 345 67.')
@@ -103,10 +91,48 @@ describe('MemberFormDialog', () => {
     expect(onSubmit).not.toHaveBeenCalled()
   })
 
+  it('envoie la fiche complète d’un membre modifié', async () => {
+    const household = makeHouseholdDTO({ members: [jean, andry] })
+    const { onSubmit, dialog } = setup({ initial: andry, household })
+    expect(within(dialog).getByRole('heading', { name: 'Modifier RAKOTO Andry' })).toBeTruthy()
+    await userEvent.clear(field(dialog, 'Adresse'))
+    await userEvent.type(field(dialog, 'Adresse'), 'Ambohitsara')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Enregistrer' }))
+    expect(onSubmit).toHaveBeenCalledWith({
+      role: 'child',
+      sex: 'M',
+      lastName: 'RAKOTO',
+      firstName: 'Andry',
+      birthDate: '1985-03-12',
+      address: 'Ambohitsara',
+      phone: '034 12 345 67',
+      baptized: false,
+      communicant: false,
+      deacon: false
+    })
+  })
+
+  it('pré-remplit l’adresse du foyer et propose Enfant pour un membre suivant', () => {
+    const { dialog } = setup({ household: makeHouseholdDTO({ members: [jean] }) })
+    expect(field(dialog, 'Adresse').value).toBe('Lot II A 45, Ambatondrazaka')
+    expect(within(dialog).getByRole<HTMLSelectElement>('combobox', { name: /Rôle/ }).value).toBe(
+      'child'
+    )
+  })
+
+  it('propose « Enregistrer et ajouter un autre » à l’ajout seulement', () => {
+    setup()
+    expect(screen.getByRole('button', { name: 'Enregistrer et ajouter un autre' })).toBeTruthy()
+  })
+
+  it('ne propose pas « Enregistrer et ajouter un autre » en modification', () => {
+    setup({ initial: andry, household: makeHouseholdDTO({ members: [andry] }) })
+    expect(screen.queryByRole('button', { name: 'Enregistrer et ajouter un autre' })).toBeNull()
+  })
+
   it('ne se ferme pas sur un clic à côté du formulaire (saisie conservée)', async () => {
     const { onCancel, dialog } = setup()
     await userEvent.type(field(dialog, 'Adresse'), 'Ambohitsara')
-    // Clic sur le fond : la fenêtre modale y bloque user-event, on émet l'événement que Radix écoute
     const overlay = document.querySelector('[data-slot="dialog-overlay"]')
     if (!overlay) throw new Error('fond de la fenêtre introuvable')
     fireEvent.pointerDown(overlay, { button: 0, pointerType: 'mouse' })
@@ -118,10 +144,84 @@ describe('MemberFormDialog', () => {
   it('affiche sous le prénom l’erreur du nom déjà pris', () => {
     const message = 'Un fidèle RAKOTO Tiana existe déjà (né le 12/03/1985, matricule 1/3B-I).'
     const { dialog } = setup({
-      initial: makeMemberDTO(),
+      initial: andry,
+      household: makeHouseholdDTO({ members: [andry] }),
       serverError: { field: 'firstName', message }
     })
     expect(field(dialog, 'Prénom').getAttribute('aria-invalid')).toBe('true')
     expect(within(dialog).getByText(message)).toBeTruthy()
+  })
+})
+
+describe('MemberFormDialog : rôle, statuts et matricule', () => {
+  it('grise les rôles déjà pris en donnant la raison', () => {
+    const { dialog } = setup({ household: makeHouseholdDTO({ members: [jean] }) })
+    const father = within(dialog).getByRole<HTMLOptionElement>('option', {
+      name: 'Père (déjà RAKOTO Jean)'
+    })
+    expect(father.disabled).toBe(true)
+    expect(within(dialog).getByRole<HTMLOptionElement>('option', { name: 'Mère' }).disabled).toBe(
+      false
+    )
+  })
+
+  it('cocher Diacre coche et verrouille Communiant et Baptisé ; décocher ne retire rien', async () => {
+    const { dialog } = setup()
+    await userEvent.click(radio(dialog, 'Diacre', 'Oui'))
+    expect(checked(radio(dialog, 'Communiant', 'Oui'))).toBe('true')
+    expect(checked(radio(dialog, 'Baptisé', 'Oui'))).toBe('true')
+    expect(radio(dialog, 'Communiant', 'Non')).toHaveProperty('disabled', true)
+    expect(radio(dialog, 'Baptisé', 'Non')).toHaveProperty('disabled', true)
+    await userEvent.click(radio(dialog, 'Diacre', 'Non'))
+    expect(checked(radio(dialog, 'Communiant', 'Oui'))).toBe('true')
+    expect(checked(radio(dialog, 'Baptisé', 'Oui'))).toBe('true')
+    expect(radio(dialog, 'Communiant', 'Non')).toHaveProperty('disabled', false)
+  })
+
+  it('recalcule le matricule pendant la saisie', async () => {
+    const household = makeHouseholdDTO({ members: [jean, andry] })
+    const { dialog } = setup({ initial: andry, household })
+    const preview = within(dialog).getByLabelText('Matricule')
+    expect(preview.textContent).toBe('1/3-I')
+    await userEvent.click(radio(dialog, 'Communiant', 'Oui'))
+    expect(preview.textContent).toBe('1/3MB-I')
+    await userEvent.click(radio(dialog, 'Communiant', 'Non'))
+    expect(preview.textContent).toBe('1/3B-I')
+  })
+
+  it('prévient que le matricule change avec le rôle', async () => {
+    const household = makeHouseholdDTO({ members: [andry] })
+    const { dialog } = setup({ initial: andry, household })
+    await userEvent.selectOptions(within(dialog).getByRole('combobox', { name: /Rôle/ }), 'father')
+    expect(within(dialog).getByText('Son matricule deviendra 1/1-I.')).toBeTruthy()
+  })
+
+  it('prévient qu’un parrain qui n’est plus diacre libère ses foyers', async () => {
+    const deacon = { ...jean, deacon: true }
+    const { dialog } = setup({
+      initial: deacon,
+      household: makeHouseholdDTO({ members: [deacon] }),
+      sponsoredHouseholds: [3, 7]
+    })
+    expect(within(dialog).queryByText(/Parrain des foyers/)).toBeNull()
+    await userEvent.click(radio(dialog, 'Diacre', 'Non'))
+    expect(
+      within(dialog).getByText(
+        'Parrain des foyers 3 et 7 : ils passeront en « Parrain à désigner ».'
+      )
+    ).toBeTruthy()
+  })
+
+  it('affiche foyer, secteur, parrain et âge', () => {
+    const household = makeHouseholdDTO({
+      members: [andry],
+      sponsor: { id: 5, lastName: 'RABE', firstName: 'Jean', matricule: '3/1MB-I' }
+    })
+    const { dialog } = setup({ initial: andry, household })
+    const summary = within(dialog).getByRole('group', { name: 'Fiche' })
+    expect(summary.textContent).toContain('Foyer 1')
+    expect(summary.textContent).toContain('I · Ambodimanga')
+    expect(summary.textContent).toContain('RABE Jean')
+    expect(summary.textContent).toContain('41 ans')
   })
 })

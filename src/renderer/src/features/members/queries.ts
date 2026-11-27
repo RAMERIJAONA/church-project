@@ -47,11 +47,12 @@ export function useSponsoredHouseholds(id: number | null) {
   })
 }
 
-export function useHouseholds(input: ListHouseholdsInput) {
+export function useHouseholds(input: ListHouseholdsInput, enabled = true) {
   return useQuery({
     queryKey: membersKeys.households(input),
     queryFn: () => householdsApi.list(input),
-    placeholderData: (previous) => previous
+    placeholderData: (previous) => previous,
+    enabled
   })
 }
 

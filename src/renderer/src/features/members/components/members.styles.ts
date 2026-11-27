@@ -46,3 +46,9 @@ export const openButton =
 /** Liste de choix d'un parrain (dans un Popover) */
 export const pickerOption =
   'flex w-full cursor-pointer flex-col items-start rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted aria-selected:bg-accent aria-selected:text-accent-foreground'
+
+/** Badge « Diacre », bien visible dans les listes (porteur, 2026-11-27) */
+export const deaconBadge =
+  'inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary'
+
+export const matriculeText = 'font-semibold whitespace-nowrap tabular-nums'

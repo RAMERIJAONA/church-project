@@ -40,23 +40,27 @@ export function conflictDetails(err: unknown): MemberConflictDetails | null {
 
 /** Erreur du service à afficher dans le formulaire : sous un champ, ou en tête. */
 export interface MemberServerError {
-  field?: 'firstName' | 'birthDate' | 'phone'
+  field?: 'firstName' | 'birthDate' | 'phone' | 'role' | 'sex'
   message: string
 }
 
-const FIELDS = ['birthDate', 'phone'] as const
+const FIELDS = ['birthDate', 'phone', 'sex'] as const
 
 export function serverErrorOf(err: unknown): MemberServerError {
   const conflict = conflictDetails(err)
   if (conflict && err instanceof IpcError) {
-    return conflict.reason === 'name-taken'
-      ? { field: 'firstName', message: err.message }
-      : { message: err.message }
+    return { field: conflict.reason === 'name-taken' ? 'firstName' : 'role', message: err.message }
   }
-  if (err instanceof IpcError && err.code === 'VALIDATION') {
+  if (err instanceof IpcError && (err.code === 'VALIDATION' || err.code === 'BUSINESS_RULE')) {
     const field = (err.details as { field?: unknown } | undefined)?.field
     const known = FIELDS.find((f) => f === field)
     if (known) return { field: known, message: err.message }
   }
   return { message: getErrorMessage(err) }
+}
+
+/** Numéros de foyers lisibles : « 3 », « 3 et 7 », « 3, 5 et 7 ». */
+export function householdNumbersLabel(numbers: readonly number[]): string {
+  if (numbers.length <= 1) return numbers.join('')
+  return `${numbers.slice(0, -1).join(', ')} et ${numbers.at(-1)}`
 }
