@@ -1,4 +1,11 @@
-import { ArrowDownToLine, ArrowUpFromLine, ChevronRight, DatabaseZap, Settings } from 'lucide-react'
+import {
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  ChevronRight,
+  DatabaseZap,
+  Settings,
+  Users
+} from 'lucide-react'
 import { Link } from 'react-router'
 import { buttonVariants } from '@renderer/components/ui/button'
 import {
@@ -10,8 +17,14 @@ import {
 } from '@renderer/components/ui/card'
 import { APP_NAME } from '@shared/domain/identity'
 
-/** Les deux comptabilités, mêmes règles (numéros : entrées A2, sorties A1). */
-const LEDGER_LINKS = [
+/** Modules, dans l'ordre du menu : fidèles, puis les deux comptabilités (entrées A2, sorties A1). */
+const MODULE_LINKS = [
+  {
+    to: '/fideles',
+    title: 'Fidèles',
+    text: 'Registre des fidèles de l’église : ajout, modification et recherche.',
+    icon: Users
+  },
   {
     to: '/comptabilite/entrees',
     title: 'Comptabilité des entrées',
@@ -42,7 +55,7 @@ export function WelcomePanel({ version }: WelcomePanelProps): React.JSX.Element 
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
-          {LEDGER_LINKS.map(({ to, title, text, icon: Icon }) => (
+          {MODULE_LINKS.map(({ to, title, text, icon: Icon }) => (
             <Link
               key={to}
               to={to}

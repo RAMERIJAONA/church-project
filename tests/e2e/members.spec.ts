@@ -29,7 +29,11 @@ test('@smoke fidèles : créer, retrouver, modifier et supprimer un fidèle', as
   const running = await launchApp()
   try {
     const w = running.window
-    await navLink(w, 'Fidèles').click()
+    // Accès depuis l'accueil, comme les comptabilités
+    await w
+      .getByRole('main')
+      .getByRole('link', { name: /^Fidèles/ })
+      .click()
     await expect(w.getByRole('heading', { level: 1, name: 'Fidèles' })).toBeVisible()
     await expect(w.getByRole('heading', { name: 'Aucun fidèle enregistré' })).toBeVisible()
 
