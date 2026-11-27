@@ -3,6 +3,7 @@ import { createFixedClock } from '@main/adapters/clock.adapter'
 import { createLogger, createMemorySink } from '@main/logging/logger'
 import { createMembersRepository } from '@main/repositories/members.repository'
 import { createMembersService } from '@main/services/members.service'
+import { birthDateError } from '@shared/domain/members/members.rules'
 import { listMembersInputSchema } from '@shared/domain/members/members.types'
 import {
   DEMO_MEMBERS_COUNT,
@@ -32,6 +33,12 @@ describe('fidèles de démonstration', () => {
       })
     )
     expect(names.size).toBe(DEMO_MEMBERS_COUNT)
+  })
+
+  it('donne une date de naissance différente et valide à chaque fidèle', () => {
+    const dates = Array.from({ length: DEMO_MEMBERS_COUNT }, (_, i) => demoMemberInput(i).birthDate)
+    expect(new Set(dates).size).toBe(DEMO_MEMBERS_COUNT)
+    expect(dates.filter((d) => birthDateError(d, '2026-11-27') !== null)).toEqual([])
   })
 
   it('crée le nombre demandé de fidèles fictifs, par le service', () => {

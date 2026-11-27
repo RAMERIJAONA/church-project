@@ -3,6 +3,7 @@ import {
   createMemberInputSchema,
   type CreateMemberInput
 } from '@shared/domain/members/members.types'
+import { utcToCalendarDate } from '@shared/utils/dates'
 
 /**
  * Fidèles FICTIFS de démonstration (`npm run seed:members`) : combinaisons déterministes de
@@ -102,6 +103,17 @@ const SECOND_NAMES = [
 const SECTORS = ['Nord', 'Sud', 'Est', 'Ouest', 'Centre']
 
 const at = <T>(list: readonly T[], n: number): T => list[n % list.length] as T
+
+/**
+ * Dates de naissance toutes différentes (porteur, 2026-11-27) : jours du 1930-01-01 au
+ * 2020-12-31 (33 237), parcourus avec un pas premier avec ce nombre (7 919) : jamais deux fois
+ * le même jour pour i < 33 237, et bien mélangés.
+ */
+const FIRST_BIRTH_DAY = Date.UTC(1930, 0, 1)
+const BIRTH_DAYS = (Date.UTC(2021, 0, 1) - FIRST_BIRTH_DAY) / 86_400_000
+const BIRTH_STEP = 7_919
+const birthDateOf = (i: number): string =>
+  utcToCalendarDate(new Date(FIRST_BIRTH_DAY + ((i * BIRTH_STEP) % BIRTH_DAYS) * 86_400_000))
 const pad = (n: number, size: number): string => String(n).padStart(size, '0')
 
 /** Saisie du i-ième fidèle de démonstration (0 ≤ i < 17 000 : nom et prénom uniques). */
@@ -117,7 +129,7 @@ export function demoMemberInput(i: number): CreateMemberInput {
     // Saisies volontairement irrégulières : le service les met en forme
     lastName: i % 7 === 0 ? lastName.toLowerCase() : lastName,
     firstName: i % 9 === 0 ? firstName.toUpperCase() : firstName,
-    birthDate: `${1935 + ((i * 7) % 85)}-${pad(1 + (i % 12), 2)}-${pad(1 + ((i * 3) % 28), 2)}`,
+    birthDate: birthDateOf(i),
     address: `Lot ${100 + i} ${sector}, Ambatondrazaka`,
     phone:
       i % 3 === 0
