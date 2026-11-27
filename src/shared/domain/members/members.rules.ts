@@ -3,6 +3,7 @@
  * (aperçu) et le service (vérité). Aucun lien avec la comptabilité.
  */
 import { isCalendarDate } from '@shared/utils/dates'
+import { toRoman } from '@shared/utils/roman'
 
 export const MIN_BIRTH_DATE = '1900-01-01'
 
@@ -99,4 +100,47 @@ export function formatBirthDate(date: string): string {
 /** Un membre communiant est toujours baptisé (porteur, 2026-11-27). */
 export function communicantError(baptized: boolean, communicant: boolean): string | null {
   return communicant && !baptized ? 'Un membre communiant est toujours baptisé.' : null
+}
+
+export interface Statuses {
+  baptized: boolean
+  communicant: boolean
+  deacon: boolean
+}
+
+/**
+ * Diacre ⇒ communiant ⇒ baptisé (porteur, 2026-11-27). Active les statuts exigés, n'en retire
+ * jamais : désactiver Diacre garde Communiant et Baptisé.
+ */
+export function applyStatusRules(s: Statuses): Statuses {
+  const communicant = s.communicant || s.deacon
+  return { baptized: s.baptized || communicant, communicant, deacon: s.deacon }
+}
+
+/** `1/3MB-I` : foyer, rang, M si communiant, B si baptisé, numéro romain du secteur. */
+export function matricule(p: {
+  householdNumber: number
+  rank: number
+  baptized: boolean
+  communicant: boolean
+  sectorNumber: number
+}): string {
+  const letters = `${p.communicant ? 'M' : ''}${p.baptized ? 'B' : ''}`
+  return `${p.householdNumber}/${p.rank}${letters}-${toRoman(p.sectorNumber)}`
+}
+
+/**
+ * Âge en années révolues à la date `today` (« AAAA-MM-JJ », comme `birthDate`). Né un 29
+ * février : un an de plus le 1er mars les années non bissextiles.
+ */
+export function ageOn(birthDate: string, today: string): number {
+  const [by = 0, bm = 0, bd = 0] = birthDate.split('-').map(Number)
+  const [ty = 0, tm = 0, td = 0] = today.split('-').map(Number)
+  const birthdayPassed = tm > bm || (tm === bm && td >= bd)
+  return ty - by - (birthdayPassed ? 0 : 1)
+}
+
+/** « 0 an », « 1 an », « 42 ans » */
+export function formatAge(age: number): string {
+  return `${age} ${age > 1 ? 'ans' : 'an'}`
 }

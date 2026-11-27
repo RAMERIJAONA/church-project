@@ -9,8 +9,7 @@ import {
   type Level2Numeral,
   nextLetter,
   reletterRoots,
-  rootCode,
-  toRoman
+  rootCode
 } from './accounting.codes'
 import { MALAGASY_LETTERS } from './accounting.types'
 
@@ -68,17 +67,6 @@ describe('lettres automatiques (alphabet malgache)', () => {
   it('trie les lettres comme un tableur', () => {
     expect(['AA', 'B', 'A', 'Z'].sort(comparePrefixes)).toEqual(['A', 'B', 'Z', 'AA'])
     expect(comparePrefixes('A', 'A')).toBe(0)
-  })
-})
-
-describe('chiffres romains (niveau 2)', () => {
-  it('convertit en chiffres romains', () => {
-    expect([1, 4, 9, 14, 40, 2026].map(toRoman)).toEqual(['I', 'IV', 'IX', 'XIV', 'XL', 'MMXXVI'])
-  })
-
-  it('refuse 0 et les nombres au-delà de 3999', () => {
-    expect(() => toRoman(0)).toThrow(RangeError)
-    expect(() => toRoman(4000)).toThrow(RangeError)
   })
 })
 

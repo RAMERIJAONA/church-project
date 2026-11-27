@@ -1,0 +1,50 @@
+[
+  {
+    "householdNumber": 1,
+    "rank": 1,
+    "baptized": true,
+    "communicant": true,
+    "sectorNumber": 1,
+    "expected": "1/1MB-I"
+  },
+  {
+    "householdNumber": 1,
+    "rank": 2,
+    "baptized": true,
+    "communicant": false,
+    "sectorNumber": 1,
+    "expected": "1/2B-I"
+  },
+  {
+    "householdNumber": 1,
+    "rank": 3,
+    "baptized": true,
+    "communicant": true,
+    "sectorNumber": 1,
+    "expected": "1/3MB-I"
+  },
+  {
+    "householdNumber": 1,
+    "rank": 4,
+    "baptized": false,
+    "communicant": false,
+    "sectorNumber": 1,
+    "expected": "1/4-I"
+  },
+  {
+    "householdNumber": 2,
+    "rank": 1,
+    "baptized": true,
+    "communicant": true,
+    "sectorNumber": 2,
+    "expected": "2/1MB-II"
+  },
+  {
+    "householdNumber": 15,
+    "rank": 4,
+    "baptized": true,
+    "communicant": false,
+    "sectorNumber": 3,
+    "expected": "15/4B-III"
+  }
+]

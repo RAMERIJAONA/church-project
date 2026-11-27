@@ -1,10 +1,15 @@
 import { describe, expect, it } from 'vitest'
+import goldenMatricules from './__golden__/matricule.json'
 import {
+  ageOn,
+  applyStatusRules,
   birthDateError,
   communicantError,
+  formatAge,
   formatBirthDate,
   formatPhone,
   formatPhoneTyping,
+  matricule,
   memberDisplayName,
   normalizeFirstName,
   normalizeLastName,
@@ -114,5 +119,56 @@ describe('membre communiant', () => {
     expect(communicantError(true, true)).toBeNull()
     expect(communicantError(true, false)).toBeNull()
     expect(communicantError(false, false)).toBeNull()
+  })
+})
+
+describe('statuts baptisé, communiant, diacre', () => {
+  it('un diacre est toujours communiant et baptisé', () => {
+    expect(applyStatusRules({ baptized: false, communicant: false, deacon: true })).toEqual({
+      baptized: true,
+      communicant: true,
+      deacon: true
+    })
+  })
+
+  it('un communiant est toujours baptisé', () => {
+    expect(applyStatusRules({ baptized: false, communicant: true, deacon: false })).toEqual({
+      baptized: true,
+      communicant: true,
+      deacon: false
+    })
+  })
+
+  it('ne retire jamais un statut', () => {
+    const s = { baptized: true, communicant: false, deacon: false }
+    expect(applyStatusRules(s)).toEqual(s)
+  })
+})
+
+describe('matricule', () => {
+  it('calcule les matricules du porteur', () => {
+    for (const { expected, ...input } of goldenMatricules) {
+      expect(matricule(input)).toBe(expected)
+    }
+  })
+})
+
+describe('âge', () => {
+  it('compte les années révolues, anniversaire compris', () => {
+    expect(ageOn('1984-11-28', '2026-11-27')).toBe(41)
+    expect(ageOn('1984-11-28', '2026-11-28')).toBe(42)
+    expect(ageOn('1984-11-28', '2026-11-29')).toBe(42)
+  })
+
+  it('né un 29 février : un an de plus le 1er mars les années non bissextiles', () => {
+    expect(ageOn('2008-02-29', '2026-02-28')).toBe(17)
+    expect(ageOn('2008-02-29', '2026-03-01')).toBe(18)
+    expect(ageOn('2008-02-29', '2028-02-29')).toBe(20)
+  })
+
+  it('affiche « an » ou « ans »', () => {
+    expect(formatAge(0)).toBe('0 an')
+    expect(formatAge(1)).toBe('1 an')
+    expect(formatAge(42)).toBe('42 ans')
   })
 })
