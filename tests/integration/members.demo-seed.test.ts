@@ -3,7 +3,11 @@ import { createFixedClock } from '@main/adapters/clock.adapter'
 import { createLogger, createMemorySink } from '@main/logging/logger'
 import { createMembersRepository } from '@main/repositories/members.repository'
 import { createMembersService } from '@main/services/members.service'
-import { birthDateError } from '@shared/domain/members/members.rules'
+import {
+  birthDateError,
+  normalizeFirstName,
+  normalizeLastName
+} from '@shared/domain/members/members.rules'
 import { listMembersInputSchema } from '@shared/domain/members/members.types'
 import {
   DEMO_MEMBERS_COUNT,
@@ -33,6 +37,14 @@ describe('fidèles de démonstration', () => {
       })
     )
     expect(names.size).toBe(DEMO_MEMBERS_COUNT)
+  })
+
+  it('donne à chaque fidèle un nom et un prénom qui ne servent qu’à lui', () => {
+    const inputs = Array.from({ length: DEMO_MEMBERS_COUNT }, (_, i) => demoMemberInput(i))
+    expect(new Set(inputs.map((m) => normalizeLastName(m.lastName))).size).toBe(DEMO_MEMBERS_COUNT)
+    expect(new Set(inputs.map((m) => normalizeFirstName(m.firstName))).size).toBe(
+      DEMO_MEMBERS_COUNT
+    )
   })
 
   it('donne une date de naissance différente et valide à chaque fidèle', () => {

@@ -6,100 +6,72 @@ import {
 import { utcToCalendarDate } from '@shared/utils/dates'
 
 /**
- * Fidèles FICTIFS de démonstration (`npm run seed:members`) : combinaisons déterministes de
- * noms et prénoms courants, aucune personne réelle. Indépendant de la comptabilité.
- * Nom et prénom tous différents (règle du porteur, 2026-11-27) : 40 noms × 25 prénoms × 17
- * (sans second prénom ou l'un des 16) = 17 000 combinaisons possibles.
+ * Fidèles FICTIFS de démonstration (`npm run seed:members`) : noms et prénoms fabriqués à partir
+ * de syllabes, aucune personne réelle. Indépendant de la comptabilité.
+ * Chaque fidèle a un nom ET un prénom qui ne servent qu'à lui (porteur, 2026-11-27) :
+ * 12 288 noms et 32 768 prénoms possibles, parcourus avec un pas premier (7 919) pour mélanger.
  */
 export const DEMO_MEMBERS_COUNT = 10_000
 
-const LAST_NAMES = [
-  'RAKOTO',
-  'RASOA',
-  'RANDRIA',
-  'RABE',
-  'RAZAFY',
-  'ANDRIAMAHEFA',
-  'RAHARISON',
-  'RAJAONA',
-  'RANAIVO',
-  'RAVELO',
-  'RAKOTOMALALA',
-  'RASOLOFO',
-  'RAMANANTSOA',
-  'RAZAFINDRAKOTO',
-  'RAHERINIAINA',
-  'ANDRIANARISOA',
-  'RAKOTONDRABE',
-  'RAVELOJAONA',
-  'RANDRIAMAMPIONONA',
-  'RAZANAMPARANY',
-  'RASOAMANANA',
-  'RAKOTOARISOA',
-  'ANDRIANTSOA',
-  'RAHARIMANANA',
-  'RAMAROSON',
-  'RANDRIANASOLO',
-  'RAZAFIMAHATRATRA',
-  'RABEMANANJARA',
-  'RAKOTONIRINA',
-  'RAVOLOLONIRINA',
-  'RAJAOFERA',
-  'RAMIANDRISOA',
-  'RANAIVOSON',
-  'RAZAKAMANANA',
-  'RABEARIVELO',
-  'ANDRIAMANANTENA',
-  'RASAMOELINA',
-  'RAKOTOVAO',
-  'RAFANOMEZANTSOA',
-  'RANDRIANARIVELO'
+const SYLLABLES = [
+  'ra',
+  'ko',
+  'to',
+  'ma',
+  'la',
+  'na',
+  'ri',
+  'zo',
+  'fy',
+  'he',
+  'ny',
+  'ti',
+  'so',
+  'va',
+  'ha',
+  'mi'
 ]
-const FIRST_NAMES = [
-  'Tiana',
-  'Nirina',
-  'Fanja',
-  'Andry',
-  'Hery',
-  'Mamy',
-  'Fara',
-  'Haja',
-  'Lova',
-  'Noro',
-  'Voahangy',
-  'Toky',
-  'Miora',
-  'Sitraka',
-  'Jean-Pierre',
-  'Fenitra',
-  'Rova',
-  'Tsiry',
-  'Holy',
-  'Naina',
-  'Mialy',
-  'Faly',
-  'Domoina',
-  'Tahiry',
-  'Onja'
-]
-const SECOND_NAMES = [
-  'Aina',
-  'Ny Avo',
-  'Lalaina',
-  'Hasina',
-  'Fitia',
-  'Soa',
-  'Zo',
-  'Riana',
-  'Tojo',
-  'Vola',
-  'Harena',
-  'Mahery',
-  'Fanantenana',
-  'Hanitra',
-  'Ando',
-  'Iary'
-]
+const LAST_PREFIXES = ['RA', 'ANDRIA', 'RAZAFIN', 'RANDRIA', 'RAHERIN', 'RAJAO']
+const LAST_ENDINGS = ['NA', 'SOA', 'VELO', 'SON', 'RISOA', 'NIRINA', 'MANANA', 'JAONA']
+const FIRST_ENDINGS = ['na', 'ry', 'ja', 'ka', 'zo', 'ny', 'ra', 'ly']
+const STEP = 7_919
+
+/** Chiffres de `n` dans une base mixte (`radixes`, du moins au plus significatif). */
+function digits(n: number, radixes: readonly number[]): number[] {
+  return radixes.map((r) => {
+    const d = n % r
+    n = Math.floor(n / r)
+    return d
+  })
+}
+
+const S = SYLLABLES.length
+const LAST_COUNT = LAST_PREFIXES.length * S * S * LAST_ENDINGS.length
+const FIRST_COUNT = S * S * S * FIRST_ENDINGS.length
+
+/** i-ième nom (unique pour i < 12 288) : « RAZAFINKOTOSOA » */
+function lastNameOf(i: number): string {
+  const [p = 0, a = 0, b = 0, e = 0] = digits((i * STEP) % LAST_COUNT, [
+    LAST_PREFIXES.length,
+    S,
+    S,
+    LAST_ENDINGS.length
+  ])
+  return `${at(LAST_PREFIXES, p)}${at(SYLLABLES, a)}${at(SYLLABLES, b)}${at(LAST_ENDINGS, e)}`.toUpperCase()
+}
+
+/** i-ième prénom (unique pour i < 32 768) : « Hamirana » */
+function firstNameOf(i: number): string {
+  const [a = 0, b = 0, c = 0, e = 0] = digits((i * STEP) % FIRST_COUNT, [
+    S,
+    S,
+    S,
+    FIRST_ENDINGS.length
+  ])
+  const word = `${at(SYLLABLES, a)}${at(SYLLABLES, b)}${at(SYLLABLES, c)}${at(FIRST_ENDINGS, e)}`
+  return word.charAt(0).toUpperCase() + word.slice(1)
+}
+
 const SECTORS = ['Nord', 'Sud', 'Est', 'Ouest', 'Centre']
 
 const at = <T>(list: readonly T[], n: number): T => list[n % list.length] as T
@@ -116,13 +88,10 @@ const birthDateOf = (i: number): string =>
   utcToCalendarDate(new Date(FIRST_BIRTH_DAY + ((i * BIRTH_STEP) % BIRTH_DAYS) * 86_400_000))
 const pad = (n: number, size: number): string => String(n).padStart(size, '0')
 
-/** Saisie du i-ième fidèle de démonstration (0 ≤ i < 17 000 : nom et prénom uniques). */
+/** Saisie du i-ième fidèle de démonstration (nom, prénom et date uniques pour i < 12 288). */
 export function demoMemberInput(i: number): CreateMemberInput {
-  const lastName = at(LAST_NAMES, i)
-  const second =
-    Math.floor(i / (LAST_NAMES.length * FIRST_NAMES.length)) % (SECOND_NAMES.length + 1)
-  const first = at(FIRST_NAMES, Math.floor(i / LAST_NAMES.length))
-  const firstName = second === 0 ? first : `${first} ${at(SECOND_NAMES, second - 1)}`
+  const lastName = lastNameOf(i)
+  const firstName = firstNameOf(i)
   const sector = at(SECTORS, i)
   const baptized = i % 4 !== 0
   return {
