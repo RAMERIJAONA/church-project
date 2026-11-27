@@ -59,15 +59,13 @@ describe('serverErrorOf', () => {
     })
   })
 
-  it('place un matricule déjà attribué sous le matricule', () => {
-    const err = new IpcError('CONFLICT', 'Le matricule M-1 est déjà attribué à RAKOTO Tiana.', {
-      reason: 'registration-number-taken',
+  it('affiche en tête un rang déjà pris dans le foyer', () => {
+    const message = 'Ce foyer a déjà un rang 1 (Père ou Chef de foyer) : RAKOTO Jean.'
+    const err = new IpcError('CONFLICT', message, {
+      reason: 'rank-taken',
       existing: makeMemberDTO()
     })
-    expect(serverErrorOf(err)).toEqual({
-      field: 'registrationNumber',
-      message: 'Le matricule M-1 est déjà attribué à RAKOTO Tiana.'
-    })
+    expect(serverErrorOf(err)).toEqual({ message })
   })
 
   it('place un nom et prénom déjà pris sous le prénom', () => {

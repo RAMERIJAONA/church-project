@@ -78,17 +78,15 @@ describe('MemberFormDialog', () => {
     const { onSubmit, dialog } = setup({ initial: makeMemberDTO() })
     expect(within(dialog).getByRole('heading', { name: 'Modifier RAKOTO Tiana' })).toBeTruthy()
     expect(field(dialog, 'Téléphone').value).toBe('034 12 345 67')
-    await userEvent.clear(field(dialog, 'Secteur'))
-    await userEvent.type(field(dialog, 'Secteur'), 'Sud')
+    await userEvent.clear(field(dialog, 'Adresse'))
+    await userEvent.type(field(dialog, 'Adresse'), 'Ambohitsara')
     await userEvent.click(within(dialog).getByRole('button', { name: 'Enregistrer' }))
     expect(onSubmit).toHaveBeenCalledWith({
       lastName: 'RAKOTO',
       firstName: 'Tiana',
       birthDate: '1985-03-12',
-      address: 'Lot II A 45, Ambatondrazaka',
+      address: 'Ambohitsara',
       phone: '034 12 345 67',
-      sector: 'Sud',
-      registrationNumber: 'M-0042',
       baptized: true,
       communicant: false
     })
@@ -117,18 +115,13 @@ describe('MemberFormDialog', () => {
     expect(field(dialog, 'Adresse').value).toBe('Ambohitsara')
   })
 
-  it('affiche l’erreur du matricule sous le champ', () => {
+  it('affiche sous le prénom l’erreur du nom déjà pris', () => {
+    const message = 'Un fidèle RAKOTO Tiana existe déjà (né le 12/03/1985, matricule 1/3B-I).'
     const { dialog } = setup({
       initial: makeMemberDTO(),
-      serverError: {
-        field: 'registrationNumber',
-        message: 'Le matricule M-0042 est déjà attribué à RASOA Nirina.'
-      }
+      serverError: { field: 'firstName', message }
     })
-    const input = field(dialog, 'Matricule')
-    expect(input.getAttribute('aria-invalid')).toBe('true')
-    expect(
-      within(dialog).getByText('Le matricule M-0042 est déjà attribué à RASOA Nirina.')
-    ).toBeTruthy()
+    expect(field(dialog, 'Prénom').getAttribute('aria-invalid')).toBe('true')
+    expect(within(dialog).getByText(message)).toBeTruthy()
   })
 })

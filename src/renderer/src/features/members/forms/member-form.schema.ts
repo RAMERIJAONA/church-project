@@ -14,8 +14,6 @@ const memberFormBaseSchema = z.object({
   birthDate: z.string().min(1, 'La date de naissance est obligatoire.'),
   address: z.string().trim().min(1, 'L’adresse est obligatoire.').max(200),
   phone: z.string().trim().max(30),
-  sector: z.string().trim().max(80),
-  registrationNumber: z.string().trim().max(40),
   baptized: z.boolean(),
   communicant: z.boolean()
 })
@@ -46,8 +44,6 @@ export function memberFormDefaults(m: MemberDTO | null): MemberFormValues {
     birthDate: m?.birthDate ?? '',
     address: m?.address ?? '',
     phone: m?.phone ? formatPhone(m.phone) : '',
-    sector: m?.sector ?? '',
-    registrationNumber: m?.registrationNumber ?? '',
     baptized: m?.baptized ?? false,
     communicant: m?.communicant ?? false
   }

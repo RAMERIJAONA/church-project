@@ -13,9 +13,8 @@ function setup() {
     lastName: 'RASOA',
     firstName: 'Nirina',
     phone: null,
-    sector: null,
     baptized: false,
-    registrationNumber: null
+    matricule: '1/4-I'
   })
   render(<MembersTable members={[member, other]} onEdit={onEdit} onDelete={onDelete} />)
   return { onEdit, onDelete, member }
@@ -29,7 +28,7 @@ describe('MembersTable', () => {
     expect(row.textContent).toContain('12/03/1985')
     expect(row.textContent).toContain('034 12 345 67')
     expect(row.textContent).toContain('Lot II A 45, Ambatondrazaka')
-    expect(row.textContent).toContain('M-0042')
+    expect(row.textContent).toContain('1/3B-I')
     const cells = within(row)
       .getAllByRole('cell')
       .map((c) => c.textContent)

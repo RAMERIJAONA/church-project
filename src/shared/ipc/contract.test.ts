@@ -30,6 +30,9 @@ describe('contrat IPC', () => {
 
 describe('contrat IPC : fidèles', () => {
   const valid = {
+    householdId: 1,
+    role: 'child',
+    sex: 'F',
     lastName: 'rakoto',
     firstName: 'tiana',
     birthDate: '1985-03-12',
@@ -40,30 +43,33 @@ describe('contrat IPC : fidèles', () => {
     expect(ipcInputs['members.create'].parse(valid)).toEqual({
       ...valid,
       phone: null,
-      sector: null,
-      registrationNumber: null,
       baptized: false,
-      communicant: false
+      communicant: false,
+      deacon: false
     })
   })
 
-  it('members.create transforme un champ facultatif vide en null', () => {
-    const parsed = ipcInputs['members.create'].parse({ ...valid, phone: '', sector: '  ' })
-    expect(parsed.phone).toBeNull()
-    expect(parsed.sector).toBeNull()
+  it('members.create transforme un téléphone vide en null', () => {
+    expect(ipcInputs['members.create'].parse({ ...valid, phone: '  ' }).phone).toBeNull()
   })
 
-  it('members.create refuse un nom vide, une date mal formée ou un champ inconnu', () => {
+  it('members.create refuse un nom vide, une date mal formée, un rôle ou un sexe inconnu', () => {
     const schema = ipcInputs['members.create']
     expect(schema.safeParse({ ...valid, lastName: '  ' }).success).toBe(false)
     expect(schema.safeParse({ ...valid, address: '' }).success).toBe(false)
     expect(schema.safeParse({ ...valid, birthDate: '12/03/1985' }).success).toBe(false)
+    expect(schema.safeParse({ ...valid, role: 'uncle' }).success).toBe(false)
+    expect(schema.safeParse({ ...valid, sex: 'X' }).success).toBe(false)
     expect(schema.safeParse({ ...valid, inconnu: 1 }).success).toBe(false)
+    // Le matricule n'est jamais saisi
+    expect(schema.safeParse({ ...valid, registrationNumber: 'M-1' }).success).toBe(false)
   })
 
-  it('members.update exige un id', () => {
-    expect(ipcInputs['members.update'].safeParse(valid).success).toBe(false)
-    expect(ipcInputs['members.update'].safeParse({ ...valid, id: 3 }).success).toBe(true)
+  it('members.update exige un id et pas de foyer (déplacement : members.move)', () => {
+    const fields = Object.fromEntries(Object.entries(valid).filter(([k]) => k !== 'householdId'))
+    expect(ipcInputs['members.update'].safeParse(fields).success).toBe(false)
+    expect(ipcInputs['members.update'].safeParse({ ...fields, id: 3 }).success).toBe(true)
+    expect(ipcInputs['members.update'].safeParse({ ...valid, id: 3 }).success).toBe(false)
   })
 
   it('members.list applique page 1, 50 par page, recherche vide', () => {

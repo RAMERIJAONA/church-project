@@ -1,21 +1,18 @@
-import { Search, UserPlus } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { useId } from 'react'
-import { Button } from '@renderer/components/ui/button'
 import { Input } from '@renderer/components/ui/input'
 
 export interface MembersToolbarProps {
   search: string
   onSearchChange: (search: string) => void
-  onAdd: () => void
   /** « 1 248 fidèles », « 3 résultats pour « rakto » » ; '' pendant le premier chargement */
   resultLabel: string
 }
 
-/** Recherche en temps réel + bouton d'ajout. */
+/** Recherche en temps réel (les fidèles s'ajoutent depuis leur foyer). */
 export function MembersToolbar({
   search,
   onSearchChange,
-  onAdd,
   resultLabel
 }: MembersToolbarProps): React.JSX.Element {
   const labelId = useId()
@@ -39,10 +36,6 @@ export function MembersToolbar({
             onChange={(e) => onSearchChange(e.currentTarget.value)}
           />
         </div>
-        <Button onClick={onAdd}>
-          <UserPlus aria-hidden />
-          Ajouter un fidèle
-        </Button>
       </div>
       <p className="text-sm text-muted-foreground" aria-live="polite">
         {resultLabel}

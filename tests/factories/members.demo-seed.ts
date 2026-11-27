@@ -89,30 +89,35 @@ const birthDateOf = (i: number): string =>
 const pad = (n: number, size: number): string => String(n).padStart(size, '0')
 
 /** Saisie du i-ième fidèle de démonstration (nom, prénom et date uniques pour i < 12 288). */
-export function demoMemberInput(i: number): CreateMemberInput {
+export function demoMemberInput(i: number, householdId: number): CreateMemberInput {
   const lastName = lastNameOf(i)
   const firstName = firstNameOf(i)
-  const sector = at(SECTORS, i)
   const baptized = i % 4 !== 0
   return {
+    householdId,
+    role: 'child',
+    sex: i % 2 === 0 ? 'M' : 'F',
     // Saisies volontairement irrégulières : le service les met en forme
     lastName: i % 7 === 0 ? lastName.toLowerCase() : lastName,
     firstName: i % 9 === 0 ? firstName.toUpperCase() : firstName,
     birthDate: birthDateOf(i),
-    address: `Lot ${100 + i} ${sector}, Ambatondrazaka`,
+    address: `Lot ${100 + i} ${at(SECTORS, i)}, Ambatondrazaka`,
     phone:
       i % 3 === 0
         ? ''
         : `03${at([2, 3, 4, 8], i)} ${pad((i * 37) % 100, 2)} ${pad((i * 101) % 1000, 3)} ${pad(i % 100, 2)}`,
-    sector,
-    registrationNumber: `M-${pad(i + 1, 5)}`,
     baptized,
     communicant: baptized && i % 3 !== 1
   }
 }
 
-/** Crée `count` fidèles par le service (normalisation et contrôles réels). Renvoie le nombre créé. */
-export function seedMembers(service: MembersService, count: number): number {
-  for (let i = 0; i < count; i++) service.create(createMemberInputSchema.parse(demoMemberInput(i)))
+/**
+ * Crée `count` fidèles par le service (normalisation et contrôles réels), tous dans le foyer
+ * `householdId` (provisoire : foyers et secteurs de démonstration à venir). Renvoie le nombre créé.
+ */
+export function seedMembers(service: MembersService, count: number, householdId: number): number {
+  for (let i = 0; i < count; i++) {
+    service.create(createMemberInputSchema.parse(demoMemberInput(i, householdId)))
+  }
   return count
 }

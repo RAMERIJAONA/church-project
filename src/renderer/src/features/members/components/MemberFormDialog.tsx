@@ -180,22 +180,6 @@ function MemberForm({
             {...form.register('address')}
           />
         </FormField>
-        <FormField id="member-sector" label="Secteur" error={errorOf('sector')}>
-          <Input id="member-sector" autoComplete="off" {...form.register('sector')} />
-        </FormField>
-        <FormField
-          id="member-registrationNumber"
-          label="Matricule"
-          error={errorOf('registrationNumber')}
-        >
-          <Input
-            id="member-registrationNumber"
-            autoComplete="off"
-            aria-invalid={invalid('registrationNumber')}
-            aria-describedby={describedBy('registrationNumber')}
-            {...form.register('registrationNumber')}
-          />
-        </FormField>
         <FormField id="member-baptized" label="Baptême">
           <Controller
             control={form.control}

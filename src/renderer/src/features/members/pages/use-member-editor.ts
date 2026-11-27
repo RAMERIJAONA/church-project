@@ -1,20 +1,19 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@renderer/lib/error-messages'
-import type { CreateMemberInput, MemberDTO } from '@shared/domain/members/members.types'
+import type { MemberDTO } from '@shared/domain/members/members.types'
 import type { MemberFormValues } from '../forms/member-form.schema'
 import { serverErrorOf, type MemberServerError } from '../members.utils'
-import { useCreateMember, useDeleteMember, useUpdateMember } from '../queries'
+import { useDeleteMember, useUpdateMember } from '../queries'
 
-/** Boîte ouverte : ajout, modification ou confirmation de suppression. */
+/** Boîte ouverte : modification ou confirmation de suppression. */
 export type MemberDialog =
-  { kind: 'create' } | { kind: 'edit'; member: MemberDTO } | { kind: 'delete'; member: MemberDTO }
+  { kind: 'edit'; member: MemberDTO } | { kind: 'delete'; member: MemberDTO }
 
 export interface MemberEditor {
   dialog: MemberDialog | null
   submitting: boolean
   serverError: MemberServerError | null
-  openCreate: () => void
   openEdit: (member: MemberDTO) => void
   openDelete: (member: MemberDTO) => void
   close: () => void
@@ -22,9 +21,8 @@ export interface MemberEditor {
   confirmDelete: (member: MemberDTO) => void
 }
 
-/** Ajout, modification, suppression : mutations, erreurs sous les champs, toasts. */
+/** Modification, suppression : mutations, erreurs sous les champs, toasts. */
 export function useMemberEditor(): MemberEditor {
-  const create = useCreateMember()
   const update = useUpdateMember()
   const remove = useDeleteMember()
   const [dialog, setDialog] = useState<MemberDialog | null>(null)
@@ -36,26 +34,25 @@ export function useMemberEditor(): MemberEditor {
   }
 
   const save = (values: MemberFormValues): void => {
-    if (dialog?.kind !== 'create' && dialog?.kind !== 'edit') return
-    const editing = dialog.kind === 'edit' ? dialog.member : null
-    const options = {
-      onSuccess: () => {
-        toast.success(editing ? 'Modifications enregistrées' : 'Fidèle ajouté')
-        open(null)
-      },
-      onError: (err: unknown) => setServerError(serverErrorOf(err))
-    }
+    if (dialog?.kind !== 'edit') return
+    const { member } = dialog
     setServerError(null)
-    const input: CreateMemberInput = values
-    if (editing) update.mutate({ ...input, id: editing.id }, options)
-    else create.mutate(input, options)
+    update.mutate(
+      { ...values, id: member.id, role: member.role, sex: member.sex, deacon: member.deacon },
+      {
+        onSuccess: () => {
+          toast.success('Modifications enregistrées')
+          open(null)
+        },
+        onError: (err: unknown) => setServerError(serverErrorOf(err))
+      }
+    )
   }
 
   return {
     dialog,
-    submitting: create.isPending || update.isPending,
+    submitting: update.isPending,
     serverError,
-    openCreate: () => open({ kind: 'create' }),
     openEdit: (member) => open({ kind: 'edit', member }),
     openDelete: (member) => open({ kind: 'delete', member }),
     close: () => open(null),

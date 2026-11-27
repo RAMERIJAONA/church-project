@@ -75,10 +75,10 @@ export function MembersTable({ members, onEdit, onDelete }: MembersTableProps): 
               <td className={bodyCell()}>{m.firstName}</td>
               <td className={bodyCell({ numeric: true })}>{formatBirthDate(m.birthDate)}</td>
               <td className={bodyCell({ numeric: true })}>{m.phone ? formatPhone(m.phone) : ''}</td>
-              <td className={bodyCell()}>{m.sector ?? ''}</td>
+              <td className={bodyCell()}>{m.sector.name}</td>
               <td className={bodyCell({ align: 'center' })}>{yesNo(m.baptized)}</td>
               <td className={bodyCell({ align: 'center' })}>{yesNo(m.communicant)}</td>
-              <td className={bodyCell({ numeric: true })}>{m.registrationNumber ?? ''}</td>
+              <td className={bodyCell({ numeric: true })}>{m.matricule}</td>
               <td className={bodyCell({ align: 'right' })}>
                 <MemberRowActions
                   name={memberDisplayName(m)}

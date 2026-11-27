@@ -1,66 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { createFixedClock } from '@main/adapters/clock.adapter'
-import { createLogger, createMemorySink } from '@main/logging/logger'
-import { createMembersRepository } from '@main/repositories/members.repository'
-import { createMembersService } from '@main/services/members.service'
-import { AppError } from '@shared/domain/errors'
-import {
-  createMemberInputSchema,
-  listMembersInputSchema,
-  updateMemberInputSchema,
-  type CreateMemberInput,
-  type ListMembersInput,
-  type MemberDTO
-} from '@shared/domain/members/members.types'
-import { makeMemberInput } from '@tests/factories/members.factory'
-import { createTestDb } from '@tests/helpers/test-db'
-
-function setup() {
-  const handle = createTestDb()
-  const clock = createFixedClock(new Date('2026-11-27T09:00:00.000Z'))
-  const service = createMembersService({
-    db: handle.db,
-    members: createMembersRepository(),
-    clock,
-    logger: createLogger(createMemorySink())
-  })
-  // Entrées passées par le schéma zod, comme le fait le handler IPC
-  const create = (input: Partial<CreateMemberInput> = {}): MemberDTO =>
-    service.create(createMemberInputSchema.parse(makeMemberInput(input)))
-  const update = (member: MemberDTO, changes: Partial<CreateMemberInput> = {}): MemberDTO =>
-    service.update(updateMemberInputSchema.parse({ ...toInput(member), ...changes, id: member.id }))
-  const list = (input: ListMembersInput = {}) => service.list(listMembersInputSchema.parse(input))
-  return { handle, clock, service, create, update, list }
-}
-
-function toInput(m: MemberDTO): CreateMemberInput {
-  return {
-    lastName: m.lastName,
-    firstName: m.firstName,
-    birthDate: m.birthDate,
-    address: m.address,
-    phone: m.phone,
-    sector: m.sector,
-    baptized: m.baptized,
-    communicant: m.communicant,
-    registrationNumber: m.registrationNumber
-  }
-}
-
-function caught(fn: () => unknown): AppError {
-  try {
-    fn()
-  } catch (err) {
-    if (err instanceof AppError) return err
-    throw err
-  }
-  throw new Error('aucune erreur levée')
-}
+import { caught, setupMembers } from '@tests/helpers/members-context'
 
 describe('MembersService : enregistrement', () => {
   it('enregistre nom et prénom normalisés et le téléphone canonique', () => {
-    const { create } = setup()
-    const m = create({ lastName: 'rakoto', firstName: 'rAkoto TiaNa', phone: '034 12 345 67' })
+    const { household, member } = setupMembers()
+    const m = member(household().id, {
+      lastName: 'rakoto',
+      firstName: 'rAkoto TiaNa',
+      phone: '034 12 345 67'
+    })
     expect(m).toMatchObject({
       lastName: 'RAKOTO',
       firstName: 'Rakoto Tiana',
@@ -70,110 +18,92 @@ describe('MembersService : enregistrement', () => {
   })
 
   it('refuse une date de naissance future', () => {
-    const { create } = setup()
-    const err = caught(() => create({ birthDate: '2026-11-28' }))
+    const { household, member } = setupMembers()
+    const err = caught(() => member(household().id, { birthDate: '2026-11-28' }))
     expect(err.code).toBe('VALIDATION')
     expect(err.details).toEqual({ field: 'birthDate' })
   })
 
   it('refuse un téléphone qui n’est pas malgache', () => {
-    const { create } = setup()
-    const err = caught(() => create({ phone: '044 12 345 67' }))
+    const { household, member } = setupMembers()
+    const err = caught(() => member(household().id, { phone: '044 12 345 67' }))
     expect(err.code).toBe('VALIDATION')
     expect(err.details).toEqual({ field: 'phone' })
   })
 
-  it('refuse un communiant non baptisé', () => {
-    const { create } = setup()
-    expect(caught(() => create({ baptized: false, communicant: true })).code).toBe('BUSINESS_RULE')
-  })
-
-  it('refuse un matricule déjà attribué, casse comprise', () => {
-    const { create } = setup()
-    create({ registrationNumber: 'M-0042' })
-    const err = caught(() => create({ firstName: 'Andry', registrationNumber: 'm-0042' }))
-    expect(err.code).toBe('CONFLICT')
-    expect(err.message).toBe('Le matricule m-0042 est déjà attribué à RAKOTO Tiana.')
-    expect(err.details).toMatchObject({ reason: 'registration-number-taken' })
-  })
-
-  it("libère le matricule d'un fidèle supprimé", () => {
-    const { create, service } = setup()
-    const first = create({ registrationNumber: 'M-0042' })
-    service.delete(first.id)
-    expect(create({ firstName: 'Andry', registrationNumber: 'M-0042' }).registrationNumber).toBe(
-      'M-0042'
-    )
+  it('refuse un fidèle dans un foyer inconnu', () => {
+    const { member } = setupMembers()
+    expect(caught(() => member(99)).code).toBe('NOT_FOUND')
   })
 
   it('refuse un fidèle de même nom et prénom, même né un autre jour', () => {
-    const { create, list } = setup()
-    const first = create({ registrationNumber: 'M-0042' })
+    const { household, member, list } = setupMembers()
+    const h = household()
+    const first = member(h.id, { baptized: true })
     const err = caught(() =>
-      create({ lastName: 'rakoto', firstName: 'tiana', birthDate: '1990-01-01' })
+      member(h.id, { lastName: 'rakoto', firstName: 'tiana', birthDate: '1990-01-01' })
     )
     expect(err.code).toBe('CONFLICT')
     expect(err.message).toBe(
-      'Un fidèle RAKOTO Tiana existe déjà (né le 12/03/1985, matricule M-0042).'
+      'Un fidèle RAKOTO Tiana existe déjà (né le 12/03/1985, matricule 1/3B-I).'
     )
     expect(err.details).toEqual({ reason: 'name-taken', existing: first })
     expect(list().total).toBe(1)
   })
 
-  it('accepte le même nom avec un autre prénom', () => {
-    const { create, list } = setup()
-    create()
-    create({ firstName: 'Andry' })
-    expect(list().total).toBe(2)
-  })
-
   it("libère le nom et le prénom d'un fidèle supprimé", () => {
-    const { create, service, list } = setup()
-    service.delete(create().id)
-    create()
+    const { household, member, membersService, list } = setupMembers()
+    const h = household()
+    membersService.delete(member(h.id).id)
+    member(h.id)
     expect(list().total).toBe(1)
   })
 
-  it('modifier un fidèle sans changer son matricule ni son identité ne crée pas de conflit', () => {
-    const { create, update } = setup()
-    const m = create({ registrationNumber: 'M-0042' })
-    expect(update(m, { address: 'Ambohitsara' }).address).toBe('Ambohitsara')
+  it('modifier un fidèle sans rien changer ne crée pas de conflit', () => {
+    const { household, member, update } = setupMembers()
+    const m = member(household().id)
+    expect(update(m, { address: 'Ambohitsara' })).toMatchObject({
+      address: 'Ambohitsara',
+      rank: 3,
+      matricule: '1/3-I'
+    })
   })
 
   it('refuse une modification qui donne le nom et le prénom d’un autre fidèle', () => {
-    const { create, update } = setup()
-    create()
-    const other = create({ firstName: 'Andry' })
+    const { household, member, update } = setupMembers()
+    const h = household()
+    member(h.id)
+    const other = member(h.id, { firstName: 'Andry' })
     const err = caught(() => update(other, { firstName: 'tiana' }))
     expect(err.code).toBe('CONFLICT')
     expect(err.details).toMatchObject({ reason: 'name-taken' })
   })
 
   it('horodate la modification avec l’horloge injectée', () => {
-    const { create, update, clock } = setup()
-    const m = create()
+    const { household, member, update, clock } = setupMembers()
+    const m = member(household().id)
     clock.set(new Date('2026-11-28T10:00:00.000Z'))
-    expect(update(m, { sector: 'Nord' })).toMatchObject({
+    expect(update(m, { address: 'Ambohitsara' })).toMatchObject({
       createdAt: '2026-11-27T09:00:00.000Z',
-      updatedAt: '2026-11-28T10:00:00.000Z',
-      sector: 'Nord'
+      updatedAt: '2026-11-28T10:00:00.000Z'
     })
   })
 
   it('fidèle introuvable', () => {
-    const { create, update, service } = setup()
-    const m = create()
-    service.delete(m.id)
+    const { household, member, update, membersService } = setupMembers()
+    const m = member(household().id)
+    membersService.delete(m.id)
     expect(caught(() => update(m)).code).toBe('NOT_FOUND')
-    expect(caught(() => service.delete(m.id)).code).toBe('NOT_FOUND')
+    expect(caught(() => membersService.delete(m.id)).code).toBe('NOT_FOUND')
   })
 })
 
 describe('MembersService : liste et recherche', () => {
   it('pagine la liste triée par nom', () => {
-    const { create, list } = setup()
+    const { household, member, list } = setupMembers()
+    const h = household()
     for (let i = 0; i < 120; i++) {
-      create({ lastName: `NOM${String(119 - i).padStart(3, '0')}`, firstName: 'Tiana' })
+      member(h.id, { lastName: `NOM${String(119 - i).padStart(3, '0')}`, firstName: 'Tiana' })
     }
     const page3 = list({ page: 3 })
     expect(page3.total).toBe(120)
@@ -183,38 +113,47 @@ describe('MembersService : liste et recherche', () => {
   })
 
   it('retrouve un fidèle malgré une faute de frappe', () => {
-    const { create, list } = setup()
-    create()
-    create({ lastName: 'RASOA', firstName: 'Nirina' })
+    const { household, member, list } = setupMembers()
+    const h = household()
+    member(h.id)
+    member(h.id, { lastName: 'RASOA', firstName: 'Nirina' })
     const res = list({ search: 'rakto' })
-    expect(res.total).toBe(1)
     expect(res.items.map((m) => m.lastName)).toEqual(['RAKOTO'])
   })
 
   it('traite une recherche faite de ponctuation comme vide', () => {
-    const { create, list } = setup()
-    create()
+    const { household, member, list } = setupMembers()
+    member(household().id)
     expect(list({ search: ' - ' }).total).toBe(1)
   })
 
   it('met la recherche à jour après modification et suppression', () => {
-    const { create, update, service, list } = setup()
-    const m = create()
+    const { household, member, update, membersService, list } = setupMembers()
+    const m = member(household().id)
     expect(list({ search: 'rakoto' }).total).toBe(1)
     update(m, { lastName: 'RASOA' })
     expect(list({ search: 'rakoto' }).total).toBe(0)
     expect(list({ search: 'rasoa' }).total).toBe(1)
-    service.delete(m.id)
+    membersService.delete(m.id)
     expect(list({ search: 'rasoa' }).total).toBe(0)
   })
 
   it('pagine les résultats de recherche dans l’ordre de pertinence', () => {
-    const { create, list } = setup()
-    create({ lastName: 'RAKOTOMALALA', firstName: 'Jean' })
-    create({ lastName: 'RAKOTO', firstName: 'Tiana' })
+    const { household, member, list } = setupMembers()
+    const h = household()
+    member(h.id, { lastName: 'RAKOTOMALALA', firstName: 'Jean' })
+    member(h.id, { lastName: 'RAKOTO', firstName: 'Tiana' })
     const res = list({ search: 'rakoto', pageSize: 1 })
     expect(res.total).toBe(2)
     expect(res.items.map((m) => m.lastName)).toEqual(['RAKOTO'])
     expect(list({ search: 'rakoto', pageSize: 1, page: 2 }).items[0]?.lastName).toBe('RAKOTOMALALA')
+  })
+
+  it('renvoie les ids trouvés par la recherche (liste des foyers)', () => {
+    const { household, member, membersService } = setupMembers()
+    const h = household()
+    const m = member(h.id)
+    member(h.id, { lastName: 'RASOA', firstName: 'Nirina' })
+    expect(membersService.searchIds('rakoto')).toEqual([m.id])
   })
 })

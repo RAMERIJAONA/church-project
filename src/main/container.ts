@@ -15,6 +15,7 @@ import { inspectDatabaseFile } from '@main/db/inspect'
 import type { Logger } from '@main/logging/logger'
 import { createAccountingSummaryRepository } from '@main/repositories/accounting-summary.repository'
 import { createAccountingRepository } from '@main/repositories/accounting.repository'
+import { createHouseholdsRepository } from '@main/repositories/households.repository'
 import { createMembersRepository } from '@main/repositories/members.repository'
 import { createSettingsRepository } from '@main/repositories/settings.repository'
 import { createAccountingExportService } from '@main/services/accounting-export.service'
@@ -123,6 +124,7 @@ export async function createContainer(paths: AppPaths, logger: Logger, platform:
   const members = createMembersService({
     db: handle.db,
     members: createMembersRepository(),
+    households: createHouseholdsRepository(),
     clock: systemClock,
     logger: logger.child({ module: 'members' })
   })

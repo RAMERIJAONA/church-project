@@ -15,7 +15,7 @@ import { useMembers } from '../queries'
 import { useMembersListState } from '../use-members-list-state'
 import { useMemberEditor } from './use-member-editor'
 
-/** Fidèles : liste paginée, recherche en temps réel, ajout / modification / suppression. */
+/** Fidèles : liste paginée, recherche en temps réel, modification / suppression. */
 export function MembersPage(): React.JSX.Element {
   const [total, setTotal] = useState<number | undefined>(undefined)
   const list = useMembersListState(total)
@@ -35,7 +35,6 @@ export function MembersPage(): React.JSX.Element {
       <MembersToolbar
         search={list.search}
         onSearchChange={list.setSearch}
-        onAdd={editor.openCreate}
         resultLabel={data ? resultLabel(data.total, list.query) : ''}
       />
 
@@ -49,7 +48,7 @@ export function MembersPage(): React.JSX.Element {
         </div>
       )}
 
-      {data && data.total === 0 && !searching && <MembersEmptyState onAdd={editor.openCreate} />}
+      {data && data.total === 0 && !searching && <MembersEmptyState />}
       {data && data.total === 0 && searching && (
         <p className="text-sm text-muted-foreground">
           Aucun fidèle ne correspond à « {list.query.trim()} ».
@@ -71,7 +70,7 @@ export function MembersPage(): React.JSX.Element {
       )}
 
       <MemberFormDialog
-        open={dialog?.kind === 'create' || dialog?.kind === 'edit'}
+        open={dialog?.kind === 'edit'}
         initial={dialog?.kind === 'edit' ? dialog.member : null}
         today={localDateOf(new Date())}
         submitting={editor.submitting}

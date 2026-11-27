@@ -28,14 +28,14 @@ export function resultLabel(total: number, query: string): string {
 export function conflictDetails(err: unknown): MemberConflictDetails | null {
   if (!(err instanceof IpcError) || err.code !== 'CONFLICT') return null
   const details = err.details as Partial<MemberConflictDetails> | undefined
-  return details?.reason === 'name-taken' || details?.reason === 'registration-number-taken'
+  return details?.reason === 'name-taken' || details?.reason === 'rank-taken'
     ? (details as MemberConflictDetails)
     : null
 }
 
 /** Erreur du service à afficher dans le formulaire : sous un champ, ou en tête. */
 export interface MemberServerError {
-  field?: 'registrationNumber' | 'firstName' | 'birthDate' | 'phone'
+  field?: 'firstName' | 'birthDate' | 'phone'
   message: string
 }
 
@@ -44,8 +44,9 @@ const FIELDS = ['birthDate', 'phone'] as const
 export function serverErrorOf(err: unknown): MemberServerError {
   const conflict = conflictDetails(err)
   if (conflict && err instanceof IpcError) {
-    const field = conflict.reason === 'name-taken' ? 'firstName' : 'registrationNumber'
-    return { field, message: err.message }
+    return conflict.reason === 'name-taken'
+      ? { field: 'firstName', message: err.message }
+      : { message: err.message }
   }
   if (err instanceof IpcError && err.code === 'VALIDATION') {
     const field = (err.details as { field?: unknown } | undefined)?.field

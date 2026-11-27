@@ -8,20 +8,11 @@
  */
 import { describe, expect, it } from 'vitest'
 import type { Sqlite } from '@main/db/client'
-import { createFixedClock } from '@main/adapters/clock.adapter'
-import { createLogger, createMemorySink } from '@main/logging/logger'
-import { createMembersRepository } from '@main/repositories/members.repository'
-import { createMembersService } from '@main/services/members.service'
-import {
-  createMemberInputSchema,
-  listMembersInputSchema,
-  updateMemberInputSchema
-} from '@shared/domain/members/members.types'
-import { makeMemberInput } from '@tests/factories/members.factory'
+import { swapChildRankInputSchema } from '@shared/domain/members/members.types'
 import { cell, setupAccounting, YEAR } from '@tests/helpers/accounting-context'
-import { createTestDb } from '@tests/helpers/test-db'
+import { setupMembers } from '@tests/helpers/members-context'
 
-const TABLES = 'accounting_entries|accounting_items|members'
+const TABLES = 'accounting_entries|accounting_items|members|households|sectors'
 
 /** Requêtes préparées pendant `run`, avec leur plan d'exécution. */
 function plansOf(sqlite: Sqlite, run: () => void): Array<{ sql: string; plan: string[] }> {
@@ -97,24 +88,24 @@ describe('plans des requêtes SQL', () => {
     expect(costlySteps(plans)).toEqual([])
   })
 
-  it('fidèles : ajout, liste, recherche, modification, suppression', () => {
-    const handle = createTestDb()
-    const members = createMembersService({
-      db: handle.db,
-      members: createMembersRepository(),
-      clock: createFixedClock(new Date('2026-11-27T09:00:00.000Z')),
-      logger: createLogger(createMemorySink())
-    })
+  it('fidèles : ajout, liste, recherche, modification, déplacement, suppression', () => {
+    const { handle, household, member, update, move, list, membersService } = setupMembers()
+    const one = household()
+    const two = household()
     const plans = plansOf(handle.sqlite, () => {
-      const m = members.create(
-        createMemberInputSchema.parse(makeMemberInput({ registrationNumber: 'M-1' }))
+      const jean = member(one.id, { role: 'father', firstName: 'Jean', deacon: true })
+      const andry = member(one.id, { firstName: 'Andry' })
+      const nirina = member(one.id, { firstName: 'Nirina' })
+      list()
+      list({ search: 'rakto' })
+      membersService.get(andry.id)
+      membersService.sponsoredHouseholds(jean.id)
+      membersService.swapChildRank(
+        swapChildRankInputSchema.parse({ id: nirina.id, direction: 'up' })
       )
-      members.list(listMembersInputSchema.parse({}))
-      members.list(listMembersInputSchema.parse({ search: 'rakto' }))
-      members.update(
-        updateMemberInputSchema.parse({ ...makeMemberInput({ sector: 'Nord' }), id: m.id })
-      )
-      members.delete(m.id)
+      update(jean, { deacon: false })
+      move({ id: andry.id, householdId: two.id, role: 'child' })
+      membersService.delete(nirina.id)
     })
     expect(plans.length).toBeGreaterThan(5)
     expect(costlySteps(plans)).toEqual([])

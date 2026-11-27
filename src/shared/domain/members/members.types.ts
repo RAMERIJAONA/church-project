@@ -1,8 +1,16 @@
 /** Types et schémas d'entrée des fidèles (contrat IPC). Indépendant de la comptabilité. */
 import { z } from 'zod'
+import { MEMBER_ROLES, SEXES, type MemberRole, type Sex } from './households.rules'
+import type { SectorRef, SponsorDTO } from './households.types'
 
 export interface MemberDTO {
   id: number
+  householdId: number
+  householdNumber: number
+  role: MemberRole
+  /** Rang dans le foyer, selon le rôle */
+  rank: number
+  sex: Sex
   /** Toujours en MAJUSCULES */
   lastName: string
   /** « Rakoto Tiana » */
@@ -12,11 +20,15 @@ export interface MemberDTO {
   address: string
   /** Forme stockée « +261341234567 », affichée « 034 12 345 67 » */
   phone: string | null
-  /** Texte libre pour l'instant (liste des secteurs prévue plus tard) */
-  sector: string | null
   baptized: boolean
   communicant: boolean
-  registrationNumber: string | null
+  deacon: boolean
+  /** Secteur du foyer */
+  sector: SectorRef
+  /** Parrain du foyer, `null` : « Parrain à désigner » */
+  sponsor: SponsorDTO | null
+  /** Calculé, jamais stocké : « 1/3MB-I » */
+  matricule: string
   createdAt: string
   updatedAt: string
 }
@@ -32,8 +44,7 @@ export const MEMBERS_PAGE_SIZE = 50
 
 /** `details` d'une erreur `CONFLICT` des fidèles, lu par l'UI. */
 export type MemberConflictDetails =
-  | { reason: 'name-taken'; existing: MemberDTO }
-  | { reason: 'registration-number-taken'; existing: MemberDTO }
+  { reason: 'name-taken'; existing: MemberDTO } | { reason: 'rank-taken'; existing: MemberDTO }
 
 const idSchema = z.number().int().positive()
 
@@ -41,6 +52,7 @@ const idSchema = z.number().int().positive()
 const nullIfEmpty = (v: string | null): string | null => (v === '' ? null : v)
 
 const memberFields = {
+  sex: z.enum(SEXES),
   lastName: z.string().trim().min(1).max(80),
   firstName: z.string().trim().min(1).max(80),
   /** Format seulement ; dates impossibles, futures ou avant 1900 : contrôlées par le service */
@@ -48,15 +60,29 @@ const memberFields = {
   address: z.string().trim().min(1).max(200),
   /** Texte saisi ; normalisé et contrôlé par le service (`parsePhone`) */
   phone: z.string().trim().max(30).nullable().default(null).transform(nullIfEmpty),
-  sector: z.string().trim().max(80).nullable().default(null).transform(nullIfEmpty),
-  registrationNumber: z.string().trim().max(40).nullable().default(null).transform(nullIfEmpty),
+  /** Normalisés par le service (`applyStatusRules`) : diacre ⇒ communiant ⇒ baptisé */
   baptized: z.boolean().default(false),
-  communicant: z.boolean().default(false)
+  communicant: z.boolean().default(false),
+  deacon: z.boolean().default(false)
 }
 
-export const createMemberInputSchema = z.object(memberFields).strict()
-export const updateMemberInputSchema = z.object({ id: idSchema, ...memberFields }).strict()
+const roleSchema = z.enum(MEMBER_ROLES)
+
+export const createMemberInputSchema = z
+  .object({ householdId: idSchema, role: roleSchema, ...memberFields })
+  .strict()
+export const updateMemberInputSchema = z
+  .object({ id: idSchema, role: roleSchema, ...memberFields })
+  .strict()
 export const memberIdInputSchema = z.object({ id: idSchema }).strict()
+/** Déplacer un fidèle dans un autre foyer, avec son rôle dans ce foyer */
+export const moveMemberInputSchema = z
+  .object({ id: idSchema, householdId: idSchema, role: roleSchema })
+  .strict()
+/** Échanger le rang d'un enfant avec l'enfant voisin */
+export const swapChildRankInputSchema = z
+  .object({ id: idSchema, direction: z.enum(['up', 'down']) })
+  .strict()
 export const listMembersInputSchema = z
   .object({
     search: z.string().max(100).default(''),
@@ -71,3 +97,7 @@ export type UpdateMemberInput = z.input<typeof updateMemberInputSchema>
 export type UpdateMemberParsed = z.output<typeof updateMemberInputSchema>
 export type ListMembersInput = z.input<typeof listMembersInputSchema>
 export type ListMembersParsed = z.output<typeof listMembersInputSchema>
+export type MoveMemberInput = z.input<typeof moveMemberInputSchema>
+export type MoveMemberParsed = z.output<typeof moveMemberInputSchema>
+export type SwapChildRankInput = z.input<typeof swapChildRankInputSchema>
+export type SwapChildRankParsed = z.output<typeof swapChildRankInputSchema>

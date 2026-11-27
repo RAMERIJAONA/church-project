@@ -1,18 +1,10 @@
 import type { Clock } from '@main/adapters/clock.adapter'
 import type { Db, Tx } from '@main/db/client'
 import type { Logger } from '@main/logging/logger'
-import type { MemberRow, MembersRepository } from '@main/repositories/members.repository'
+import type { HouseholdRow, HouseholdsRepository } from '@main/repositories/households.repository'
+import type { MembersRepository } from '@main/repositories/members.repository'
 import { AppError } from '@shared/domain/errors'
-import {
-  birthDateError,
-  communicantError,
-  formatBirthDate,
-  memberDisplayName,
-  normalizeFirstName,
-  normalizeLastName,
-  parsePhone,
-  PHONE_ERROR
-} from '@shared/domain/members/members.rules'
+import type { MemberRole, Sex } from '@shared/domain/members/households.rules'
 import {
   buildSearchIndex,
   isBlankQuery,
@@ -22,21 +14,29 @@ import {
 import type {
   CreateMemberParsed,
   ListMembersParsed,
-  MemberConflictDetails,
   MemberDTO,
+  MoveMemberParsed,
   Paginated,
+  SwapChildRankParsed,
   UpdateMemberParsed
 } from '@shared/domain/members/members.types'
-import { localDateOf } from '@shared/utils/dates'
+import {
+  assertSexFitsRole,
+  prepareMemberFields,
+  rankInHousehold,
+  type MemberFields
+} from './members.checks'
 
 /**
- * Fidèles (porteur, 2026-11-27) : normalisation, contrôles, recherche tolérante aux fautes.
- * L'index de recherche est gardé en mémoire (dérogation justifiée dans le spec, par. 4.1) et
- * reconstruit au besoin après chaque écriture.
+ * Fidèles rattachés à un foyer (porteur, 2026-11-27) : normalisation, statuts, rang selon le
+ * rôle (jamais réutilisé pour un enfant), parrainage retiré quand un diacre ne l'est plus.
+ * L'index de recherche est gardé en mémoire (dérogation du CLAUDE.md par. 6) et reconstruit au
+ * besoin après chaque écriture qui change un nom ou un matricule.
  */
 export function createMembersService(deps: {
   db: Db
   members: MembersRepository
+  households: HouseholdsRepository
   clock: Clock
   logger: Logger
 }) {
@@ -54,69 +54,57 @@ export function createMembersService(deps: {
     return index
   }
 
-  function conflict(message: string, details: MemberConflictDetails): AppError {
-    return new AppError('CONFLICT', message, details)
-  }
-
-  /** Normalise et contrôle une saisie ; lève l'erreur à afficher. */
-  function prepare(
+  const now = (): string => deps.clock().toISOString()
+  const prepare = (
     tx: Tx,
-    input: CreateMemberParsed,
-    /** Fidèle modifié, exclu des contrôles d'unicité (absent : ajout) */
+    input: CreateMemberParsed | UpdateMemberParsed,
     exceptId?: number
-  ): Omit<MemberRow, 'createdAt' | 'updatedAt'> {
-    const lastName = normalizeLastName(input.lastName)
-    const firstName = normalizeFirstName(input.firstName)
-
-    const dateError = birthDateError(input.birthDate, localDateOf(deps.clock()))
-    if (dateError) throw new AppError('VALIDATION', dateError, { field: 'birthDate' })
-
-    const phone = parsePhone(input.phone ?? '')
-    if (!phone.ok) throw new AppError('VALIDATION', PHONE_ERROR, { field: 'phone' })
-
-    const ruleError = communicantError(input.baptized, input.communicant)
-    if (ruleError) throw new AppError('BUSINESS_RULE', ruleError)
-
-    if (input.registrationNumber !== null) {
-      const owner = deps.members.findByRegistrationNumber(tx, input.registrationNumber, exceptId)
-      if (owner) {
-        throw conflict(
-          `Le matricule ${input.registrationNumber} est déjà attribué à ${memberDisplayName(owner)}.`,
-          { reason: 'registration-number-taken', existing: owner }
-        )
-      }
-    }
-
-    // Deux fidèles actifs ne portent jamais le même nom et prénom (porteur, 2026-11-27)
-    const homonym = deps.members.findByName(tx, { lastName, firstName }, exceptId)
-    if (homonym) {
-      const matricule = homonym.registrationNumber
-        ? `, matricule ${homonym.registrationNumber}`
-        : ''
-      throw conflict(
-        `Un fidèle ${memberDisplayName(homonym)} existe déjà (né le ${formatBirthDate(homonym.birthDate)}${matricule}).`,
-        { reason: 'name-taken', existing: homonym }
-      )
-    }
-
-    return {
-      lastName,
-      firstName,
-      birthDate: input.birthDate,
-      address: input.address,
-      phone: phone.value,
-      sector: input.sector,
-      baptized: input.baptized,
-      communicant: input.communicant,
-      registrationNumber: input.registrationNumber
-    }
-  }
+  ): MemberFields => prepareMemberFields(tx, deps, input, exceptId)
+  const rankIn = (
+    tx: Tx,
+    household: HouseholdRow,
+    role: MemberRole,
+    sex: Sex,
+    memberId?: number
+  ): number => rankInHousehold(tx, deps, { household, role, sex, memberId, at: now() })
 
   function notFound(id: number): AppError {
     return new AppError('NOT_FOUND', 'Fidèle introuvable.', { id })
   }
 
+  function householdOf(tx: Tx, id: number): HouseholdRow {
+    const household = deps.households.findById(tx, id)
+    if (!household) throw new AppError('NOT_FOUND', 'Foyer introuvable.', { householdId: id })
+    return household
+  }
+
+  function existing(tx: Tx, id: number): MemberDTO {
+    const member = deps.members.findById(tx, id)
+    if (!member) throw notFound(id)
+    return member
+  }
+
+  /** Un fidèle qui n'est plus diacre (ou supprimé) ne parraine plus aucun foyer. */
+  function dropSponsorships(tx: Tx, memberId: number): void {
+    const cleared = deps.households.clearSponsor(tx, memberId, now())
+    if (cleared > 0) {
+      deps.logger.info({ memberId, households: cleared }, 'foyers repassés « parrain à désigner »')
+    }
+  }
+
+  function written<T>(fn: (tx: Tx) => T): T {
+    const result = deps.db.transaction(fn)
+    index = null
+    return result
+  }
+
   return {
+    get(id: number): MemberDTO {
+      const member = deps.members.findById(deps.db, id)
+      if (!member) throw notFound(id)
+      return member
+    },
+
     list(input: ListMembersParsed): Paginated<MemberDTO> {
       const offset = (input.page - 1) * input.pageSize
       const page = { page: input.page, pageSize: input.pageSize }
@@ -134,38 +122,104 @@ export function createMembersService(deps: {
       return { ...page, items, total: ids.length }
     },
 
-    create(input: CreateMemberParsed): MemberDTO {
-      const member = deps.db.transaction((tx) => {
-        const now = deps.clock().toISOString()
-        return deps.members.insert(tx, {
-          ...prepare(tx, input),
-          createdAt: now,
-          updatedAt: now
-        })
-      })
+    /** Ids des fidèles trouvés, par pertinence (recherche des foyers par nom d'un membre). */
+    searchIds(query: string): number[] {
+      return isBlankQuery(query) ? [] : searchMembers(searchIndex(), query)
+    },
+
+    /** L'index est à reconstruire (secteur ou parrain d'un foyer changé). */
+    invalidate(): void {
       index = null
-      deps.logger.info({ id: member.id }, 'fidèle ajouté')
+    },
+
+    /** Numéros des foyers que ce fidèle parraine (avertissement avant de retirer Diacre). */
+    sponsoredHouseholds(id: number): number[] {
+      return deps.households.sponsoredNumbers(deps.db, id)
+    },
+
+    create(input: CreateMemberParsed): MemberDTO {
+      const member = written((tx) => {
+        const household = householdOf(tx, input.householdId)
+        const fields = prepare(tx, input)
+        const rank = rankIn(tx, household, input.role, fields.sex)
+        const id = deps.members.insert(tx, {
+          ...fields,
+          householdId: household.id,
+          role: input.role,
+          rank,
+          createdAt: now()
+        })
+        return existing(tx, id)
+      })
+      deps.logger.info({ id: member.id, householdId: member.householdId }, 'fidèle ajouté')
       return member
     },
 
     update(input: UpdateMemberParsed): MemberDTO {
-      const member = deps.db.transaction((tx) => {
-        if (!deps.members.findById(tx, input.id)) throw notFound(input.id)
-        const row = prepare(tx, input, input.id)
-        deps.members.update(tx, input.id, { ...row, updatedAt: deps.clock().toISOString() })
-        const updated = deps.members.findById(tx, input.id)
-        if (!updated) throw notFound(input.id)
-        return updated
+      const member = written((tx) => {
+        const before = existing(tx, input.id)
+        const fields = prepare(tx, input, input.id)
+        // Le rang ne bouge que si le rôle change (porteur, 2026-11-27 : rangs stables)
+        let rank = before.rank
+        if (input.role === before.role) assertSexFitsRole(input.role, fields.sex)
+        else
+          rank = rankIn(tx, householdOf(tx, before.householdId), input.role, fields.sex, input.id)
+        deps.members.update(tx, input.id, { ...fields, role: input.role, rank, updatedAt: now() })
+        if (before.deacon && !fields.deacon) dropSponsorships(tx, input.id)
+        return existing(tx, input.id)
       })
-      index = null
       deps.logger.info({ id: member.id }, 'fidèle modifié')
       return member
     },
 
+    /** Vers un autre foyer ; les rangs du foyer d'origine ne bougent pas. */
+    move(input: MoveMemberParsed): MemberDTO {
+      const member = written((tx) => {
+        const before = existing(tx, input.id)
+        if (before.householdId === input.householdId) {
+          throw new AppError('BUSINESS_RULE', 'Ce fidèle est déjà dans ce foyer.')
+        }
+        const target = householdOf(tx, input.householdId)
+        const rank = rankIn(tx, target, input.role, before.sex, input.id)
+        deps.members.update(tx, input.id, {
+          householdId: target.id,
+          role: input.role,
+          rank,
+          updatedAt: now()
+        })
+        return existing(tx, input.id)
+      })
+      deps.logger.info({ id: member.id, householdId: member.householdId }, 'fidèle déplacé')
+      return member
+    },
+
+    /** Échange le rang d'un enfant avec l'enfant voisin ; sans voisin, rien ne change. */
+    swapChildRank(input: SwapChildRankParsed): void {
+      written((tx) => {
+        const member = existing(tx, input.id)
+        if (member.role !== 'child') {
+          throw new AppError('BUSINESS_RULE', 'Seuls les enfants peuvent changer de place.')
+        }
+        const children = deps.members.childrenOf(tx, member.householdId)
+        const at = children.findIndex((c) => c.id === member.id)
+        const neighbour = children[input.direction === 'up' ? at - 1 : at + 1]
+        if (!neighbour) return
+        // Rang de passage libre (au-delà du plus haut jamais attribué) : l'index unique est
+        // vérifié à chaque instruction, et le CHECK exige un rang d'enfant ≥ 3
+        const free = householdOf(tx, member.householdId).lastChildRank + 1
+        const updatedAt = now()
+        deps.members.update(tx, member.id, { rank: free, updatedAt })
+        deps.members.update(tx, neighbour.id, { rank: member.rank, updatedAt })
+        deps.members.update(tx, member.id, { rank: neighbour.rank, updatedAt })
+      })
+      deps.logger.info({ id: input.id, direction: input.direction }, 'rangs échangés')
+    },
+
     delete(id: number): void {
-      const deleted = deps.members.softDelete(deps.db, id, deps.clock().toISOString())
-      if (!deleted) throw notFound(id)
-      index = null
+      written((tx) => {
+        if (!deps.members.softDelete(tx, id, now())) throw notFound(id)
+        dropSponsorships(tx, id)
+      })
       deps.logger.info({ id }, 'fidèle supprimé')
     }
   }

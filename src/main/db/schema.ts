@@ -116,13 +116,70 @@ export const accountingEntries = sqliteTable(
 )
 
 /*
+ * Secteurs (porteur, 2026-11-27). Numéro romain = `number`, attribué dans l'ordre de création,
+ * jamais modifié ni réattribué. Pas de suppression (non demandée).
+ */
+export const sectors = sqliteTable(
+  'sectors',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    number: integer('number').notNull(),
+    /** « Ambohitsara Avaratra » (normalizeSectorName) */
+    name: text('name').notNull(),
+    createdAt: text('created_at').notNull(),
+    updatedAt: text('updated_at').notNull()
+  },
+  (t) => [
+    uniqueIndex('sectors_number_unique_idx').on(t.number),
+    uniqueIndex('sectors_name_unique_idx').on(sql`${t.name} COLLATE NOCASE`)
+  ]
+)
+
+/*
+ * Foyers (porteur, 2026-11-27). `number` unique sur toutes les lignes, supprimées comprises :
+ * jamais réattribué. `sponsor_id` NULL = « Parrain à désigner » ; le service vérifie que le
+ * parrain est un diacre actif. `last_child_rank` : plus haut rang jamais donné à un enfant.
+ */
+export const households = sqliteTable(
+  'households',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    number: integer('number').notNull(),
+    sectorId: integer('sector_id')
+      .notNull()
+      .references(() => sectors.id),
+    sponsorId: integer('sponsor_id').references((): AnySQLiteColumn => members.id),
+    lastChildRank: integer('last_child_rank').notNull().default(2),
+    createdAt: text('created_at').notNull(),
+    updatedAt: text('updated_at').notNull(),
+    deletedAt: text('deleted_at')
+  },
+  (t) => [
+    uniqueIndex('households_number_unique_idx').on(t.number),
+    index('households_sector_idx').on(t.sectorId),
+    index('households_sponsor_idx').on(t.sponsorId),
+    check('households_last_child_rank_check', sql`${t.lastChildRank} >= 2`)
+  ]
+)
+
+/*
  * Fidèles (porteur, 2026-11-27). Indépendant de la comptabilité. Nom et prénom stockés déjà
  * normalisés (shared/domain/members/members.rules.ts). Suppression douce (`deleted_at`).
+ * Chaque fidèle appartient à un foyer ; son secteur est celui du foyer ; son matricule est
+ * calculé (`matricule()`), jamais stocké (migration 0009).
  */
 export const members = sqliteTable(
   'members',
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
+    householdId: integer('household_id')
+      .notNull()
+      .references((): AnySQLiteColumn => households.id),
+    /** head | father | mother | child (households.rules.ts) */
+    role: text('role', { enum: ['head', 'father', 'mother', 'child'] }).notNull(),
+    /** Rang dans le foyer, selon le rôle : 1, 2, puis 3 et plus pour les enfants */
+    rank: integer('rank').notNull(),
+    sex: text('sex', { enum: ['M', 'F'] }).notNull(),
     /** MAJUSCULES : « RAKOTO » */
     lastName: text('last_name').notNull(),
     /** « Rakoto Tiana » */
@@ -132,11 +189,9 @@ export const members = sqliteTable(
     address: text('address').notNull(),
     /** « +261341234567 » */
     phone: text('phone'),
-    /** Texte libre ; deviendra une référence à une table des secteurs */
-    sector: text('sector'),
     baptized: integer('baptized', { mode: 'boolean' }).notNull().default(false),
     communicant: integer('communicant', { mode: 'boolean' }).notNull().default(false),
-    registrationNumber: text('registration_number'),
+    deacon: integer('deacon', { mode: 'boolean' }).notNull().default(false),
     createdAt: text('created_at').notNull(),
     updatedAt: text('updated_at').notNull(),
     deletedAt: text('deleted_at')
@@ -149,13 +204,25 @@ export const members = sqliteTable(
     uniqueIndex('members_name_unique_idx')
       .on(t.lastName, t.firstName)
       .where(sql`${t.deletedAt} IS NULL`),
-    /** Matricule unique parmi les fidèles actifs, insensible à la casse (porteur, 2026-11-27) */
-    uniqueIndex('members_registration_number_idx')
-      .on(sql`${t.registrationNumber} COLLATE NOCASE`)
-      .where(sql`${t.registrationNumber} IS NOT NULL AND ${t.deletedAt} IS NULL`),
+    /** Un rang par foyer parmi les membres actifs : matricules uniques (migration 0009) */
+    uniqueIndex('members_rank_unique_idx')
+      .on(t.householdId, t.rank)
+      .where(sql`${t.deletedAt} IS NULL`),
     check('members_baptized_check', sql`${t.baptized} IN (0, 1)`),
     check('members_communicant_check', sql`${t.communicant} IN (0, 1)`),
+    check('members_deacon_check', sql`${t.deacon} IN (0, 1)`),
     /** Un membre communiant est toujours baptisé (porteur, 2026-11-27) */
-    check('members_communicant_baptized_check', sql`${t.communicant} = 0 OR ${t.baptized} = 1`)
+    check('members_communicant_baptized_check', sql`${t.communicant} = 0 OR ${t.baptized} = 1`),
+    /** Un diacre est toujours communiant (et donc baptisé) */
+    check('members_deacon_communicant_check', sql`${t.deacon} = 0 OR ${t.communicant} = 1`),
+    check('members_role_check', sql`${t.role} IN ('head', 'father', 'mother', 'child')`),
+    check('members_sex_check', sql`${t.sex} IN ('M', 'F')`),
+    /** Rang selon le rôle (porteur, 2026-11-27) */
+    check(
+      'members_rank_check',
+      sql`(${t.role} IN ('head', 'father') AND ${t.rank} = 1) OR (${t.role} = 'mother' AND ${t.rank} = 2) OR (${t.role} = 'child' AND ${t.rank} >= 3)`
+    ),
+    check('members_father_sex_check', sql`${t.role} <> 'father' OR ${t.sex} = 'M'`),
+    check('members_mother_sex_check', sql`${t.role} <> 'mother' OR ${t.sex} = 'F'`)
   ]
 )

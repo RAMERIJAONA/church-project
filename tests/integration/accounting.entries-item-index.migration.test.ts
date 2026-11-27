@@ -48,7 +48,8 @@ describe('migration 0008 : index des saisies par rubrique', () => {
 
     runMigrations(handle, MIGRATIONS_FOLDER)
 
-    expect(countRowsPerTable(handle.sqlite)).toEqual(before.rows)
+    // Tables d'avant intactes (les migrations suivantes peuvent en ajouter, vides : 0009)
+    expect(countRowsPerTable(handle.sqlite)).toMatchObject(before.rows)
     expect(handle.sqlite.prepare('SELECT * FROM accounting_entries ORDER BY id').all()).toEqual(
       before.entries
     )
