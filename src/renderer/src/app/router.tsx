@@ -20,17 +20,28 @@ export const routes: RouteObject[] = [
           Component: (await import('@renderer/features/home/pages/HomePage')).HomePage
         })
       },
-      // Fidèles : module indépendant de la comptabilité
+      // Fidèles, foyers et secteurs : module indépendant de la comptabilité
       {
         path: 'fideles',
         handle: {
-          title: 'Fidèles',
-          description: 'Registre des fidèles : ajout, modification, recherche',
+          title: 'Liste des fidèles',
+          description: 'Tous les fidèles, tous foyers confondus : recherche, filtres, tri',
           fillHeight: true
         } satisfies RouteHandle,
         errorElement: <RouteErrorBoundary />,
         lazy: async () => ({
           Component: (await import('@renderer/features/members/pages/MembersPage')).MembersPage
+        })
+      },
+      {
+        path: 'secteurs',
+        handle: {
+          title: 'Secteurs',
+          description: 'Secteurs de l’église, numérotés I, II, III… dans l’ordre de création'
+        } satisfies RouteHandle,
+        errorElement: <RouteErrorBoundary />,
+        lazy: async () => ({
+          Component: (await import('@renderer/features/members/pages/SectorsPage')).SectorsPage
         })
       },
       // Deux comptabilités, mêmes règles et même affichage (numéros : sorties A1, entrées A2)

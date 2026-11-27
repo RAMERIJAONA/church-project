@@ -2,8 +2,10 @@ import {
   ArrowDownToLine,
   ArrowUpFromLine,
   House,
+  MapPin,
   Settings,
   Users,
+  UsersRound,
   type LucideIcon
 } from 'lucide-react'
 
@@ -21,7 +23,16 @@ export interface NavItem {
 /** Les modules métier s'ajouteront ici (un item par feature). */
 export const MAIN_NAV: readonly NavItem[] = [
   { to: '/', label: 'Accueil', icon: House },
-  { to: '/fideles', label: 'Fidèles', icon: Users },
+  // Fidèles, foyers, secteurs : module indépendant de la comptabilité (2026-11-27)
+  { to: '/foyers', label: 'Foyers', section: 'Fidèles', icon: UsersRound },
+  {
+    to: '/fideles',
+    label: 'Liste des fidèles',
+    title: 'Liste des fidèles, tous foyers confondus',
+    section: 'Fidèles',
+    icon: Users
+  },
+  { to: '/secteurs', label: 'Secteurs', section: 'Fidèles', icon: MapPin },
   // Libellés courts sous un titre « Comptabilité » : une ligne chacun (2026-11-25)
   {
     to: '/comptabilite/entrees',

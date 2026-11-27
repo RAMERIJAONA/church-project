@@ -19,7 +19,7 @@ import { useMemberEditor } from './use-member-editor'
 export function MembersPage(): React.JSX.Element {
   const [total, setTotal] = useState<number | undefined>(undefined)
   const list = useMembersListState(total)
-  const members = useMembers(list.query, list.page)
+  const members = useMembers({ search: list.query, page: list.page })
   const editor = useMemberEditor()
   const { dialog } = editor
 
