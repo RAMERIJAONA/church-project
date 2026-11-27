@@ -1,0 +1,701 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "5f2b1c23-f142-4ca1-ab97-e212a48d9e8b",
+  "prevId": "3ea1bb16-6fa9-4ce8-bd92-929c0da58c92",
+  "tables": {
+    "accounting_entries": {
+      "name": "accounting_entries",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "item_id": {
+          "name": "item_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "year": {
+          "name": "year",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "amount": {
+          "name": "amount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "label": {
+          "name": "label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "operated_on": {
+          "name": "operated_on",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "accounting_entries_year_item_idx": {
+          "name": "accounting_entries_year_item_idx",
+          "columns": [
+            "year",
+            "item_id"
+          ],
+          "isUnique": false
+        },
+        "accounting_entries_operated_on_idx": {
+          "name": "accounting_entries_operated_on_idx",
+          "columns": [
+            "operated_on"
+          ],
+          "isUnique": false
+        },
+        "accounting_entries_item_idx": {
+          "name": "accounting_entries_item_idx",
+          "columns": [
+            "item_id",
+            "deleted_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "accounting_entries_item_id_accounting_items_id_fk": {
+          "name": "accounting_entries_item_id_accounting_items_id_fk",
+          "tableFrom": "accounting_entries",
+          "tableTo": "accounting_items",
+          "columnsFrom": [
+            "item_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "accounting_entries_type_check": {
+          "name": "accounting_entries_type_check",
+          "value": "\"accounting_entries\".\"type\" IN ('estimate', 'actual')"
+        },
+        "accounting_entries_amount_check": {
+          "name": "accounting_entries_amount_check",
+          "value": "\"accounting_entries\".\"amount\" >= 0"
+        },
+        "accounting_entries_operated_on_check": {
+          "name": "accounting_entries_operated_on_check",
+          "value": "(\"accounting_entries\".\"type\" = 'estimate' AND \"accounting_entries\".\"operated_on\" IS NULL) OR (\"accounting_entries\".\"type\" = 'actual' AND \"accounting_entries\".\"operated_on\" IS NOT NULL AND CAST(substr(\"accounting_entries\".\"operated_on\", 1, 4) AS INTEGER) = \"accounting_entries\".\"year\")"
+        }
+      }
+    },
+    "accounting_items": {
+      "name": "accounting_items",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "parent_id": {
+          "name": "parent_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "prefix": {
+          "name": "prefix",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ledger": {
+          "name": "ledger",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'expense'"
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "accounting_items_parent_position_idx": {
+          "name": "accounting_items_parent_position_idx",
+          "columns": [
+            "parent_id",
+            "position"
+          ],
+          "isUnique": false
+        },
+        "accounting_items_ledger_idx": {
+          "name": "accounting_items_ledger_idx",
+          "columns": [
+            "ledger"
+          ],
+          "isUnique": false
+        },
+        "accounting_items_root_letter_idx": {
+          "name": "accounting_items_root_letter_idx",
+          "columns": [
+            "ledger",
+            "prefix"
+          ],
+          "isUnique": true,
+          "where": "\"accounting_items\".\"parent_id\" IS NULL AND \"accounting_items\".\"deleted_at\" IS NULL"
+        }
+      },
+      "foreignKeys": {
+        "accounting_items_parent_id_accounting_items_id_fk": {
+          "name": "accounting_items_parent_id_accounting_items_id_fk",
+          "tableFrom": "accounting_items",
+          "tableTo": "accounting_items",
+          "columnsFrom": [
+            "parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "accounting_items_prefix_check": {
+          "name": "accounting_items_prefix_check",
+          "value": "(\"accounting_items\".\"parent_id\" IS NULL AND \"accounting_items\".\"prefix\" IS NOT NULL AND \"accounting_items\".\"prefix\" NOT GLOB '*[^ABD-PR-TVYZ]*' AND length(\"accounting_items\".\"prefix\") BETWEEN 1 AND 3) OR (\"accounting_items\".\"parent_id\" IS NOT NULL AND \"accounting_items\".\"prefix\" IS NULL)"
+        }
+      }
+    },
+    "households": {
+      "name": "households",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "number": {
+          "name": "number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "sector_id": {
+          "name": "sector_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "sponsor_id": {
+          "name": "sponsor_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "last_child_rank": {
+          "name": "last_child_rank",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 2
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "households_number_unique_idx": {
+          "name": "households_number_unique_idx",
+          "columns": [
+            "number"
+          ],
+          "isUnique": true
+        },
+        "households_active_number_idx": {
+          "name": "households_active_number_idx",
+          "columns": [
+            "number"
+          ],
+          "isUnique": false,
+          "where": "\"households\".\"deleted_at\" IS NULL"
+        },
+        "households_sector_idx": {
+          "name": "households_sector_idx",
+          "columns": [
+            "sector_id"
+          ],
+          "isUnique": false
+        },
+        "households_sponsor_idx": {
+          "name": "households_sponsor_idx",
+          "columns": [
+            "sponsor_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "households_sector_id_sectors_id_fk": {
+          "name": "households_sector_id_sectors_id_fk",
+          "tableFrom": "households",
+          "tableTo": "sectors",
+          "columnsFrom": [
+            "sector_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "households_sponsor_id_members_id_fk": {
+          "name": "households_sponsor_id_members_id_fk",
+          "tableFrom": "households",
+          "tableTo": "members",
+          "columnsFrom": [
+            "sponsor_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "households_last_child_rank_check": {
+          "name": "households_last_child_rank_check",
+          "value": "\"households\".\"last_child_rank\" >= 2"
+        }
+      }
+    },
+    "members": {
+      "name": "members",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "household_id": {
+          "name": "household_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "rank": {
+          "name": "rank",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "sex": {
+          "name": "sex",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "last_name": {
+          "name": "last_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "first_name": {
+          "name": "first_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "birth_date": {
+          "name": "birth_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "address": {
+          "name": "address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "phone": {
+          "name": "phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "baptized": {
+          "name": "baptized",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "communicant": {
+          "name": "communicant",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "deacon": {
+          "name": "deacon",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "members_name_unique_idx": {
+          "name": "members_name_unique_idx",
+          "columns": [
+            "last_name",
+            "first_name"
+          ],
+          "isUnique": true,
+          "where": "\"members\".\"deleted_at\" IS NULL"
+        },
+        "members_rank_unique_idx": {
+          "name": "members_rank_unique_idx",
+          "columns": [
+            "household_id",
+            "rank"
+          ],
+          "isUnique": true,
+          "where": "\"members\".\"deleted_at\" IS NULL"
+        },
+        "members_household_idx": {
+          "name": "members_household_idx",
+          "columns": [
+            "household_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "members_household_id_households_id_fk": {
+          "name": "members_household_id_households_id_fk",
+          "tableFrom": "members",
+          "tableTo": "households",
+          "columnsFrom": [
+            "household_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "members_baptized_check": {
+          "name": "members_baptized_check",
+          "value": "\"members\".\"baptized\" IN (0, 1)"
+        },
+        "members_communicant_check": {
+          "name": "members_communicant_check",
+          "value": "\"members\".\"communicant\" IN (0, 1)"
+        },
+        "members_deacon_check": {
+          "name": "members_deacon_check",
+          "value": "\"members\".\"deacon\" IN (0, 1)"
+        },
+        "members_communicant_baptized_check": {
+          "name": "members_communicant_baptized_check",
+          "value": "\"members\".\"communicant\" = 0 OR \"members\".\"baptized\" = 1"
+        },
+        "members_deacon_communicant_check": {
+          "name": "members_deacon_communicant_check",
+          "value": "\"members\".\"deacon\" = 0 OR \"members\".\"communicant\" = 1"
+        },
+        "members_role_check": {
+          "name": "members_role_check",
+          "value": "\"members\".\"role\" IN ('head', 'father', 'mother', 'child')"
+        },
+        "members_sex_check": {
+          "name": "members_sex_check",
+          "value": "\"members\".\"sex\" IN ('M', 'F')"
+        },
+        "members_rank_check": {
+          "name": "members_rank_check",
+          "value": "(\"members\".\"role\" IN ('head', 'father') AND \"members\".\"rank\" = 1) OR (\"members\".\"role\" = 'mother' AND \"members\".\"rank\" = 2) OR (\"members\".\"role\" = 'child' AND \"members\".\"rank\" >= 3)"
+        },
+        "members_father_sex_check": {
+          "name": "members_father_sex_check",
+          "value": "\"members\".\"role\" <> 'father' OR \"members\".\"sex\" = 'M'"
+        },
+        "members_mother_sex_check": {
+          "name": "members_mother_sex_check",
+          "value": "\"members\".\"role\" <> 'mother' OR \"members\".\"sex\" = 'F'"
+        }
+      }
+    },
+    "sectors": {
+      "name": "sectors",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "number": {
+          "name": "number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "sectors_number_unique_idx": {
+          "name": "sectors_number_unique_idx",
+          "columns": [
+            "number"
+          ],
+          "isUnique": true
+        },
+        "sectors_name_unique_idx": {
+          "name": "sectors_name_unique_idx",
+          "columns": [
+            "\"name\" COLLATE NOCASE"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "settings": {
+      "name": "settings",
+      "columns": {
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "indexes": {
+      "sectors_name_unique_idx": {
+        "columns": {
+          "\"name\" COLLATE NOCASE": {
+            "isExpression": true
+          }
+        }
+      }
+    }
+  }
+}

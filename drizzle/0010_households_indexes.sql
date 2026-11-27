@@ -1,0 +1,2 @@
+CREATE INDEX `households_active_number_idx` ON `households` (`number`) WHERE "households"."deleted_at" IS NULL;--> statement-breakpoint
+CREATE INDEX `members_household_idx` ON `members` (`household_id`);

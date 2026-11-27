@@ -165,7 +165,9 @@ async function start(): Promise<void> {
     accounting: services.accounting,
     accountingExport: services.accountingExport,
     accountingSummary: services.accountingSummary,
-    members: services.members
+    members: services.members,
+    households: services.households,
+    sectors: services.sectors
   })
 
   const openWindow = (): void => {

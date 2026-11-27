@@ -9,6 +9,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Sqlite } from '@main/db/client'
 import { swapChildRankInputSchema } from '@shared/domain/members/members.types'
+import { renameSectorInputSchema } from '@shared/domain/members/sectors.types'
 import { cell, setupAccounting, YEAR } from '@tests/helpers/accounting-context'
 import { setupMembers } from '@tests/helpers/members-context'
 
@@ -106,6 +107,40 @@ describe('plans des requêtes SQL', () => {
       update(jean, { deacon: false })
       move({ id: andry.id, householdId: two.id, role: 'child' })
       membersService.delete(nirina.id)
+    })
+    expect(plans.length).toBeGreaterThan(5)
+    expect(costlySteps(plans)).toEqual([])
+  })
+
+  it('foyers et secteurs : création, liste, filtres, ouverture, parrains, liste globale', () => {
+    const ctx = setupMembers()
+    const { handle, sector, household, member, updateHousehold, listHouseholds, list } = ctx
+    const plans = plansOf(handle.sqlite, () => {
+      const one = sector('Ambodimanga')
+      const two = sector('Antanety')
+      ctx.sectorsService.rename(
+        renameSectorInputSchema.parse({ id: two.id, name: 'Antanety Atsimo' })
+      )
+      ctx.sectorsService.list()
+      const h = household({ sectorId: one.id })
+      const rabe = member(h.id, {
+        role: 'father',
+        lastName: 'RABE',
+        firstName: 'Jean',
+        deacon: true
+      })
+      const other = household({ sectorId: two.id, sponsorId: rabe.id })
+      member(other.id, { firstName: 'Andry' })
+      updateHousehold({ id: other.id, sectorId: one.id, sponsorId: rabe.id })
+      ctx.householdsService.get(other.id)
+      listHouseholds()
+      listHouseholds({ sectorId: one.id, sponsorMissing: true })
+      listHouseholds({ search: '2' })
+      listHouseholds({ search: 'rabe' })
+      ctx.householdsService.sponsorCandidates('')
+      ctx.householdsService.sponsorCandidates('rabe')
+      list({ sectorId: one.id, deacon: true, sort: 'matricule' })
+      ctx.householdsService.delete(household().id)
     })
     expect(plans.length).toBeGreaterThan(5)
     expect(costlySteps(plans)).toEqual([])

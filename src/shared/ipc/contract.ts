@@ -22,13 +22,30 @@ import {
 } from '../domain/accounting/accounting.types'
 import { exportSheetInputSchema } from '../domain/accounting/accounting.export'
 import {
+  createHouseholdInputSchema,
+  householdIdInputSchema,
+  listHouseholdsInputSchema,
+  sponsorCandidatesInputSchema,
+  updateHouseholdInputSchema,
+  type HouseholdDTO,
+  type HouseholdSummaryDTO,
+  type SponsorDTO
+} from '../domain/members/households.types'
+import {
   createMemberInputSchema,
   listMembersInputSchema,
   memberIdInputSchema,
+  moveMemberInputSchema,
+  swapChildRankInputSchema,
   updateMemberInputSchema,
   type MemberDTO,
   type Paginated
 } from '../domain/members/members.types'
+import {
+  createSectorInputSchema,
+  renameSectorInputSchema,
+  type SectorDTO
+} from '../domain/members/sectors.types'
 import { appSettingsPatchSchema, type AppSettings } from '../domain/settings/settings.types'
 import type { Channel } from './channels'
 
@@ -56,10 +73,22 @@ export const ipcInputs = {
   'backup.export': z.undefined(),
   'backup.restore': z.undefined(),
   'backup.openFolder': z.undefined(),
+  'households.list': listHouseholdsInputSchema,
+  'households.get': householdIdInputSchema,
+  'households.create': createHouseholdInputSchema,
+  'households.update': updateHouseholdInputSchema,
+  'households.delete': householdIdInputSchema,
+  'households.sponsorCandidates': sponsorCandidatesInputSchema,
   'members.list': listMembersInputSchema,
   'members.create': createMemberInputSchema,
   'members.update': updateMemberInputSchema,
   'members.delete': memberIdInputSchema,
+  'members.move': moveMemberInputSchema,
+  'members.swapChildRank': swapChildRankInputSchema,
+  'members.sponsoredHouseholds': memberIdInputSchema,
+  'sectors.list': z.undefined(),
+  'sectors.create': createSectorInputSchema,
+  'sectors.rename': renameSectorInputSchema,
   'settings.get': z.undefined(),
   'settings.update': appSettingsPatchSchema
 } satisfies Record<Channel, z.ZodType>
@@ -110,10 +139,22 @@ export interface IpcOutputs {
   'backup.export': ExportResultDTO
   'backup.restore': RestoreResultDTO
   'backup.openFolder': null
+  'households.list': Paginated<HouseholdSummaryDTO>
+  'households.get': HouseholdDTO
+  'households.create': HouseholdDTO
+  'households.update': HouseholdDTO
+  'households.delete': null
+  'households.sponsorCandidates': SponsorDTO[]
   'members.list': Paginated<MemberDTO>
   'members.create': MemberDTO
   'members.update': MemberDTO
   'members.delete': null
+  'members.move': MemberDTO
+  'members.swapChildRank': null
+  'members.sponsoredHouseholds': number[]
+  'sectors.list': SectorDTO[]
+  'sectors.create': SectorDTO
+  'sectors.rename': SectorDTO
   'settings.get': AppSettings
   'settings.update': AppSettings
 }

@@ -156,6 +156,10 @@ export const households = sqliteTable(
   },
   (t) => [
     uniqueIndex('households_number_unique_idx').on(t.number),
+    /** Liste et comptage des foyers actifs, par numéro (migration 0010) */
+    index('households_active_number_idx')
+      .on(t.number)
+      .where(sql`${t.deletedAt} IS NULL`),
     index('households_sector_idx').on(t.sectorId),
     index('households_sponsor_idx').on(t.sponsorId),
     check('households_last_child_rank_check', sql`${t.lastChildRank} >= 2`)
@@ -208,6 +212,11 @@ export const members = sqliteTable(
     uniqueIndex('members_rank_unique_idx')
       .on(t.householdId, t.rank)
       .where(sql`${t.deletedAt} IS NULL`),
+    /**
+     * Clé étrangère vers le foyer (migration 0010) : vérifiée à chaque écriture d'un foyer, elle
+     * ne peut pas utiliser l'index partiel ci-dessus.
+     */
+    index('members_household_idx').on(t.householdId),
     check('members_baptized_check', sql`${t.baptized} IN (0, 1)`),
     check('members_communicant_check', sql`${t.communicant} IN (0, 1)`),
     check('members_deacon_check', sql`${t.deacon} IN (0, 1)`),

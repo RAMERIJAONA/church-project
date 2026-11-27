@@ -17,12 +17,15 @@ import { createAccountingSummaryRepository } from '@main/repositories/accounting
 import { createAccountingRepository } from '@main/repositories/accounting.repository'
 import { createHouseholdsRepository } from '@main/repositories/households.repository'
 import { createMembersRepository } from '@main/repositories/members.repository'
+import { createSectorsRepository } from '@main/repositories/sectors.repository'
 import { createSettingsRepository } from '@main/repositories/settings.repository'
 import { createAccountingExportService } from '@main/services/accounting-export.service'
 import { createAccountingSummaryService } from '@main/services/accounting-summary.service'
 import { createAccountingService } from '@main/services/accounting.service'
 import { createMaintenanceService } from '@main/services/maintenance.service'
+import { createHouseholdsService } from '@main/services/households.service'
 import { createMembersService } from '@main/services/members.service'
+import { createSectorsService } from '@main/services/sectors.service'
 import { createPrintService } from '@main/services/print.service'
 import { createSettingsService } from '@main/services/settings.service'
 
@@ -121,12 +124,32 @@ export async function createContainer(paths: AppPaths, logger: Logger, platform:
     logger: logger.child({ module: 'export' })
   })
 
-  const members = createMembersService({
-    db: handle.db,
+  // Fidèles d'abord : le service des foyers cherche par nom d'un membre et invalide l'index
+  const memberRepos = {
     members: createMembersRepository(),
     households: createHouseholdsRepository(),
+    sectors: createSectorsRepository()
+  }
+  const members = createMembersService({
+    db: handle.db,
+    members: memberRepos.members,
+    households: memberRepos.households,
     clock: systemClock,
     logger: logger.child({ module: 'members' })
+  })
+  const households = createHouseholdsService({
+    db: handle.db,
+    ...memberRepos,
+    clock: systemClock,
+    logger: logger.child({ module: 'households' }),
+    memberSearch: (query) => members.searchIds(query),
+    onChange: () => members.invalidate()
+  })
+  const sectors = createSectorsService({
+    db: handle.db,
+    sectors: memberRepos.sectors,
+    clock: systemClock,
+    logger: logger.child({ module: 'sectors' })
   })
 
   const print = createPrintService({
@@ -146,6 +169,8 @@ export async function createContainer(paths: AppPaths, logger: Logger, platform:
     accountingExport,
     accountingSummary,
     members,
+    households,
+    sectors,
     print,
     dispose: closeDatabase
   }
