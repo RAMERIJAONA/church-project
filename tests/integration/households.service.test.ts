@@ -44,7 +44,7 @@ describe('HouseholdsService', () => {
     member(h.id, { firstName: 'Andry' })
     member(h.id, { role: 'mother', sex: 'F', firstName: 'Soa' })
     const opened = householdsService.get(h.id)
-    expect(opened.sponsor).toMatchObject({ lastName: 'RABE', matricule: '1/1MB-I' })
+    expect(opened.sponsor).toMatchObject({ lastName: 'RABE', matricule: '1/1M-I' })
     expect(opened.members.map((m) => m.matricule)).toEqual(['2/2-I', '2/3-I'])
     expect(opened).toMatchObject({
       memberCount: 2,

@@ -10,7 +10,7 @@
       "id": 2,
       "lastName": "RAKOTOMALALA",
       "firstName": "Jean-Pierre",
-      "matricule": "2/1MB-I"
+      "matricule": "2/1M-I"
     },
     {
       "id": 3,
@@ -28,7 +28,7 @@
       "id": 5,
       "lastName": "RAKOTO",
       "firstName": "Andry",
-      "matricule": "1/3MB-I"
+      "matricule": "1/3M-I"
     },
     {
       "id": 6,
@@ -86,12 +86,12 @@
       "why": "partie d'un prénom composé"
     },
     {
-      "query": "1/3MB-I",
+      "query": "1/3M-I",
       "ids": [5],
       "why": "matricule complet"
     },
     {
-      "query": "3mb",
+      "query": "3m",
       "ids": [5],
       "why": "partie du matricule"
     },
@@ -136,7 +136,7 @@
       "why": "membres du foyer 12, ordre alphabétique"
     },
     {
-      "query": "1/3mb-i rakoto",
+      "query": "1/3m-i rakoto",
       "ids": [5],
       "why": "matricule et nom ensemble"
     }

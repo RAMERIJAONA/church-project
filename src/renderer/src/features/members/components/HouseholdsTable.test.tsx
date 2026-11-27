@@ -10,7 +10,7 @@ const households: HouseholdSummaryDTO[] = [
     id: 10,
     number: 1,
     sector,
-    sponsor: { id: 5, lastName: 'RABE', firstName: 'Jean', matricule: '3/1MB-I' },
+    sponsor: { id: 5, lastName: 'RABE', firstName: 'Jean', matricule: '3/1M-I' },
     memberCount: 4,
     mainLastName: 'RAKOTO'
   },

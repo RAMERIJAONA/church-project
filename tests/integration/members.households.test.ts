@@ -20,7 +20,7 @@ describe('MembersService : foyers, rangs et matricules', () => {
       member(h.id, { firstName: 'Andry', baptized: true, communicant: true }),
       member(h.id, { firstName: 'Nirina' })
     ].map((m) => m.matricule)
-    expect(matricules).toEqual(['1/1MB-I', '1/2B-I', '1/3MB-I', '1/4-I'])
+    expect(matricules).toEqual(['1/1M-I', '1/2B-I', '1/3M-I', '1/4-I'])
   })
 
   it('crée un foyer sans père', () => {
@@ -149,7 +149,7 @@ describe('MembersService : foyers, rangs et matricules', () => {
       deacon: true,
       communicant: true,
       baptized: true,
-      matricule: '1/3MB-I'
+      matricule: '1/3M-I'
     })
     // Désactiver diacre garde communiant et baptisé
     expect(update(m, { deacon: false })).toMatchObject({
@@ -179,7 +179,7 @@ describe('MembersService : parrains', () => {
     const child = member(sponsored[0]!.id, { firstName: 'Andry' })
     expect(membersService.get(child.id).sponsor).toMatchObject({
       id: rabe.id,
-      matricule: '1/1MB-I'
+      matricule: '1/1M-I'
     })
     expect(membersService.sponsoredHouseholds(rabe.id)).toEqual([2, 3])
 

@@ -8,8 +8,8 @@ const tiana = makeMemberDTO({
   birthDate: '1984-11-28',
   deacon: true,
   communicant: true,
-  matricule: '1/3MB-I',
-  sponsor: { id: 9, lastName: 'RABE', firstName: 'Jean', matricule: '2/1MB-I' }
+  matricule: '1/3M-I',
+  sponsor: { id: 9, lastName: 'RABE', firstName: 'Jean', matricule: '2/1M-I' }
 })
 const nirina = makeMemberDTO({
   id: 2,
@@ -66,7 +66,7 @@ describe('MembersTable', () => {
       .getAllByRole('cell')
       .map((c) => c.textContent)
     expect(cells.slice(0, 11)).toEqual([
-      '1/3MB-I',
+      '1/3M-I',
       'RAKOTO',
       'Tiana',
       '28/11/1984',

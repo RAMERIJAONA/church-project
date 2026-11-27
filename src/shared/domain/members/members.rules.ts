@@ -117,7 +117,10 @@ export function applyStatusRules(s: Statuses): Statuses {
   return { baptized: s.baptized || communicant, communicant, deacon: s.deacon }
 }
 
-/** `1/3MB-I` : foyer, rang, M si communiant, B si baptisé, numéro romain du secteur. */
+/**
+ * `1/3M-I` : foyer, rang, statut, numéro romain du secteur. Statut : `M` si communiant (d'office
+ * baptisé, `B` inutile : porteur, 2026-11-27, remplace `MB`), `B` si baptisé seulement, rien sinon.
+ */
 export function matricule(p: {
   householdNumber: number
   rank: number
@@ -125,7 +128,7 @@ export function matricule(p: {
   communicant: boolean
   sectorNumber: number
 }): string {
-  const letters = `${p.communicant ? 'M' : ''}${p.baptized ? 'B' : ''}`
+  const letters = p.communicant ? 'M' : p.baptized ? 'B' : ''
   return `${p.householdNumber}/${p.rank}${letters}-${toRoman(p.sectorNumber)}`
 }
 

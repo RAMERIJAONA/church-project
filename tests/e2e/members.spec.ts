@@ -101,9 +101,9 @@ test('@smoke fidèles : secteurs, foyers, membres, matricules et liste globale',
       baptized: true,
       communicant: true
     })
-    await expect(form.getByLabel('Matricule')).toHaveText('1/1MB-I')
+    await expect(form.getByLabel('Matricule')).toHaveText('1/1M-I')
     await form.getByRole('button', { name: 'Enregistrer et ajouter un autre' }).click()
-    await expect(w.getByText('Membre ajouté : 1/1MB-I')).toBeVisible()
+    await expect(w.getByText('Membre ajouté : 1/1M-I')).toBeVisible()
     form = await fillMember(w, 1, {
       role: 'mother',
       sex: 'Féminin',
@@ -125,7 +125,7 @@ test('@smoke fidèles : secteurs, foyers, membres, matricules et liste globale',
     await expect(w.getByText('Membre ajouté : 1/4-I')).toBeVisible()
     await expect
       .poll(() => matricules(w, 'Membres du foyer'))
-      .toEqual(['1/1MB-I', '1/2B-I', '1/3-I', '1/4-I'])
+      .toEqual(['1/1M-I', '1/2B-I', '1/3-I', '1/4-I'])
 
     // Le père devient diacre : son matricule ne change pas
     await w.getByRole('button', { name: 'RAKOTO Jean', exact: true }).click()
@@ -133,7 +133,7 @@ test('@smoke fidèles : secteurs, foyers, membres, matricules et liste globale',
     await yes(form, 'Diacre').click()
     await form.getByRole('button', { name: 'Enregistrer', exact: true }).click()
     await expect(w.getByText('Modifications enregistrées')).toBeVisible()
-    await expect(w.getByRole('row', { name: /1\/1MB-I/ })).toContainText('Diacre')
+    await expect(w.getByRole('row', { name: /1\/1M-I/ })).toContainText('Diacre')
 
     // Foyer 2, secteur II, parrain : le diacre (seuls les diacres sont proposés)
     await createHousehold(w, 'II · Antanety Atsimo', 'RAKOTO Jean')
@@ -184,7 +184,7 @@ test('@smoke fidèles : secteurs, foyers, membres, matricules et liste globale',
     await expect(w.getByText('Fidèle supprimé')).toBeVisible()
     await expect
       .poll(() => matricules(w, 'Membres du foyer'))
-      .toEqual(['1/1MB-I', '1/2B-I', '1/4-I'])
+      .toEqual(['1/1M-I', '1/2B-I', '1/4-I'])
   } finally {
     await running.close()
     removeDir(running.userData)

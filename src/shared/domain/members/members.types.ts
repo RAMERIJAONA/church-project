@@ -27,7 +27,7 @@ export interface MemberDTO {
   sector: SectorRef
   /** Parrain du foyer, `null` : « Parrain à désigner » */
   sponsor: SponsorDTO | null
-  /** Calculé, jamais stocké : « 1/3MB-I » */
+  /** Calculé, jamais stocké : « 1/3M-I » */
   matricule: string
   createdAt: string
   updatedAt: string

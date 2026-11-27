@@ -11,7 +11,7 @@ const jean = makeMemberDTO({
   firstName: 'Jean',
   baptized: true,
   communicant: true,
-  matricule: '1/1MB-I'
+  matricule: '1/1M-I'
 })
 const andry = makeMemberDTO({
   id: 8,
@@ -165,26 +165,42 @@ describe('MemberFormDialog : rôle, statuts et matricule', () => {
     )
   })
 
-  it('cocher Diacre coche et verrouille Communiant et Baptisé ; décocher ne retire rien', async () => {
+  it('statuts pas à pas : Communiant exige Baptisé, Diacre exige Communiant', async () => {
     const { dialog } = setup()
+    const disabled = (group: string) => radio(dialog, group, 'Oui').hasAttribute('disabled')
+    // Non baptisé : Communiant et Diacre à Non, grisés
+    expect(checked(radio(dialog, 'Communiant', 'Non'))).toBe('true')
+    expect([disabled('Baptisé'), disabled('Communiant'), disabled('Diacre')]).toEqual([
+      false,
+      true,
+      true
+    ])
+    expect(within(dialog).getByText('Seul un fidèle baptisé peut être communiant.')).toBeTruthy()
+    // Baptisé : Communiant possible, Diacre toujours grisé
+    await userEvent.click(radio(dialog, 'Baptisé', 'Oui'))
+    expect([disabled('Communiant'), disabled('Diacre')]).toEqual([false, true])
+    expect(within(dialog).getByText('Seul un communiant peut être diacre.')).toBeTruthy()
+    // Communiant : Diacre possible ; Baptisé verrouillé à Oui
+    await userEvent.click(radio(dialog, 'Communiant', 'Oui'))
+    expect([disabled('Baptisé'), disabled('Diacre')]).toEqual([true, false])
+    // Diacre : Communiant verrouillé à Oui ; décocher Diacre ne retire rien
     await userEvent.click(radio(dialog, 'Diacre', 'Oui'))
-    expect(checked(radio(dialog, 'Communiant', 'Oui'))).toBe('true')
-    expect(checked(radio(dialog, 'Baptisé', 'Oui'))).toBe('true')
-    expect(radio(dialog, 'Communiant', 'Non')).toHaveProperty('disabled', true)
-    expect(radio(dialog, 'Baptisé', 'Non')).toHaveProperty('disabled', true)
+    expect(disabled('Communiant')).toBe(true)
     await userEvent.click(radio(dialog, 'Diacre', 'Non'))
     expect(checked(radio(dialog, 'Communiant', 'Oui'))).toBe('true')
     expect(checked(radio(dialog, 'Baptisé', 'Oui'))).toBe('true')
-    expect(radio(dialog, 'Communiant', 'Non')).toHaveProperty('disabled', false)
+    expect(disabled('Communiant')).toBe(false)
   })
 
-  it('recalcule le matricule pendant la saisie', async () => {
+  it('recalcule le matricule pendant la saisie : B si baptisé, M seul si communiant', async () => {
     const household = makeHouseholdDTO({ members: [jean, andry] })
     const { dialog } = setup({ initial: andry, household })
     const preview = within(dialog).getByLabelText('Matricule')
     expect(preview.textContent).toBe('1/3-I')
+    await userEvent.click(radio(dialog, 'Baptisé', 'Oui'))
+    expect(preview.textContent).toBe('1/3B-I')
     await userEvent.click(radio(dialog, 'Communiant', 'Oui'))
-    expect(preview.textContent).toBe('1/3MB-I')
+    expect(preview.textContent).toBe('1/3M-I')
     await userEvent.click(radio(dialog, 'Communiant', 'Non'))
     expect(preview.textContent).toBe('1/3B-I')
   })
@@ -215,7 +231,7 @@ describe('MemberFormDialog : rôle, statuts et matricule', () => {
   it('affiche foyer, secteur, parrain et âge', () => {
     const household = makeHouseholdDTO({
       members: [andry],
-      sponsor: { id: 5, lastName: 'RABE', firstName: 'Jean', matricule: '3/1MB-I' }
+      sponsor: { id: 5, lastName: 'RABE', firstName: 'Jean', matricule: '3/1M-I' }
     })
     const { dialog } = setup({ initial: andry, household })
     const summary = within(dialog).getByRole('group', { name: 'Fiche' })

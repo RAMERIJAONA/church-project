@@ -72,6 +72,9 @@ Le module reste **indépendant de la comptabilité** (aucun lien de données, au
 | Premier parrain | le parrain peut rester **« à désigner »** : un foyer s'enregistre sans parrain |
 | Départ d'un enfant | **les rangs ne bougent pas** : `4/3`, `4/4`, `4/5`, le premier part → `4/4`, `4/5` restent |
 | Création d'un foyer | **le foyer d'abord, puis les membres à la chaîne** (« Enregistrer et ajouter un autre ») |
+| Sexe (après la livraison) | Père toujours masculin, Mère toujours féminine : le rôle impose le sexe, grisé |
+| Matricule (après la livraison) | **`M` seul pour un communiant** (d'office baptisé) : `1/2M-I`, plus jamais `MB` ; `B` si baptisé seulement |
+| Statuts (après la livraison) | **pas à pas** : Communiant grisé à Non tant que non baptisé, Diacre grisé à Non tant que non communiant ; un statut exigé reste verrouillé à Oui (ce verrou : choix de l'équipe, proposé au porteur) |
 
 ### 3.3 Conséquences proposées au porteur pendant la conception (non contestées)
 

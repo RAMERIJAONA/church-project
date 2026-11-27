@@ -6,7 +6,7 @@
  * mot tapé (plus petit = meilleur) : mot identique 0, début de mot 1, contenu dans un mot 2
  * (2 lettres et plus), approché 3 + distance (4 lettres et plus : 1 faute jusqu'à 7 lettres,
  * 2 à partir de 8 ; sur le début d'un mot plus long, seulement à partir de 5 lettres).
- * Matricule (calculé, `1/3MB-I`) : un mot tapé avec une barre (`1/3`, `12/`) est un matricule
+ * Matricule (calculé, `1/3M-I`) : un mot tapé avec une barre (`1/3`, `12/`) est un matricule
  * partiel, qui doit COMMENCER le matricule (`1/3` ne trouve ni `13/1` ni `21/3`) ; sinon,
  * identique, début ou contenu du matricule sans ponctuation, jamais approché.
  * Ex æquo : ordre alphabétique (nom, prénom).
@@ -37,7 +37,7 @@ export interface IndexedEntry extends SearchEntry {
   words: string[]
   /** Matricule sans ponctuation, « 13mbi » */
   registration: string
-  /** Matricule en minuscules, ponctuation gardée, « 1/3mb-i » */
+  /** Matricule en minuscules, ponctuation gardée, « 1/3m-i » */
   matriculeKey: string
 }
 
@@ -136,7 +136,7 @@ function registrationScore(token: string, registration: string): number {
   return NO_MATCH
 }
 
-/** « 1/3MB-I » → « 1/3mb-i » : minuscules, sans espaces. */
+/** « 1/3M-I » → « 1/3m-i » : minuscules, sans espaces. */
 const matriculeKeyOf = (text: string): string => text.toLowerCase().replace(/\s+/g, '')
 
 function matriculePrefixScore(token: string, key: string): number {

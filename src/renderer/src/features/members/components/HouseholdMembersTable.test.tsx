@@ -11,7 +11,7 @@ const jean = makeMemberDTO({
   firstName: 'Jean',
   deacon: true,
   communicant: true,
-  matricule: '1/1MB-I'
+  matricule: '1/1M-I'
 })
 const andry = makeMemberDTO({
   id: 2,
@@ -55,7 +55,7 @@ describe('HouseholdMembersTable', () => {
     ])
     const rows = screen.getAllByRole('row').slice(1)
     expect(rows.map((r) => within(r).getAllByRole('cell')[0]?.textContent)).toEqual([
-      '1/1MB-I',
+      '1/1M-I',
       '1/3B-I',
       '1/4B-I'
     ])

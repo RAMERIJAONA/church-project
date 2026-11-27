@@ -5,7 +5,7 @@
     "baptized": true,
     "communicant": true,
     "sectorNumber": 1,
-    "expected": "1/1MB-I"
+    "expected": "1/1M-I"
   },
   {
     "householdNumber": 1,
@@ -21,7 +21,7 @@
     "baptized": true,
     "communicant": true,
     "sectorNumber": 1,
-    "expected": "1/3MB-I"
+    "expected": "1/3M-I"
   },
   {
     "householdNumber": 1,
@@ -37,7 +37,7 @@
     "baptized": true,
     "communicant": true,
     "sectorNumber": 2,
-    "expected": "2/1MB-II"
+    "expected": "2/1M-II"
   },
   {
     "householdNumber": 15,

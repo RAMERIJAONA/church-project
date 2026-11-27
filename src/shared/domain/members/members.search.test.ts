@@ -66,7 +66,7 @@ describe('searchMembers', () => {
         id: i + 1,
         lastName: word(i, 3 + (i % 4)).toUpperCase(),
         firstName: `${word(i + 3, 2)} ${word(i + 11, 3)}`,
-        matricule: `${i + 1}/3MB-II`
+        matricule: `${i + 1}/3M-II`
       })
     )
     const big = buildSearchIndex(entries)

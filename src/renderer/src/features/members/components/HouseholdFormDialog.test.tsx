@@ -10,7 +10,7 @@ const sectors: SectorDTO[] = [
   { id: 1, number: 1, numeral: 'I', name: 'Ambodimanga', householdCount: 1, memberCount: 3 },
   { id: 2, number: 2, numeral: 'II', name: 'Antanety', householdCount: 0, memberCount: 0 }
 ]
-const rabe: SponsorDTO = { id: 5, lastName: 'RABE', firstName: 'Jean', matricule: '3/1MB-I' }
+const rabe: SponsorDTO = { id: 5, lastName: 'RABE', firstName: 'Jean', matricule: '3/1M-I' }
 
 function setup(props: Partial<HouseholdFormDialogProps> = {}) {
   const onSubmit = vi.fn()
