@@ -3,7 +3,15 @@
  * d'affichage des réalisations. Fonctions pures : la date du jour est toujours passée en
  * paramètre. Calculs faits en UTC sur des dates sans heure (aucun décalage de fuseau).
  */
-import { capitalize } from '@shared/utils/dates'
+import {
+  calendarDateToUtc as toUtc,
+  capitalize,
+  localDateOf,
+  utcToCalendarDate as fromUtc
+} from '@shared/utils/dates'
+
+// Helpers génériques déplacés dans shared/utils/dates (aussi utilisés par les fidèles)
+export { isCalendarDate, localDateOf } from '@shared/utils/dates'
 
 export type PeriodKind = 'day' | 'week' | 'month'
 
@@ -16,32 +24,12 @@ export interface DateRange {
 
 const pad = (n: number, size = 2): string => String(n).padStart(size, '0')
 
-/** Date du calendrier LOCAL (fuseau de la machine) d'un instant. */
-export function localDateOf(instant: Date): string {
-  return `${pad(instant.getFullYear(), 4)}-${pad(instant.getMonth() + 1)}-${pad(instant.getDate())}`
-}
-
 /** Date d'opération proposée pour une réalisation de `year` : aujourd'hui, ramené dans l'année. */
 export function defaultOperationDate(now: Date, year: number): string {
   const today = localDateOf(now)
   const first = `${pad(year, 4)}-01-01`
   const last = `${pad(year, 4)}-12-31`
   return today < first ? first : today > last ? last : today
-}
-
-/** « 2026-11-24 » → Date à minuit UTC (pour l'arithmétique et l'affichage en UTC). */
-function toUtc(date: string): Date {
-  const [y, m, d] = date.split('-').map(Number)
-  return new Date(Date.UTC(y ?? 0, (m ?? 1) - 1, d ?? 1))
-}
-
-function fromUtc(date: Date): string {
-  return `${pad(date.getUTCFullYear(), 4)}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`
-}
-
-/** Vrai si « AAAA-MM-JJ » est une date existante du calendrier (pas de 29 février 2026). */
-export function isCalendarDate(date: string): boolean {
-  return /^\d{4}-\d{2}-\d{2}$/.test(date) && fromUtc(toUtc(date)) === date
 }
 
 function addDays(date: string, days: number): string {

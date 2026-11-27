@@ -29,3 +29,26 @@ export function formatDateTime(date: Date): string {
 export function capitalize(text: string): string {
   return text.charAt(0).toLocaleUpperCase('fr-FR') + text.slice(1)
 }
+
+const pad = (n: number, size = 2): string => String(n).padStart(size, '0')
+
+/** Date du calendrier LOCAL (fuseau de la machine) d'un instant, « AAAA-MM-JJ ». */
+export function localDateOf(instant: Date): string {
+  return `${pad(instant.getFullYear(), 4)}-${pad(instant.getMonth() + 1)}-${pad(instant.getDate())}`
+}
+
+/** « 2026-11-24 » → Date à minuit UTC (pour l'arithmétique et l'affichage en UTC). */
+export function calendarDateToUtc(date: string): Date {
+  const [y, m, d] = date.split('-').map(Number)
+  return new Date(Date.UTC(y ?? 0, (m ?? 1) - 1, d ?? 1))
+}
+
+/** Date à minuit UTC → « AAAA-MM-JJ ». */
+export function utcToCalendarDate(date: Date): string {
+  return `${pad(date.getUTCFullYear(), 4)}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`
+}
+
+/** Vrai si « AAAA-MM-JJ » est une date existante du calendrier (pas de 29 février 2026). */
+export function isCalendarDate(date: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(date) && utcToCalendarDate(calendarDateToUtc(date)) === date
+}
