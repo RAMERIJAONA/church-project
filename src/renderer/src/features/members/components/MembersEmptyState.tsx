@@ -1,4 +1,6 @@
 import { Users } from 'lucide-react'
+import { Link } from 'react-router'
+import { Button } from '@renderer/components/ui/button'
 
 /** Aucun fidèle enregistré : ils s'ajoutent depuis leur foyer. */
 export function MembersEmptyState(): React.JSX.Element {
@@ -10,10 +12,12 @@ export function MembersEmptyState(): React.JSX.Element {
       <div className="max-w-md space-y-1.5">
         <h2 className="font-display text-lg font-semibold">Aucun fidèle enregistré</h2>
         <p className="text-sm text-muted-foreground">
-          Les fidèles s’ajoutent depuis leur foyer. Le nom et le prénom sont mis en forme
-          automatiquement.
+          Les fidèles s’ajoutent depuis leur foyer : créez un foyer, puis ajoutez-y ses membres.
         </p>
       </div>
+      <Button asChild>
+        <Link to="/foyers">Aller aux foyers</Link>
+      </Button>
     </div>
   )
 }

@@ -1,30 +1,54 @@
 import {
+  ageOn,
+  formatAge,
   formatBirthDate,
   formatPhone,
   memberDisplayName
 } from '@shared/domain/members/members.rules'
-import type { MemberDTO } from '@shared/domain/members/members.types'
+import type { MemberDTO, MemberSort } from '@shared/domain/members/members.types'
 import { MemberRowActions } from './MemberRowActions'
 import {
   addressText,
   bodyCell,
+  deaconBadge,
   headCell,
-  lastNameText,
+  matriculeText,
+  missingText,
+  openButton,
   row,
   table,
   tableFrame
 } from './members.styles'
+import { SortableHeader } from './SortableHeader'
 
 export interface MembersTableProps {
   members: MemberDTO[]
+  /** « AAAA-MM-JJ » : calcul de l'âge */
+  today: string
+  sort: MemberSort
+  order: 'asc' | 'desc'
+  onSort: (sort: MemberSort) => void
   onEdit: (member: MemberDTO) => void
+  onOpenHousehold: (member: MemberDTO) => void
   onDelete: (member: MemberDTO) => void
 }
 
-const yesNo = (value: boolean): string => (value ? 'Oui' : 'Non')
-
-/** Liste des fidèles (une page). L'adresse est rappelée en petit sous le nom. */
-export function MembersTable({ members, onEdit, onDelete }: MembersTableProps): React.JSX.Element {
+/** Liste globale des fidèles (une page), tous foyers confondus. */
+export function MembersTable(p: MembersTableProps): React.JSX.Element {
+  const sortable = (label: string, sortKey: MemberSort): React.JSX.Element => (
+    <SortableHeader
+      label={label}
+      sortKey={sortKey}
+      sort={p.sort}
+      order={p.order}
+      onSort={p.onSort}
+    />
+  )
+  const plain = (label: string): React.JSX.Element => (
+    <th scope="col" className={headCell()}>
+      {label}
+    </th>
+  )
   return (
     <div
       role="region"
@@ -33,57 +57,67 @@ export function MembersTable({ members, onEdit, onDelete }: MembersTableProps): 
       tabIndex={0}
       className={tableFrame}
     >
-      <table className={table}>
+      <table className={`${table} min-w-[76rem]`}>
         <thead>
           <tr>
-            <th scope="col" className={headCell()}>
-              Nom
-            </th>
-            <th scope="col" className={headCell()}>
-              Prénom
-            </th>
-            <th scope="col" className={headCell()}>
-              Naissance
-            </th>
-            <th scope="col" className={headCell()}>
-              Téléphone
-            </th>
-            <th scope="col" className={headCell()}>
-              Secteur
-            </th>
-            <th scope="col" className={headCell({ align: 'center' })}>
-              Baptisé
-            </th>
-            <th scope="col" className={headCell({ align: 'center' })}>
-              Communiant
-            </th>
-            <th scope="col" className={headCell()}>
-              Matricule
-            </th>
+            {sortable('Matricule', 'matricule')}
+            {sortable('Nom', 'name')}
+            {plain('Prénom')}
+            {sortable('Date de naissance', 'birthDate')}
+            {plain('Âge')}
+            {plain('Téléphone')}
+            {plain('Adresse')}
+            {sortable('Secteur', 'sector')}
+            {plain('Diacre')}
+            {plain('Parrain diacre')}
+            {sortable('Foyer', 'household')}
             <th scope="col" className={headCell({ align: 'right' })}>
               <span className="sr-only">Actions</span>
             </th>
           </tr>
         </thead>
         <tbody>
-          {members.map((m) => (
+          {p.members.map((m) => (
             <tr key={m.id} className={row}>
               <td className={bodyCell()}>
-                <div className={lastNameText}>{m.lastName}</div>
-                <div className={addressText}>{m.address}</div>
+                <span className={matriculeText}>{m.matricule}</span>
+              </td>
+              <td className={bodyCell()}>
+                <button type="button" className={openButton} onClick={() => p.onEdit(m)}>
+                  {m.lastName}
+                </button>
               </td>
               <td className={bodyCell()}>{m.firstName}</td>
               <td className={bodyCell({ numeric: true })}>{formatBirthDate(m.birthDate)}</td>
+              <td className={bodyCell({ numeric: true })}>
+                {formatAge(ageOn(m.birthDate, p.today))}
+              </td>
               <td className={bodyCell({ numeric: true })}>{m.phone ? formatPhone(m.phone) : ''}</td>
-              <td className={bodyCell()}>{m.sector.name}</td>
-              <td className={bodyCell({ align: 'center' })}>{yesNo(m.baptized)}</td>
-              <td className={bodyCell({ align: 'center' })}>{yesNo(m.communicant)}</td>
-              <td className={bodyCell({ numeric: true })}>{m.matricule}</td>
+              <td className={bodyCell()}>
+                <span className={addressText}>{m.address}</span>
+              </td>
+              <td className={bodyCell()}>{`${m.sector.numeral} · ${m.sector.name}`}</td>
+              <td className={bodyCell()}>
+                {m.deacon && <span className={deaconBadge}>Diacre</span>}
+              </td>
+              <td className={bodyCell()}>
+                {m.sponsor ? (
+                  memberDisplayName(m.sponsor)
+                ) : (
+                  <span className={missingText}>À désigner</span>
+                )}
+              </td>
+              <td className={bodyCell({ numeric: true })}>
+                <button type="button" className={openButton} onClick={() => p.onOpenHousehold(m)}>
+                  Foyer {m.householdNumber}
+                </button>
+              </td>
               <td className={bodyCell({ align: 'right' })}>
                 <MemberRowActions
                   name={memberDisplayName(m)}
-                  onEdit={() => onEdit(m)}
-                  onDelete={() => onDelete(m)}
+                  onEdit={() => p.onEdit(m)}
+                  onOpenHousehold={() => p.onOpenHousehold(m)}
+                  onDelete={() => p.onDelete(m)}
                 />
               </td>
             </tr>

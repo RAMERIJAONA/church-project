@@ -52,3 +52,6 @@ export const deaconBadge =
   'inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary'
 
 export const matriculeText = 'font-semibold whitespace-nowrap tabular-nums'
+
+export const sortButton =
+  'inline-flex cursor-pointer items-center gap-1 uppercase hover:text-foreground focus-visible:text-foreground focus-visible:outline-none'
