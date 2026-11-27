@@ -3,6 +3,7 @@ import { Button } from '@renderer/components/ui/button'
 import type { HouseholdSummaryDTO } from '@shared/domain/members/households.types'
 import { memberDisplayName } from '@shared/domain/members/members.rules'
 import {
+  actionsCell,
   bodyCell,
   headCell,
   missingText,
@@ -44,7 +45,7 @@ export function HouseholdsTable({
             <th scope="col" className={headCell({ align: 'right' })}>
               Membres
             </th>
-            <th scope="col" className={headCell({ align: 'right' })}>
+            <th scope="col" className={`${headCell({ align: 'right' })} ${actionsCell}`}>
               <span className="sr-only">Actions</span>
             </th>
           </tr>
@@ -67,7 +68,7 @@ export function HouseholdsTable({
                 )}
               </td>
               <td className={bodyCell({ align: 'right', numeric: true })}>{h.memberCount}</td>
-              <td className={bodyCell({ align: 'right' })}>
+              <td className={`${bodyCell({ align: 'right' })} ${actionsCell}`}>
                 {/* Ouvrir toujours visible : cliquer sur le nom n'est pas évident (porteur) */}
                 <Button
                   variant="ghost"

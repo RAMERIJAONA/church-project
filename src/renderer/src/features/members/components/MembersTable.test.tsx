@@ -37,48 +37,35 @@ function setup(props: Partial<MembersTableProps> = {}) {
 }
 
 describe('MembersTable', () => {
-  it('affiche les colonnes de la liste globale dans l’ordre demandé', () => {
+  it('regroupe les informations en 7 colonnes, sans défilement horizontal', () => {
     setup()
     expect(
       screen
         .getAllByRole('columnheader')
         .map((h) => h.textContent)
-        .slice(0, 11)
-    ).toEqual([
-      'Matricule',
-      'Nom',
-      'Prénom',
-      'Date de naissance',
-      'Âge',
-      'Téléphone',
-      'Adresse',
-      'Secteur',
-      'Diacre',
-      'Parrain diacre',
-      'Foyer'
-    ])
+        .slice(0, 7)
+    ).toEqual(['Matricule', 'Fidèle', 'Naissance', 'Téléphone', 'Secteur', 'Parrain', 'Foyer'])
   })
 
-  it('affiche matricule, âge, diacre, parrain et foyer', () => {
+  it('affiche nom, diacre et adresse ensemble, l’âge sous la date, le parrain et le foyer', () => {
     setup()
     const [first, second] = screen.getAllByRole('row').slice(1)
-    const cells = within(first!)
-      .getAllByRole('cell')
-      .map((c) => c.textContent)
-    expect(cells.slice(0, 11)).toEqual([
-      '1/3M-I',
-      'RAKOTO',
-      'Tiana',
-      '28/11/1984',
-      '41 ans',
+    const cells = within(first!).getAllByRole('cell')
+    expect(cells[0]?.textContent).toBe('1/3M-I')
+    const person = within(cells[1]!)
+    expect(person.getByText('RAKOTO Tiana')).toBeTruthy()
+    expect(person.getByText('Diacre')).toBeTruthy()
+    expect(person.getByText('Lot II A 45, Ambatondrazaka')).toBeTruthy()
+    expect(within(cells[2]!).getByText('28/11/1984')).toBeTruthy()
+    expect(within(cells[2]!).getByText('41 ans')).toBeTruthy()
+    expect(cells.slice(3, 7).map((c) => c.textContent)).toEqual([
       '034 12 345 67',
-      'Lot II A 45, Ambatondrazaka',
       'I · Ambodimanga',
-      'Diacre',
       'RABE Jean',
       'Foyer 1'
     ])
     expect(second!.textContent).toContain('À désigner')
+    expect(second!.textContent).not.toContain('Diacre')
     expect(second!.textContent).not.toContain('null')
   })
 
@@ -87,7 +74,7 @@ describe('MembersTable', () => {
     expect(screen.getByRole('columnheader', { name: /Matricule/ }).getAttribute('aria-sort')).toBe(
       'descending'
     )
-    expect(screen.getByRole('columnheader', { name: /^Nom/ }).getAttribute('aria-sort')).toBe(
+    expect(screen.getByRole('columnheader', { name: /^Fidèle/ }).getAttribute('aria-sort')).toBe(
       'none'
     )
     await userEvent.click(screen.getByRole('button', { name: /trier par foyer/i }))

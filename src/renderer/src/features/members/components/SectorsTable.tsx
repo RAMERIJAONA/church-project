@@ -1,7 +1,7 @@
 import { Pencil } from 'lucide-react'
 import { Button } from '@renderer/components/ui/button'
 import type { SectorDTO } from '@shared/domain/members/sectors.types'
-import { bodyCell, headCell, row, table, tableFrame } from './members.styles'
+import { actionsCell, bodyCell, headCell, row, table, tableFrame } from './members.styles'
 
 export interface SectorsTableProps {
   sectors: SectorDTO[]
@@ -27,7 +27,7 @@ export function SectorsTable({ sectors, onRename }: SectorsTableProps): React.JS
             <th scope="col" className={headCell({ align: 'right' })}>
               Fidèles
             </th>
-            <th scope="col" className={headCell({ align: 'right' })}>
+            <th scope="col" className={`${headCell({ align: 'right' })} ${actionsCell}`}>
               <span className="sr-only">Actions</span>
             </th>
           </tr>
@@ -39,7 +39,7 @@ export function SectorsTable({ sectors, onRename }: SectorsTableProps): React.JS
               <td className={bodyCell()}>{s.name}</td>
               <td className={bodyCell({ align: 'right', numeric: true })}>{s.householdCount}</td>
               <td className={bodyCell({ align: 'right', numeric: true })}>{s.memberCount}</td>
-              <td className={bodyCell({ align: 'right' })}>
+              <td className={`${bodyCell({ align: 'right' })} ${actionsCell}`}>
                 <Button
                   variant="ghost"
                   aria-label={`Renommer ${s.name}`}

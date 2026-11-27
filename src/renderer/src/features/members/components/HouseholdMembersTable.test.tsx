@@ -27,7 +27,6 @@ function setup(props: Partial<HouseholdMembersTableProps> = {}) {
   render(
     <HouseholdMembersTable
       members={[jean, andry, soa]}
-      sponsor={null}
       today="2026-11-27"
       {...handlers}
       {...props}
@@ -37,22 +36,13 @@ function setup(props: Partial<HouseholdMembersTableProps> = {}) {
 }
 
 describe('HouseholdMembersTable', () => {
-  it('affiche les colonnes demandées, par rang', () => {
+  it('regroupe en 5 colonnes, par rang, sans répéter secteur ni parrain du foyer', () => {
     setup()
     const headers = screen.getAllByRole('columnheader').map((h) => h.textContent)
-    // Pas de colonne Diacre dans un foyer (porteur, 2026-11-27)
-    expect(headers.slice(0, 10)).toEqual([
-      'Matricule',
-      'Rôle',
-      'Nom',
-      'Prénom',
-      'Naissance',
-      'Âge',
-      'Téléphone',
-      'Adresse',
-      'Secteur',
-      'Parrain'
-    ])
+    // Secteur et parrain sont les mêmes pour tout le foyer : affichés dans l'en-tête de la page
+    expect(headers.slice(0, 5)).toEqual(['Matricule', 'Rôle', 'Fidèle', 'Naissance', 'Téléphone'])
+    expect(headers).not.toContain('Secteur')
+    expect(headers).not.toContain('Parrain')
     const rows = screen.getAllByRole('row').slice(1)
     expect(rows.map((r) => within(r).getAllByRole('cell')[0]?.textContent)).toEqual([
       '1/1M-I',
@@ -61,11 +51,12 @@ describe('HouseholdMembersTable', () => {
     ])
   })
 
-  it('calcule l’âge et montre le parrain à désigner', () => {
+  it('montre l’adresse sous le nom et l’âge sous la date de naissance', () => {
     setup()
-    const [, andryRow] = screen.getAllByRole('row').slice(1)
-    expect(andryRow?.textContent).toContain('41 ans')
-    expect(andryRow?.textContent).toContain('À désigner')
+    const cells = within(screen.getAllByRole('row')[2]!).getAllByRole('cell')
+    expect(within(cells[2]!).getByText('Lot II A 45, Ambatondrazaka')).toBeTruthy()
+    expect(within(cells[3]!).getByText('28/11/1984')).toBeTruthy()
+    expect(within(cells[3]!).getByText('41 ans')).toBeTruthy()
   })
 
   it('n’affiche la flèche ↑ ni sur le premier enfant, ni la flèche ↓ sur le dernier', async () => {

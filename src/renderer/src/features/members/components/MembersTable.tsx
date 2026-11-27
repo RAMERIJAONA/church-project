@@ -1,18 +1,12 @@
 import { Pencil } from 'lucide-react'
 import { Button } from '@renderer/components/ui/button'
-import {
-  ageOn,
-  formatAge,
-  formatBirthDate,
-  formatPhone,
-  memberDisplayName
-} from '@shared/domain/members/members.rules'
+import { formatPhone, memberDisplayName } from '@shared/domain/members/members.rules'
 import type { MemberDTO, MemberSort } from '@shared/domain/members/members.types'
+import { BirthCell, PersonCell } from './MemberCells'
 import { MemberRowActions } from './MemberRowActions'
 import {
-  addressText,
+  actionsCell,
   bodyCell,
-  deaconBadge,
   headCell,
   matriculeText,
   missingText,
@@ -35,7 +29,10 @@ export interface MembersTableProps {
   onDelete: (member: MemberDTO) => void
 }
 
-/** Liste globale des fidèles (une page), tous foyers confondus. */
+/**
+ * Liste globale des fidèles (une page), tous foyers confondus : 7 colonnes regroupées (nom et
+ * adresse, date et âge) pour tenir sans défilement horizontal (porteur, 2026-11-27).
+ */
 export function MembersTable(p: MembersTableProps): React.JSX.Element {
   const sortable = (label: string, sortKey: MemberSort): React.JSX.Element => (
     <SortableHeader
@@ -59,21 +56,17 @@ export function MembersTable(p: MembersTableProps): React.JSX.Element {
       tabIndex={0}
       className={tableFrame}
     >
-      <table className={`${table} min-w-[76rem]`}>
+      <table className={`${table} min-w-[46rem]`}>
         <thead>
           <tr>
             {sortable('Matricule', 'matricule')}
-            {sortable('Nom', 'name')}
-            {plain('Prénom')}
-            {sortable('Date de naissance', 'birthDate')}
-            {plain('Âge')}
+            {sortable('Fidèle', 'name')}
+            {sortable('Naissance', 'birthDate')}
             {plain('Téléphone')}
-            {plain('Adresse')}
             {sortable('Secteur', 'sector')}
-            {plain('Diacre')}
-            {plain('Parrain diacre')}
+            {plain('Parrain')}
             {sortable('Foyer', 'household')}
-            <th scope="col" className={headCell({ align: 'right' })}>
+            <th scope="col" className={`${headCell({ align: 'right' })} ${actionsCell}`}>
               <span className="sr-only">Actions</span>
             </th>
           </tr>
@@ -85,23 +78,13 @@ export function MembersTable(p: MembersTableProps): React.JSX.Element {
                 <span className={matriculeText}>{m.matricule}</span>
               </td>
               <td className={bodyCell()}>
-                <button type="button" className={openButton} onClick={() => p.onEdit(m)}>
-                  {m.lastName}
-                </button>
+                <PersonCell member={m} showDeacon onOpen={() => p.onEdit(m)} />
               </td>
-              <td className={bodyCell()}>{m.firstName}</td>
-              <td className={bodyCell({ numeric: true })}>{formatBirthDate(m.birthDate)}</td>
-              <td className={bodyCell({ numeric: true })}>
-                {formatAge(ageOn(m.birthDate, p.today))}
+              <td className={bodyCell()}>
+                <BirthCell birthDate={m.birthDate} today={p.today} />
               </td>
               <td className={bodyCell({ numeric: true })}>{m.phone ? formatPhone(m.phone) : ''}</td>
-              <td className={bodyCell()}>
-                <span className={addressText}>{m.address}</span>
-              </td>
               <td className={bodyCell()}>{`${m.sector.numeral} · ${m.sector.name}`}</td>
-              <td className={bodyCell()}>
-                {m.deacon && <span className={deaconBadge}>Diacre</span>}
-              </td>
               <td className={bodyCell()}>
                 {m.sponsor ? (
                   memberDisplayName(m.sponsor)
@@ -114,7 +97,7 @@ export function MembersTable(p: MembersTableProps): React.JSX.Element {
                   Foyer {m.householdNumber}
                 </button>
               </td>
-              <td className={bodyCell({ align: 'right' })}>
+              <td className={`${bodyCell({ align: 'right' })} ${actionsCell}`}>
                 <div className="flex items-center justify-end gap-0.5">
                   {/* Modifier toujours visible : cliquer sur le nom n'est pas évident (porteur) */}
                   <Button

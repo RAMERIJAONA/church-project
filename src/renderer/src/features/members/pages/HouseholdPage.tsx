@@ -84,7 +84,6 @@ export function HouseholdPage(): React.JSX.Element {
       ) : (
         <HouseholdMembersTable
           members={data.members}
-          sponsor={data.sponsor}
           today={today}
           onOpen={(member) => open({ kind: 'edit', member })}
           onDelete={(member) => open({ kind: 'delete', member })}

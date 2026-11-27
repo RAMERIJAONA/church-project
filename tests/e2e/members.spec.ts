@@ -48,6 +48,20 @@ async function fillMember(w: Page, householdNumber: number, m: NewMember): Promi
 const matricules = (w: Page, region: string): Promise<string[]> =>
   w.getByRole('region', { name: region }).locator('tbody tr td:first-child').allTextContents()
 
+/** Le tableau tient dans sa zone : aucun défilement horizontal (porteur, 2026-11-27). */
+const fitsWidth = (w: Page, region: string): Promise<boolean> =>
+  w.getByRole('region', { name: region }).evaluate((el) => el.scrollWidth <= el.clientWidth)
+
+/** Fenêtre ramenée à sa taille minimale (1160 × 640, CLAUDE.md par. 10). */
+async function setMinimumWindowSize(running: Awaited<ReturnType<typeof launchApp>>): Promise<void> {
+  await running.app.evaluate(({ BrowserWindow }) => {
+    const win = BrowserWindow.getAllWindows()[0]
+    if (!win) throw new Error('aucune fenêtre')
+    const [width = 0, height = 0] = win.getMinimumSize()
+    win.setSize(width, height)
+  })
+}
+
 async function addSector(w: Page, name: string): Promise<void> {
   await w.getByRole('button', { name: 'Ajouter un secteur' }).click()
   const form = w.getByRole('dialog', { name: 'Ajouter un secteur' })
@@ -127,6 +141,10 @@ test('@smoke fidèles : secteurs, foyers, membres, matricules et liste globale',
       .poll(() => matricules(w, 'Membres du foyer'))
       .toEqual(['1/1M-I', '1/2B-I', '1/3-I', '1/4-I'])
 
+    // Tableau sans défilement horizontal, même à la taille minimale de la fenêtre
+    await setMinimumWindowSize(running)
+    await expect.poll(() => fitsWidth(w, 'Membres du foyer')).toBe(true)
+
     // Le père devient diacre : son matricule ne change pas
     // Icônes et liens avec la main (cursor: pointer), comme tout élément cliquable
     const pencil = w.getByRole('button', { name: 'Modifier RAKOTO Jean' })
@@ -161,6 +179,7 @@ test('@smoke fidèles : secteurs, foyers, membres, matricules et liste globale',
     const list = w.getByRole('region', { name: 'Liste des fidèles' })
     await expect(list.getByRole('row', { name: /RASOA/ })).toContainText('RAKOTO Jean')
     await expect(list.getByRole('row', { name: /1\/1M-I/ })).toContainText('Diacre')
+    await expect.poll(() => fitsWidth(w, 'Liste des fidèles')).toBe(true)
     await w
       .getByRole('group', { name: 'Filtres' })
       .getByRole('combobox', { name: 'Secteur' })
@@ -242,7 +261,7 @@ test('@smoke fidèles : seul le tableau défile', async () => {
     await expect(w.getByText('60 fidèles')).toBeVisible()
     const search = w.getByRole('searchbox', { name: 'Rechercher un fidèle' })
     const list = w.getByRole('region', { name: 'Liste des fidèles' })
-    const header = list.getByRole('columnheader', { name: /^Nom/ })
+    const header = list.getByRole('columnheader', { name: /^Fidèle/ })
     const searchTop = (await search.boundingBox())?.y
     const headerTop = (await header.boundingBox())?.y
 

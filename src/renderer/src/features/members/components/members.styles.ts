@@ -7,10 +7,15 @@ import { cva } from 'class-variance-authority'
  */
 export const tableFrame = 'min-h-0 overflow-auto rounded-xl border bg-card text-sm'
 
-export const table = 'w-full min-w-[56rem] border-collapse'
+/**
+ * Tableau : colonnes regroupées et texte qui revient à la ligne pour tenir dans la fenêtre sans
+ * défilement horizontal (porteur, 2026-11-27) ; chaque tableau fixe sa largeur minimale, juste
+ * pour les très petits écrans.
+ */
+export const table = 'w-full border-collapse'
 
 export const headCell = cva(
-  'sticky top-0 z-10 border-b bg-card px-3 py-2.5 text-xs font-medium tracking-wide text-muted-foreground uppercase',
+  'sticky top-0 z-10 border-b bg-card px-3 py-2.5 text-xs font-medium tracking-wide whitespace-nowrap text-muted-foreground uppercase',
   {
     variants: { align: { left: 'text-left', center: 'text-center', right: 'text-right' } },
     defaultVariants: { align: 'left' }
@@ -27,9 +32,15 @@ export const bodyCell = cva('border-b px-3 py-2 align-top group-last:border-b-0'
 
 export const row = 'group hover:bg-muted/50'
 
+/** Colonne des icônes d'action : aussi étroite que son contenu, toujours à droite */
+export const actionsCell = 'w-px whitespace-nowrap'
+
 export const lastNameText = 'font-semibold'
 
-export const addressText = 'mt-0.5 text-xs text-muted-foreground'
+/** Seconde ligne d'une cellule : adresse sous le nom, âge sous la date */
+export const subText = 'mt-0.5 text-xs text-muted-foreground'
+
+export const addressText = subText
 
 export const rowActions =
   'flex items-center justify-end opacity-40 transition-opacity duration-100 group-hover:opacity-100 group-focus-within:opacity-100'
