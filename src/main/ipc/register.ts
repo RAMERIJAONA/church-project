@@ -3,6 +3,7 @@ import type { AccountingSummaryService } from '@main/services/accounting-summary
 import type { AccountingService } from '@main/services/accounting.service'
 import type { Logger } from '@main/logging/logger'
 import type { MaintenanceService } from '@main/services/maintenance.service'
+import type { MembersService } from '@main/services/members.service'
 import type { SettingsService } from '@main/services/settings.service'
 import type { AppInfoDTO, PrintResultDTO } from '@shared/ipc/contract'
 import type { IpcMain } from 'electron'
@@ -10,6 +11,7 @@ import { registerAccountingIpc } from './accounting.ipc'
 import { registerAppIpc } from './app.ipc'
 import { createHandle } from './handle'
 import { registerMaintenanceIpc } from './maintenance.ipc'
+import { registerMembersIpc } from './members.ipc'
 import { registerSettingsIpc } from './settings.ipc'
 
 export interface IpcServices {
@@ -23,6 +25,8 @@ export interface IpcServices {
   accountingExport: AccountingExportService
   /** Synthèse prévu / réalisé par date de saisie */
   accountingSummary: AccountingSummaryService
+  /** Fidèles (indépendant de la comptabilité) */
+  members: MembersService
 }
 
 /** Enregistre tous les canaux. Appelé une fois par main/index.ts. */
@@ -41,4 +45,5 @@ export function registerIpc(
     services.accountingExport,
     services.accountingSummary
   )
+  registerMembersIpc(handle, services.members)
 }

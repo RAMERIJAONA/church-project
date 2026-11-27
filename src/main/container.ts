@@ -15,11 +15,13 @@ import { inspectDatabaseFile } from '@main/db/inspect'
 import type { Logger } from '@main/logging/logger'
 import { createAccountingSummaryRepository } from '@main/repositories/accounting-summary.repository'
 import { createAccountingRepository } from '@main/repositories/accounting.repository'
+import { createMembersRepository } from '@main/repositories/members.repository'
 import { createSettingsRepository } from '@main/repositories/settings.repository'
 import { createAccountingExportService } from '@main/services/accounting-export.service'
 import { createAccountingSummaryService } from '@main/services/accounting-summary.service'
 import { createAccountingService } from '@main/services/accounting.service'
 import { createMaintenanceService } from '@main/services/maintenance.service'
+import { createMembersService } from '@main/services/members.service'
 import { createPrintService } from '@main/services/print.service'
 import { createSettingsService } from '@main/services/settings.service'
 
@@ -118,6 +120,13 @@ export async function createContainer(paths: AppPaths, logger: Logger, platform:
     logger: logger.child({ module: 'export' })
   })
 
+  const members = createMembersService({
+    db: handle.db,
+    members: createMembersRepository(),
+    clock: systemClock,
+    logger: logger.child({ module: 'members' })
+  })
+
   const print = createPrintService({
     printer: platform.print,
     dialog: platform.dialog,
@@ -134,6 +143,7 @@ export async function createContainer(paths: AppPaths, logger: Logger, platform:
     accounting,
     accountingExport,
     accountingSummary,
+    members,
     print,
     dispose: closeDatabase
   }
