@@ -92,16 +92,35 @@ describe('HouseholdsService', () => {
     expect(list({ search: '1/4B-II' }).items.map((m) => m.firstName)).toEqual(['Nirina'])
   })
 
-  it('refuse de supprimer un foyer qui a des membres, accepte un foyer vide', () => {
-    const { household, member, membersService, householdsService } = setupMembers()
+  it('supprime un foyer avec tous ses membres (porteur, 2026-11-27)', () => {
+    const { household, member, householdsService, list, listHouseholds } = setupMembers()
     const h = household()
-    const andry = member(h.id, { firstName: 'Andry' })
-    const err = caught(() => householdsService.delete(h.id))
-    expect(err.code).toBe('BUSINESS_RULE')
-    expect(err.message).toBe('Retirez d’abord les membres de ce foyer.')
-    membersService.delete(andry.id)
+    const other = household()
+    member(h.id, { role: 'father', firstName: 'Jean' })
+    member(h.id, { firstName: 'Andry' })
+    const kept = member(other.id, { lastName: 'RASOA', firstName: 'Nirina' })
     householdsService.delete(h.id)
     expect(caught(() => householdsService.get(h.id)).code).toBe('NOT_FOUND')
+    expect(list().items.map((m) => m.id)).toEqual([kept.id])
+    expect(list({ search: 'andry' }).total).toBe(0)
+    expect(listHouseholds().items.map((x) => x.number)).toEqual([2])
+    // Numéro jamais réattribué, noms libérés
+    expect(household().number).toBe(3)
+    expect(member(other.id, { firstName: 'Andry' }).lastName).toBe('RAKOTO')
+  })
+
+  it('un diacre supprimé avec son foyer ne parraine plus les autres foyers', () => {
+    const { household, member, householdsService } = setupMembers()
+    const h = household()
+    const rabe = member(h.id, { role: 'father', lastName: 'RABE', firstName: 'Jean', deacon: true })
+    const sponsored = household({ sponsorId: rabe.id })
+    householdsService.delete(h.id)
+    expect(householdsService.get(sponsored.id).sponsor).toBeNull()
+  })
+
+  it('refuse de supprimer un foyer inconnu', () => {
+    const { householdsService } = setupMembers()
+    expect(caught(() => householdsService.delete(99)).code).toBe('NOT_FOUND')
   })
 
   it('filtre par secteur et par parrain à désigner', () => {

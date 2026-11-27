@@ -3,13 +3,23 @@ import { useNavigate } from 'react-router'
 import { toast } from 'sonner'
 import { Button } from '@renderer/components/ui/button'
 import { getErrorMessage } from '@renderer/lib/error-messages'
-import { HOUSEHOLDS_PAGE_SIZE } from '@shared/domain/members/households.types'
+import {
+  HOUSEHOLDS_PAGE_SIZE,
+  type HouseholdSummaryDTO
+} from '@shared/domain/members/households.types'
+import { ConfirmDeleteHouseholdDialog } from '../components/ConfirmDeleteHouseholdDialog'
 import { HouseholdFormDialog } from '../components/HouseholdFormDialog'
 import { HouseholdsTable } from '../components/HouseholdsTable'
 import { HouseholdsToolbar } from '../components/HouseholdsToolbar'
 import { MembersPagination } from '../components/MembersPagination'
 import { clampPage, countLabel, pageCount } from '../members.utils'
-import { useCreateHousehold, useHouseholds, useSectors, useSponsorCandidates } from '../queries'
+import {
+  useCreateHousehold,
+  useDeleteHousehold,
+  useHouseholds,
+  useSectors,
+  useSponsorCandidates
+} from '../queries'
 import { SEARCH_DEBOUNCE_MS } from '../use-members-list-state'
 import { useDebouncedValue } from '../use-debounced-value'
 
@@ -35,6 +45,8 @@ export function HouseholdsPage(): React.JSX.Element {
   const sectors = useSectors()
   const sponsors = useSponsorCandidates(sponsorQuery, creating)
   const create = useCreateHousehold()
+  const remove = useDeleteHousehold()
+  const [deleting, setDeleting] = useState<HouseholdSummaryDTO | null>(null)
   const data = households.data
   if (data && data.total !== total) setTotal(data.total)
 
@@ -81,7 +93,11 @@ export function HouseholdsPage(): React.JSX.Element {
       )}
       {data && data.items.length > 0 && (
         <>
-          <HouseholdsTable households={data.items} onOpen={(h) => navigate(`/foyers/${h.id}`)} />
+          <HouseholdsTable
+            households={data.items}
+            onOpen={(h) => navigate(`/foyers/${h.id}`)}
+            onDelete={setDeleting}
+          />
           <MembersPagination
             page={page}
             pageCount={pageCount(data.total, HOUSEHOLDS_PAGE_SIZE)}
@@ -109,6 +125,17 @@ export function HouseholdsPage(): React.JSX.Element {
           })
         }
         onCancel={() => setCreating(false)}
+      />
+      <ConfirmDeleteHouseholdDialog
+        household={deleting}
+        onCancel={() => setDeleting(null)}
+        onConfirm={(h) => {
+          setDeleting(null)
+          remove.mutate(h.id, {
+            onSuccess: () => toast.success(`Foyer ${h.number} supprimé`),
+            onError: (err) => toast.error(getErrorMessage(err))
+          })
+        }}
       />
     </div>
   )

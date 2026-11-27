@@ -1,4 +1,4 @@
-import { Eye } from 'lucide-react'
+import { Eye, Trash2 } from 'lucide-react'
 import { Button } from '@renderer/components/ui/button'
 import type { HouseholdSummaryDTO } from '@shared/domain/members/households.types'
 import { memberDisplayName } from '@shared/domain/members/members.rules'
@@ -15,10 +15,15 @@ import {
 export interface HouseholdsTableProps {
   households: HouseholdSummaryDTO[]
   onOpen: (household: HouseholdSummaryDTO) => void
+  onDelete: (household: HouseholdSummaryDTO) => void
 }
 
 /** Foyers par numéro ; le nom du membre de plus petit rang aide à reconnaître le foyer. */
-export function HouseholdsTable({ households, onOpen }: HouseholdsTableProps): React.JSX.Element {
+export function HouseholdsTable({
+  households,
+  onOpen,
+  onDelete
+}: HouseholdsTableProps): React.JSX.Element {
   return (
     <div role="region" aria-label="Liste des foyers" tabIndex={0} className={tableFrame}>
       <table className={`${table} min-w-[40rem]`}>
@@ -72,6 +77,16 @@ export function HouseholdsTable({ households, onOpen }: HouseholdsTableProps): R
                   onClick={() => onOpen(h)}
                 >
                   <Eye aria-hidden />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  aria-label={`Supprimer le foyer ${h.number}`}
+                  title="Supprimer le foyer"
+                  onClick={() => onDelete(h)}
+                >
+                  <Trash2 aria-hidden />
                 </Button>
               </td>
             </tr>

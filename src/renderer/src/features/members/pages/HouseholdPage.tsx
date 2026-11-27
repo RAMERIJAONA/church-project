@@ -1,19 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle
-} from '@renderer/components/ui/alert-dialog'
 import { Button } from '@renderer/components/ui/button'
 import { getErrorMessage } from '@renderer/lib/error-messages'
 import { IpcError } from '@renderer/lib/ipc-client'
 import { localDateOf } from '@shared/utils/dates'
+import { ConfirmDeleteHouseholdDialog } from '../components/ConfirmDeleteHouseholdDialog'
 import { HouseholdFormDialog } from '../components/HouseholdFormDialog'
 import { HouseholdHeader } from '../components/HouseholdHeader'
 import { HouseholdMembersTable } from '../components/HouseholdMembersTable'
@@ -116,22 +107,11 @@ export function HouseholdPage(): React.JSX.Element {
         onSubmit={dialogs.save}
         onCancel={dialogs.close}
       />
-      <AlertDialog open={dialogs.deleting} onOpenChange={(o) => !o && dialogs.close()}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer le foyer {data.number} ?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Ce foyer n’a aucun membre. Son numéro ne sera jamais réattribué.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction variant="destructive" onClick={dialogs.confirmDelete}>
-              Supprimer
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDeleteHouseholdDialog
+        household={dialogs.deleting ? data : null}
+        onConfirm={dialogs.confirmDelete}
+        onCancel={dialogs.close}
+      />
     </div>
   )
 }

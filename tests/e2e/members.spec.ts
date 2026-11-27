@@ -191,6 +191,18 @@ test('@smoke fidèles : secteurs, foyers, membres, matricules et liste globale',
     await expect
       .poll(() => matricules(w, 'Membres du foyer'))
       .toEqual(['1/1M-I', '1/2B-I', '1/4-I'])
+
+    // Suppression d'un foyer depuis la liste : ses membres disparaissent avec lui
+    await navLink(w, 'Foyers').click()
+    await w.getByRole('button', { name: 'Supprimer le foyer 2' }).click()
+    await w
+      .getByRole('alertdialog', { name: 'Supprimer le foyer 2 (RASOA Nirina) ?' })
+      .getByRole('button', { name: 'Supprimer le foyer et ses membres' })
+      .click()
+    await expect(w.getByText('Foyer 2 supprimé')).toBeVisible()
+    await expect(w.getByText('1 foyer', { exact: true })).toBeVisible()
+    await navLink(w, 'Liste des fidèles, tous foyers confondus').click()
+    await expect(w.getByText('3 fidèles')).toBeVisible()
   } finally {
     await running.close()
     removeDir(running.userData)

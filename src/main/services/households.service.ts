@@ -150,15 +150,21 @@ export function createHouseholdsService(deps: {
       return household
     },
 
-    /** Seulement un foyer vide ; son numéro n'est jamais réattribué. */
+    /**
+     * Le foyer et tous ses membres (porteur, 2026-11-27), en une transaction ; un diacre supprimé
+     * ne parraine plus les autres foyers. Le numéro du foyer n'est jamais réattribué.
+     */
     delete(id: number): void {
-      deps.db.transaction((tx) => {
-        if (get(tx, id).memberCount > 0) {
-          throw new AppError('BUSINESS_RULE', 'Retirez d’abord les membres de ce foyer.')
-        }
-        deps.households.softDelete(tx, id, deps.clock().toISOString())
+      const removed = deps.db.transaction((tx) => {
+        if (!deps.households.findById(tx, id)) throw notFound(id)
+        const at = deps.clock().toISOString()
+        const memberIds = deps.members.softDeleteByHousehold(tx, id, at)
+        for (const memberId of memberIds) deps.households.clearSponsor(tx, memberId, at)
+        deps.households.softDelete(tx, id, at)
+        return memberIds.length
       })
-      deps.logger.info({ id }, 'foyer supprimé')
+      deps.onChange()
+      deps.logger.info({ id, members: removed }, 'foyer supprimé avec ses membres')
     },
 
     /** Diacres actifs, par nom ou par pertinence de la recherche. */

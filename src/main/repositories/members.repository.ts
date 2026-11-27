@@ -102,6 +102,17 @@ export function createMembersRepository() {
       return res.changes > 0
     },
 
+    /** Supprime (doucement) tous les membres actifs d'un foyer ; renvoie leurs ids. */
+    softDeleteByHousehold(db: DbOrTx, householdId: number, at: string): number[] {
+      return db
+        .update(members)
+        .set({ deletedAt: at, updatedAt: at })
+        .where(and(eq(members.householdId, householdId), active))
+        .returning({ id: members.id })
+        .all()
+        .map((r) => r.id)
+    },
+
     findById(db: DbOrTx, id: number): MemberDTO | null {
       const row = readQuery(db)
         .where(and(eq(members.id, id), active))

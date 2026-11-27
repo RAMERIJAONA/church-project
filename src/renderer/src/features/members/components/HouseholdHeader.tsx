@@ -9,7 +9,7 @@ export interface HouseholdHeaderProps {
   household: HouseholdDTO
   onEdit: () => void
   onAddMember: () => void
-  /** Proposé seulement pour un foyer sans membre */
+  /** Supprime le foyer et ses membres, après confirmation */
   onDelete: () => void
 }
 
@@ -47,12 +47,10 @@ export function HouseholdHeader({
             <Pencil aria-hidden />
             Modifier le foyer
           </Button>
-          {household.memberCount === 0 && (
-            <Button variant="outline" onClick={onDelete}>
-              <Trash2 aria-hidden />
-              Supprimer le foyer
-            </Button>
-          )}
+          <Button variant="outline" onClick={onDelete}>
+            <Trash2 aria-hidden />
+            Supprimer le foyer
+          </Button>
           <Button onClick={onAddMember}>
             <UserPlus aria-hidden />
             Ajouter un membre

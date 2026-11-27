@@ -139,6 +139,8 @@ describe('plans des requêtes SQL', () => {
       ctx.householdsService.sponsorCandidates('rabe')
       list({ sectorId: one.id, deacon: true, sort: 'matricule' })
       ctx.householdsService.delete(household().id)
+      // Foyer avec ses membres (dont un diacre parrain) : suppression en cascade
+      ctx.householdsService.delete(h.id)
     })
     expect(plans.length).toBeGreaterThan(5)
     expect(costlySteps(plans)).toEqual([])

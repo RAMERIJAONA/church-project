@@ -77,6 +77,7 @@ Le module reste **indépendant de la comptabilité** (aucun lien de données, au
 | Statuts (après la livraison) | **pas à pas** : Communiant grisé à Non tant que non baptisé, Diacre grisé à Non tant que non communiant ; Non en cascade : Baptisé Non remet Communiant et Diacre à Non, Communiant Non remet Diacre à Non (porteur) |
 | Page d'un foyer (après la livraison) | pas de colonne Diacre ; **Déplacer retiré** (fonctionnalité supprimée) ; Modifier et Supprimer en icônes visibles sur chaque ligne |
 | Curseur (après la livraison) | main (`cursor: pointer`) sur tout ce qui se clique, icônes comprises |
+| Suppression d'un foyer (après la livraison) | possible depuis la liste et la page du foyer, **avec tous ses membres** (confirmation qui annonce leur nombre) ; remplace « seulement un foyer vide » |
 
 ### 3.3 Conséquences proposées au porteur pendant la conception (non contestées)
 
