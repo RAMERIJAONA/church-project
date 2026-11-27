@@ -12,9 +12,9 @@ const households: HouseholdSummaryDTO[] = [
     sector,
     sponsor: { id: 5, lastName: 'RABE', firstName: 'Jean', matricule: '3/1M-I' },
     memberCount: 4,
-    mainLastName: 'RAKOTO'
+    mainName: 'RAKOTO Jean'
   },
-  { id: 11, number: 2, sector, sponsor: null, memberCount: 0, mainLastName: null }
+  { id: 11, number: 2, sector, sponsor: null, memberCount: 0, mainName: null }
 ]
 
 describe('HouseholdsTable', () => {
@@ -25,7 +25,7 @@ describe('HouseholdsTable', () => {
       within(row)
         .getAllByRole('cell')
         .map((c) => c.textContent)
-    ).toEqual(['1', 'RAKOTO', 'I · Ambodimanga', 'RABE Jean', '4', ''])
+    ).toEqual(['1', 'RAKOTO Jean', 'I · Ambodimanga', 'RABE Jean', '4', ''])
   })
 
   it('signale le parrain à désigner et le foyer sans membre', () => {
@@ -46,7 +46,7 @@ describe('HouseholdsTable', () => {
   it('ouvre aussi un foyer en cliquant sur son nom', async () => {
     const onOpen = vi.fn()
     render(<HouseholdsTable households={households} onOpen={onOpen} />)
-    await userEvent.click(screen.getByRole('button', { name: 'RAKOTO' }))
+    await userEvent.click(screen.getByRole('button', { name: 'RAKOTO Jean' }))
     expect(onOpen).toHaveBeenCalledWith(households[0])
   })
 })

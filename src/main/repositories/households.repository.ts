@@ -25,7 +25,7 @@ export interface HouseholdSummaryRow extends HouseholdRow {
   sectorNumber: number
   sectorName: string
   memberCount: number
-  mainLastName: string | null
+  mainName: string | null
 }
 
 export interface HouseholdFilters {
@@ -36,10 +36,13 @@ export interface HouseholdFilters {
   ids?: readonly number[]
 }
 
-/** Membres actifs et nom du plus petit rang (index `members_rank_unique_idx`). */
+/**
+ * Membres actifs, et nom et prénom du plus petit rang : chef de foyer ou père, sinon mère, sinon
+ * premier enfant (porteur, 2026-11-27 ; index `members_rank_unique_idx`).
+ */
 const memberCount = sql<number>`(SELECT count(*) FROM members m
   WHERE m.household_id = "households"."id" AND m.deleted_at IS NULL)`
-const mainLastName = sql<string | null>`(SELECT m.last_name FROM members m
+const mainName = sql<string | null>`(SELECT m.last_name || ' ' || m.first_name FROM members m
   WHERE m.household_id = "households"."id" AND m.deleted_at IS NULL ORDER BY m.rank LIMIT 1)`
 
 const summaryCols = {
@@ -47,7 +50,7 @@ const summaryCols = {
   sectorNumber: sectors.number,
   sectorName: sectors.name,
   memberCount,
-  mainLastName
+  mainName
 }
 
 function where(f: HouseholdFilters): SQL | undefined {

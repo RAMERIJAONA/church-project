@@ -76,7 +76,7 @@ export function createHouseholdsService(deps: {
       },
       sponsor: r.sponsorId === null ? null : (sponsors.get(r.sponsorId) ?? null),
       memberCount: r.memberCount,
-      mainLastName: r.mainLastName
+      mainName: r.mainName
     }))
   }
 

@@ -50,7 +50,7 @@ export function HouseholdsTable({ households, onOpen }: HouseholdsTableProps): R
               <td className={bodyCell({ numeric: true })}>{h.number}</td>
               <td className={bodyCell()}>
                 <button type="button" className={openButton} onClick={() => onOpen(h)}>
-                  {h.mainLastName ?? <span className={missingText}>Aucun membre</span>}
+                  {h.mainName ?? <span className={missingText}>Aucun membre</span>}
                 </button>
               </td>
               <td className={bodyCell()}>{`${h.sector.numeral} · ${h.sector.name}`}</td>

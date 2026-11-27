@@ -99,7 +99,7 @@ function MoveForm({
       )}
       {target && !sameHousehold && (
         <p className="text-sm">
-          Foyer {target.number} · {target.mainLastName ?? 'Aucun membre'} · {target.sector.numeral}{' '}
+          Foyer {target.number} · {target.mainName ?? 'Aucun membre'} · {target.sector.numeral}{' '}
           {target.sector.name}
         </p>
       )}

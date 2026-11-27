@@ -15,7 +15,7 @@ describe('HouseholdsService', () => {
       sponsor: null,
       memberCount: 0,
       members: [],
-      mainLastName: null
+      mainName: null
     })
   })
 
@@ -48,10 +48,20 @@ describe('HouseholdsService', () => {
     expect(opened.members.map((m) => m.matricule)).toEqual(['2/2-I', '2/3-I'])
     expect(opened).toMatchObject({
       memberCount: 2,
-      mainLastName: 'RAKOTO',
+      mainName: 'RAKOTO Soa',
       takenRanks: [2, 3],
       lastChildRank: 3
     })
+  })
+
+  it('nomme le foyer par le nom et le prénom du chef de foyer ou du père', () => {
+    const { household, member, listHouseholds } = setupMembers()
+    const h = household()
+    member(h.id, { firstName: 'Andry' })
+    member(h.id, { role: 'mother', sex: 'F', firstName: 'Soa' })
+    expect(listHouseholds().items[0]?.mainName).toBe('RAKOTO Soa')
+    member(h.id, { role: 'father', firstName: 'Jean' })
+    expect(listHouseholds().items[0]?.mainName).toBe('RAKOTO Jean')
   })
 
   it('propose seulement les diacres actifs comme parrains', () => {

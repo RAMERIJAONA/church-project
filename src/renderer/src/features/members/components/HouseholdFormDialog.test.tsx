@@ -71,7 +71,7 @@ describe('HouseholdFormDialog', () => {
       sector: { id: 1, number: 1, name: 'Ambodimanga', numeral: 'I' },
       sponsor: rabe,
       memberCount: 3,
-      mainLastName: 'RAKOTO',
+      mainName: 'RAKOTO Jean',
       members: [],
       takenRanks: [1, 2, 3],
       lastChildRank: 3

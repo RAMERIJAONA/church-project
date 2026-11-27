@@ -73,7 +73,7 @@ export function makeHouseholdDTO(overrides: Partial<HouseholdDTO> = {}): Househo
     sector: { id: 1, number: 1, name: 'Ambodimanga', numeral: 'I' },
     sponsor: null,
     memberCount: members.length,
-    mainLastName: members[0]?.lastName ?? null,
+    mainName: members[0] ? `${members[0].lastName} ${members[0].firstName}` : null,
     members,
     takenRanks: members.map((m) => m.rank),
     lastChildRank: Math.max(2, ...members.filter((m) => m.role === 'child').map((m) => m.rank)),

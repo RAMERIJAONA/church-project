@@ -28,8 +28,11 @@ export interface HouseholdSummaryDTO {
   sponsor: SponsorDTO | null
   /** Membres actifs */
   memberCount: number
-  /** Nom du membre de plus petit rang, pour reconnaître le foyer : « Foyer 4 · RAKOTO » */
-  mainLastName: string | null
+  /**
+   * Nom et prénom du chef de foyer ou du père (sinon du membre de plus petit rang), pour
+   * reconnaître le foyer : « RAKOTO Jean » (porteur, 2026-11-27)
+   */
+  mainName: string | null
 }
 
 /** Foyer ouvert : ses membres actifs par rang. */
